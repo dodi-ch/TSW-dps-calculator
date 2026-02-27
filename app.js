@@ -7,28 +7,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const weaponSelect = document.getElementById('weapon-type');
     const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
-    const abilitySelect = document.getElementById('ability-select');
     const resourcesInput = document.getElementById('resources-used');
+    const simTimeInput = document.getElementById('simulation-time');
 
-    const resName = document.getElementById('res-ability-name');
-    const resBase = document.getElementById('res-base-dmg');
-    const resAvg = document.getElementById('res-avg-dmg');
-    const resDps = document.getElementById('res-dps');
-    const resCast = document.getElementById('res-cast');
-    const resCd = document.getElementById('res-cd');
-    const resDesc = document.getElementById('res-desc');
+    const resTotalDps = document.getElementById('res-total-dps');
+    const slotBreakdownContainer = document.getElementById('slot-breakdown-container');
+
+    // Containers for dynamically generated select elements
+    const activeContainer = document.getElementById('active-abilities-container');
+    const auxActiveContainer = document.getElementById('aux-ability-container');
+    const elitePassiveContainer = document.getElementById('elite-passive-container');
+    const normalPassivesContainer = document.getElementById('normal-passives-container');
+    const auxPassiveContainer = document.getElementById('aux-passive-container');
+
+    // Dropdown arrays to keep track of them
+    const activeSelects = [];
+    const auxActiveSelects = [];
+    const elitePassiveSelects = [];
+    const normalPassiveSelects = [];
+    const auxPassiveSelects = [];
+
+    // Initialize all the UI elements
+    function initUI() {
+        // Active Abilities (7 slots)
+        for (let i = 1; i <= 7; i++) {
+            const select = document.createElement('select');
+            select.id = `active-ability-${i}`;
+            select.addEventListener('change', calculate);
+            activeSelects.push(select);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slot-wrapper';
+            wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
+            wrapper.appendChild(select);
+            activeContainer.appendChild(wrapper);
+        }
+
+        // Aux Active (1 slot)
+        const auxSelect = document.createElement('select');
+        auxSelect.id = `aux-active-1`;
+        auxSelect.addEventListener('change', calculate);
+        auxActiveSelects.push(auxSelect);
+        auxActiveContainer.appendChild(auxSelect);
+
+        // Elite Passive (1 slot)
+        const eliteSelect = document.createElement('select');
+        eliteSelect.id = `elite-passive-1`;
+        eliteSelect.addEventListener('change', calculate);
+        elitePassiveSelects.push(eliteSelect);
+        elitePassiveContainer.appendChild(eliteSelect);
+
+        // Normal Passives (6 slots)
+        for (let i = 1; i <= 6; i++) {
+            const select = document.createElement('select');
+            select.id = `normal-passive-${i}`;
+            select.addEventListener('change', calculate);
+            normalPassiveSelects.push(select);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slot-wrapper';
+            wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
+            wrapper.appendChild(select);
+            normalPassivesContainer.appendChild(wrapper);
+        }
+
+        // Aux Passive (1 slot)
+        const auxPassSelect = document.createElement('select');
+        auxPassSelect.id = `aux-passive-1`;
+        auxPassSelect.addEventListener('change', calculate);
+        auxPassiveSelects.push(auxPassSelect);
+        auxPassiveContainer.appendChild(auxPassSelect);
+
+    }
 
     // Data - check if loaded
     if (typeof tswData === 'undefined') {
-        resName.textContent = "Error: Data failed to load";
+        resTotalDps.textContent = "Error: Data failed to load";
         return;
     }
 
     // Populate Weapons
-    const weapons = new Set(tswData.map(a => a.tree));
+    const weapons = new Set(tswData.map(a => a.weapon));
     const sortedWeapons = Array.from(weapons).sort();
 
     sortedWeapons.forEach(w => {
+        // Exclude Aux/Deviations from main weapons list if they are in there
+        if (w === "Aux" || w === "Anima Deviations" || w === "") return;
+
         const option1 = document.createElement('option');
         option1.value = w;
         option1.textContent = w;
@@ -40,109 +105,286 @@ document.addEventListener('DOMContentLoaded', () => {
         secondaryWeaponSelect.appendChild(option2);
     });
 
-    // Populate Abilities based on Weapon
-    function updateAbilityDropdown() {
-        const selectedPrimary = weaponSelect.value;
-        const selectedSecondary = secondaryWeaponSelect.value;
+    // Filtering Helpers
+    function populateDropdowns(selectElements, filterFn, emptyLabel = "-- None --") {
+        const filteredData = tswData.filter(filterFn);
+        filteredData.sort((a, b) => a.name.localeCompare(b.name));
 
-        abilitySelect.innerHTML = '<option value="">-- Choose an ability --</option>';
+        selectElements.forEach(select => {
+            // save current selection to attempt to restore it
+            const currentVal = select.value;
+            select.innerHTML = `<option value="">${emptyLabel}</option>`;
 
-        let filtered = tswData;
-        if (selectedPrimary !== 'All') {
-            filtered = tswData.filter(a => {
-                return a.tree === selectedPrimary || a.tree === selectedSecondary;
+            filteredData.forEach(a => {
+                const globalIndex = tswData.indexOf(a);
+                const option = document.createElement('option');
+                option.value = globalIndex;
+                option.textContent = a.name;
+                select.appendChild(option);
             });
-        }
 
-        // Sort alphabetically
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-
-        filtered.forEach((a, index) => {
-            const option = document.createElement('option');
-            // use index in the main array as value to easily fetch later
-            const originalIndex = tswData.indexOf(a);
-            option.value = originalIndex;
-            option.textContent = a.name;
-            abilitySelect.appendChild(option);
+            // Restore if possible
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
         });
+    }
+
+    function updateAbilityDropdowns() {
+        const prim = weaponSelect.value;
+        const sec = secondaryWeaponSelect.value;
+
+        // Actives: Primary or Secondary weapon, contains "Active" or empty type (many core abilities have empty type)
+        const isSelectedWeapon = (weapon) => weapon === prim || weapon === sec || prim === "All";
+        const getType = (a) => a.type || "";
+
+        populateDropdowns(activeSelects, a => isSelectedWeapon(a.weapon) && (getType(a).includes("Active") || getType(a) === ""));
+
+        // Aux Actives: Fixed list of auxiliary weapons
+        const auxWeapons = ["Rocket Launcher", "Chainsaw", "Quantum", "Whiplash", "Flamethrower"];
+        populateDropdowns(auxActiveSelects, a => auxWeapons.includes(a.weapon) && getType(a).includes("Active"));
+
+        // Elite Passives: Any weapon (regardless of selection), type contains Elite and Passive
+        populateDropdowns(elitePassiveSelects, a => getType(a).includes("Elite") && getType(a).includes("Passive"));
+
+        // Normal Passives: Any weapon (regardless of selection), type contains Passive, NOT Elite
+        populateDropdowns(normalPassiveSelects, a => getType(a).includes("Passive") && !getType(a).includes("Elite"));
+
+        // Aux Passives: Use aux weapon list
+        populateDropdowns(auxPassiveSelects, a => auxWeapons.includes(a.weapon) && getType(a).includes("Passive"));
 
         calculate();
     }
 
-    function calculate() {
-        const abilityIdx = abilitySelect.value;
-        if (!abilityIdx) {
-            resName.textContent = "No Ability Selected";
-            resBase.textContent = "0";
-            resAvg.textContent = "0";
-            resDps.textContent = "0";
-            resCast.textContent = "0";
-            resCd.textContent = "0";
-            resDesc.textContent = "";
-            return;
-        }
+    // Mathematical Helpers
+    function getAbilityStats(ability, cp, critChance, critPower, penChance, resourcesUsed) {
+        if (!ability) return null;
 
-        const ability = tswData[abilityIdx];
-
-        // Stats
-        const cp = parseFloat(cpInput.value) || 0;
-        const critChance = parseFloat(critChanceInput.value) || 0;
-        const critPower = parseFloat(critPowerInput.value) || 0;
-        const penChance = parseFloat(penChanceInput.value) || 0;
-        const resources = parseInt(resourcesInput.value) || 5;
-
-        // Base Calc with Resource Scaling
         let scalingToUse = ability.scaling || 0;
-
-        // If the ability has linear scaling from 1 to 5 resources
         if (ability.scaling_5 > 0 && ability.scaling_1 > 0) {
-            scalingToUse = ability.scaling_1 + ((resources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
-        } else if (ability.scaling_5 > 0 && resources === 5) {
-            // Some abilities only get a bonus specifically at 5 resources (e.g. Buckshot) 
+            scalingToUse = ability.scaling_1 + ((resourcesUsed - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+        } else if (ability.scaling_5 > 0 && resourcesUsed === 5) {
             scalingToUse = ability.scaling_5;
         }
 
         const baseDamage = scalingToUse * cp;
-
-        // Averages (Crit mapping)
-        // Avg Dmg = Base * (1 + (Crit Chance / 100) * (Crit Power / 100))
-        // Assuming pen adds ~50% damage flat when it hits in standard setups or bypasses mitigation.
-        // We will add a simplistic 15% bonus per pen as a generic stand-in, as exact TSW mitigation math depends on target.
         const critMultiplier = 1 + ((critChance / 100) * (critPower / 100));
-        const penMultiplier = 1 + ((penChance / 100) * 0.15); // estimation for standard target
-
+        const penMultiplier = 1 + ((penChance / 100) * 0.15);
         const avgDamage = baseDamage * critMultiplier * penMultiplier;
 
-        // DPS
-        // Total time to execute = Cast time + Cooldown
-        // If it's a spammable builder, CD is 0.
-        const castTime = ability.cast_time || 1.0; // Assume 1s global cooldown if not listed
+        // Global minimum time is 1.0 seconds
+        const castTime = Math.max(ability.cast_time || 1.0, 1.0);
         const cooldown = ability.cooldown || 0;
-        const totalTime = Math.max(castTime, 1.0) + cooldown; // taking 1s global cooldown floor
 
-        const dps = avgDamage / totalTime;
+        return {
+            name: ability.name,
+            avgDamage,
+            castTime,
+            cooldown,
+            tree: ability.tree,
+            isConsumer: ability.scaling_1 > 0 || ability.scaling_5 > 0, // Quick heuristic
+            type: ability.type || "Unknown",
+            originalAbility: ability
+        };
+    }
 
-        // Render UI
-        resName.textContent = ability.name;
-        resBase.textContent = Math.round(baseDamage).toLocaleString();
-        resAvg.textContent = Math.round(avgDamage).toLocaleString();
-        resDps.textContent = Math.round(dps).toLocaleString();
+    function calculate() {
+        const cp = parseFloat(cpInput.value) || 0;
+        const critChance = parseFloat(critChanceInput.value) || 0;
+        const critPower = parseFloat(critPowerInput.value) || 0;
+        const penChance = parseFloat(penChanceInput.value) || 0;
+        const targetResources = parseInt(resourcesInput.value) || 5;
+        const simTimeMins = parseFloat(simTimeInput.value) || 3;
+        const targetSeconds = simTimeMins * 60;
 
-        resCast.textContent = ability.cast_time || "N/A";
-        resCd.textContent = ability.cooldown || "0";
-        resDesc.textContent = ability.description || ability.note || "No description available.";
+        // Collect configured items
+        const actives = activeSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, penChance, targetResources));
+        const auxActives = auxActiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, penChance, targetResources));
+
+        // Passives don't consume resources typically, so use 1 or max
+        const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, penChance, 5));
+        const normPass = normalPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, penChance, 5));
+        const auxPass = auxPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, penChance, 5));
+
+        const allActives = [...actives, ...auxActives];
+        const allPassives = [...elitePass, ...normPass, ...auxPass];
+
+        if (allActives.length === 0) {
+            resTotalDps.textContent = "0";
+            slotBreakdownContainer.innerHTML = "<em>No active abilities selected</em>";
+            return;
+        }
+
+        // Validate Elite Actives (max 1)
+        const eliteActives = actives.filter(a => a.type.includes("Elite"));
+        if (eliteActives.length > 1) {
+            resTotalDps.textContent = "Error: Too many Elite Actives";
+            slotBreakdownContainer.innerHTML = `<em style="color: #ffaa55;">You can only select a maximum of 1 Elite Active ability. You have selected ${eliteActives.length}: ${eliteActives.map(a => a.name).join(', ')}.</em>`;
+            return;
+        }
+
+        // --- SIMULATION ENGINE ---
+        let time = 0;
+        let primResources = 0;
+        let secResources = 0;
+        let totalDamage = 0;
+
+        const statsBreakdown = {};
+        [...allActives, ...allPassives].forEach(a => {
+            statsBreakdown[a.name] = { damage: 0, casts: 0 };
+        });
+
+        // Track cooldown state
+        const activeCooldowns = allActives.map(() => 0);
+        const passiveCooldowns = allPassives.map(() => 0);
+
+        const primWeapon = weaponSelect.value;
+        const secWeapon = secondaryWeaponSelect.value;
+
+        // Loop until time exceeds target
+        while (time < targetSeconds) {
+            let castSomething = false;
+
+            // Iterate through actions in priority order (left-to-right UI order)
+            for (let i = 0; i < allActives.length; i++) {
+                const action = allActives[i];
+                if (activeCooldowns[i] > 0) continue; // On cooldown
+
+                // Requirement Check
+                let canCast = true;
+                const isPrim = action.tree === primWeapon;
+                const isSec = action.tree === secWeapon;
+
+                if (action.isConsumer) {
+                    // Check if we have the target amount of resources
+                    if (isPrim && primResources < targetResources) canCast = false;
+                    if (isSec && secResources < targetResources) canCast = false;
+                    // Note: auxiliary abilities that build/consume handle resources weirdly, 
+                    // but for simplistic approximation we bypass resource requirement if it's not our primary/secondary
+                    if (!isPrim && !isSec && action.tree !== "Aux") {
+                        // Should not happen if correctly configured
+                    }
+                }
+
+                if (canCast) {
+                    // 1. Execute Cast
+                    totalDamage += action.avgDamage;
+                    statsBreakdown[action.name].casts++;
+                    statsBreakdown[action.name].damage += action.avgDamage;
+
+                    const timeTaken = action.castTime; // Enforced min 1.0 earlier
+                    time += timeTaken;
+                    activeCooldowns[i] = action.cooldown; // Wait, we add castTime to others, so this goes on absolute CD
+
+                    // 2. Resource Management
+                    if (action.isConsumer) {
+                        if (isPrim) primResources -= targetResources;
+                        if (isSec) secResources -= targetResources;
+
+                        if (primResources < 0) primResources = 0;
+                        if (secResources < 0) secResources = 0;
+                    } else {
+                        // Builder generates 1 resource for both
+                        if (action.tree !== "Aux") {
+                            primResources = Math.min(5, primResources + 1);
+                            if (secWeapon !== "None") {
+                                secResources = Math.min(5, secResources + 1);
+                            }
+                        }
+                    }
+
+                    // 3. Proc Passives (Evaluate on every hit)
+                    // Simplified: We assume 1 proc max per second, so we check if a passive can proc when we hit
+                    // In TSW, passives trigger on crit/pen/hit. Without complex rng, we average out.
+                    // For the "maximum once a second" rule, if cooldown > 0, it doesn't proc.
+                    for (let p = 0; p < allPassives.length; p++) {
+                        const passive = allPassives[p];
+                        if (passiveCooldowns[p] <= 0) {
+                            // Proc!
+                            totalDamage += passive.avgDamage;
+                            statsBreakdown[passive.name].casts++;
+                            statsBreakdown[passive.name].damage += passive.avgDamage;
+
+                            // Put passive on 1 second internal cooldown
+                            passiveCooldowns[p] = 1.0;
+                        }
+                    }
+
+                    // 4. Reduce Cooldowns
+                    for (let j = 0; j < activeCooldowns.length; j++) {
+                        activeCooldowns[j] -= timeTaken;
+                    }
+                    for (let j = 0; j < passiveCooldowns.length; j++) {
+                        passiveCooldowns[j] -= timeTaken;
+                    }
+
+                    castSomething = true;
+                    break; // Back to top priority
+                }
+            }
+
+            // If we iterated all abilities and none could be cast (waiting on CDs/Resources)
+            // advance time slightly to prevent infinite loop.
+            // Usually occurs if you select only long-cooldown consumers without builders.
+            if (!castSomething) {
+                // Find next ability coming off CD, or default to 1 sec wait
+                let minWait = 1.0;
+                for (let c of activeCooldowns) {
+                    if (c > 0 && c < minWait) minWait = c;
+                }
+                time += minWait;
+                for (let j = 0; j < activeCooldowns.length; j++) {
+                    activeCooldowns[j] -= minWait;
+                }
+                for (let j = 0; j < passiveCooldowns.length; j++) {
+                    passiveCooldowns[j] -= minWait;
+                }
+            }
+        }
+
+        const finalDps = totalDamage / targetSeconds;
+        resTotalDps.textContent = Math.round(finalDps).toLocaleString() + ` DPS (over ${simTimeMins}m)`;
+
+        // Render Breakdown
+        slotBreakdownContainer.innerHTML = '';
+        const sortedStats = Object.keys(statsBreakdown)
+            .filter(name => statsBreakdown[name].casts > 0)
+            .map(name => ({
+                name,
+                ...statsBreakdown[name]
+            }))
+            .sort((a, b) => b.damage - a.damage);
+
+        sortedStats.forEach(stat => {
+            const itemDps = stat.damage / targetSeconds;
+            const percent = ((stat.damage / totalDamage) * 100).toFixed(1);
+
+            const div = document.createElement('div');
+            div.style.background = 'rgba(0,0,0,0.2)';
+            div.style.padding = '0.5rem';
+            div.style.borderRadius = 'var(--border-radius)';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+
+            div.innerHTML = `
+                <span><strong>${stat.name}</strong> (${stat.casts} casts)</span>
+                <span>${Math.round(itemDps).toLocaleString()} DPS (${percent}%)</span>
+            `;
+            slotBreakdownContainer.appendChild(div);
+        });
     }
 
     // Event Listeners
-    weaponSelect.addEventListener('change', updateAbilityDropdown);
-    secondaryWeaponSelect.addEventListener('change', updateAbilityDropdown);
-    abilitySelect.addEventListener('change', calculate);
+    weaponSelect.addEventListener('change', updateAbilityDropdowns);
+    secondaryWeaponSelect.addEventListener('change', updateAbilityDropdowns);
     resourcesInput.addEventListener('input', calculate);
+    simTimeInput.addEventListener('input', calculate);
 
     [cpInput, critChanceInput, critPowerInput, penChanceInput].forEach(input => {
         input.addEventListener('input', calculate);
     });
 
     // Init
-    updateAbilityDropdown();
+    initUI();
+    updateAbilityDropdowns();
 });
