@@ -182,7 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
             castTime,
             cooldown,
             tree: ability.tree,
-            isConsumer: ability.scaling_1 > 0 || ability.scaling_5 > 0, // Quick heuristic
+            isConsumer: (ability.scaling_1 > 0 || ability.scaling_5 > 0) && (ability.cooldown === 0 || ability.cooldown === 4.0), // Focus/Strike consumers have 4s CD
+            weapon: ability.weapon,
             type: ability.type || "Unknown",
             originalAbility: ability
         };
@@ -252,18 +253,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Requirement Check
                 let canCast = true;
-                const isPrim = action.tree === primWeapon;
-                const isSec = action.tree === secWeapon;
+                const isPrim = action.weapon === primWeapon;
+                const isSec = action.weapon === secWeapon;
 
                 if (action.isConsumer) {
                     // Check if we have the target amount of resources
                     if (isPrim && primResources < targetResources) canCast = false;
                     if (isSec && secResources < targetResources) canCast = false;
-                    // Note: auxiliary abilities that build/consume handle resources weirdly, 
-                    // but for simplistic approximation we bypass resource requirement if it's not our primary/secondary
-                    if (!isPrim && !isSec && action.tree !== "Aux") {
-                        // Should not happen if correctly configured
-                    }
+
+                    // Simple logic for secondary weapons: if it's a secondary consumer and we don't have resources, 
+                    // we might skip it or wait. For now, just enforce the check.
+                }
+
+                // Priority logic: if it's a builder and we have plenty of resources, 
+                // and there are OTHER abilities (consumers/cooldowns) that might be ready soon, 
+                // we should NOT cast the builder if it's in a lower slot? 
+                // Actually, the simplest fix for starvation is: 
+                // Builders should only be cast if nothing else can be cast.
+                const isBuilder = !action.isConsumer && action.cooldown === 0;
+                if (isBuilder) {
+                    // Check if any NON-BUILDER is ready or will be ready before we can cast again
+                    // But wait, builders build resources. We only skip builders if we are at MAX resources.
+                    if (isPrim && primResources >= 5) canCast = false;
+                    if (isSec && secResources >= 5) canCast = false;
+
+                    // If we have resources but not at max, we still might want to build? 
+                    // Actually, let's keep it simple: 
+                    // 1. If it's a non-builder, and ready -> Cast.
+                    // 2. If it's a builder, and we need resources -> Cast.
                 }
 
                 if (canCast) {
@@ -274,7 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const timeTaken = action.castTime; // Enforced min 1.0 earlier
                     time += timeTaken;
-                    activeCooldowns[i] = action.cooldown; // Wait, we add castTime to others, so this goes on absolute CD
+                    activeCooldowns[i] = action.cooldown;
+
+                    // If it's a consumer, we force a 1.0s "pseudo-cooldown" or just rely on cast time
+                    // In TSW, builders and consumers both take time. 
+                    // Most are 1.0s. 
 
                     // 2. Resource Management
                     if (action.isConsumer) {
@@ -320,6 +341,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     castSomething = true;
                     break; // Back to top priority
+                }
+            }
+
+            // --- SECOND PASS: If nothing was cast, try builders ---
+            if (!castSomething) {
+                for (let i = 0; i < allActives.length; i++) {
+                    const action = allActives[i];
+                    if (activeCooldowns[i] > 0) continue;
+
+                    const isBuilder = !action.isConsumer && action.cooldown === 0;
+                    if (!isBuilder) continue;
+
+                    const isPrim = action.weapon === primWeapon;
+                    const isSec = action.weapon === secWeapon;
+
+                    // Builders can always be cast as long as resources aren't maxed
+                    let canBuild = false;
+                    if (isPrim && primResources < 5) canBuild = true;
+                    if (isSec && secResources < 5) canBuild = true;
+                    if (action.weapon === "Aux") canBuild = true; // Aux weirdness
+
+                    if (canBuild) {
+                        totalDamage += action.avgDamage;
+                        statsBreakdown[action.name].casts++;
+                        statsBreakdown[action.name].damage += action.avgDamage;
+
+                        const timeTaken = action.castTime;
+                        time += timeTaken;
+                        activeCooldowns[i] = action.cooldown;
+
+                        // Resource Management
+                        if (action.weapon !== "Aux") {
+                            primResources = Math.min(5, primResources + 1);
+                            if (secWeapon !== "None") {
+                                secResources = Math.min(5, secResources + 1);
+                            }
+                        }
+
+                        // Proc Passives 
+                        for (let p = 0; p < allPassives.length; p++) {
+                            const passive = allPassives[p];
+                            if (passiveCooldowns[p] <= 0) {
+                                totalDamage += passive.avgDamage;
+                                statsBreakdown[passive.name].casts++;
+                                statsBreakdown[passive.name].damage += passive.avgDamage;
+                                passiveCooldowns[p] = 1.0;
+                            }
+                        }
+
+                        // Reduce Cooldowns
+                        for (let j = 0; j < activeCooldowns.length; j++) {
+                            activeCooldowns[j] -= timeTaken;
+                        }
+                        for (let j = 0; j < passiveCooldowns.length; j++) {
+                            passiveCooldowns[j] -= timeTaken;
+                        }
+
+                        castSomething = true;
+                        break;
+                    }
                 }
             }
 
