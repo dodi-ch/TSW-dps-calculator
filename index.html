@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Secret World - DPS Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>TSW DPS Calculator</h1>
+            <p class="subtitle">Optimize your build for The Secret World</p>
+        </header>
+
+        <main>
+            <section class="panel glass-panel" id="stats-panel">
+                <h2>Character Stats</h2>
+                <div class="form-group">
+                    <label for="combat-power">Combat Power</label>
+                    <input type="number" id="combat-power" value="1000" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="crit-chance">Auto Critical Chance (%)</label>
+                    <input type="number" id="crit-chance" value="10" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="crit-power">Critical Power (%)</label>
+                    <input type="number" id="crit-power" value="25" min="25">
+                </div>
+                <div class="form-group">
+                    <label for="pen-chance">Penetration Chance (%)</label>
+                    <input type="number" id="pen-chance" value="10" min="0" max="100">
+                </div>
+            </section>
+
+            <section class="panel glass-panel" id="build-panel">
+                <h2>Build Configuration</h2>
+                <div class="form-group">
+                    <label for="weapon-type">Primary Weapon</label>
+                    <select id="weapon-type">
+                        <option value="All">All Weapons</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="secondary-weapon-type">Secondary Weapon</label>
+                    <select id="secondary-weapon-type">
+                        <option value="None">None</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ability-select">Select Ability</label>
+                    <select id="ability-select">
+                        <option value="">-- Choose an ability --</option>
+                    </select>
+                </div>
+                <div class="form-group" id="resources-group">
+                    <label for="resources-used">Resources Built/Consumed</label>
+                    <input type="number" id="resources-used" value="5" min="1" max="5">
+                </div>
+            </section>
+
+            <section class="panel highlight-panel" id="results-panel">
+                <h2>Damage Calculation</h2>
+                <div class="result-card">
+                    <h3 id="res-ability-name">No Ability Selected</h3>
+                    <div class="metrics">
+                        <div class="metric">
+                            <span class="metric-label">Base Damage</span>
+                            <span class="metric-value" id="res-base-dmg">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Avg Hit (w/ Crit & Pen)</span>
+                            <span class="metric-value" id="res-avg-dmg">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Estimated DPS</span>
+                            <span class="metric-value highlight" id="res-dps">0</span>
+                        </div>
+                    </div>
+                    <div class="ability-details">
+                        <p><strong>Cast Time:</strong> <span id="res-cast">0</span>s
+                            <strong>Cooldown:</strong> <span id="res-cd">0</span>s
+                        </p>
+                        <p id="res-desc" class="desc-text"></p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Built with ❤️ for The Secret World.</p>
+        </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
