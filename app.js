@@ -30,13 +30,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalPassiveSelects = [];
     const auxPassiveSelects = [];
 
+    // Enforce only 1 Elite Active across all 7 active slots
+    function enforceOneEliteActive(changedSelect) {
+        if (!changedSelect.value) return; // selecting "None" is always fine
+        const ability = tswData[changedSelect.value];
+        if (!ability || !(ability.type || '').includes('Elite')) return; // not an elite, no conflict
+
+        // If this IS an elite, clear all OTHER active slots that also have an elite
+        activeSelects.forEach(sel => {
+            if (sel === changedSelect) return; // skip the one we just changed
+            if (!sel.value) return;
+            const other = tswData[sel.value];
+            if (other && (other.type || '').includes('Elite')) {
+                sel.value = ''; // deselect
+            }
+        });
+    }
+
     // Initialize all the UI elements
     function initUI() {
         // Active Abilities (7 slots)
         for (let i = 1; i <= 7; i++) {
             const select = document.createElement('select');
             select.id = `active-ability-${i}`;
-            select.addEventListener('change', calculate);
+            select.addEventListener('change', () => {
+                enforceOneEliteActive(select);
+                calculate();
+            });
             activeSelects.push(select);
 
             const wrapper = document.createElement('div');
@@ -271,7 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const eliteActives = actives.filter(a => a.type.includes("Elite"));
         if (eliteActives.length > 1) {
             resTotalDps.textContent = "Error: Too many Elite Actives";
-            slotBreakdownContainer.innerHTML = `<em style="color: #ffaa55;">You can only select a maximum of 1 Elite Active.</em>`;
+            slotBreakdownContainer.innerHTML = `<em style="color: #ffaa55;">Only 1 Elite Active ability may be equipped. Clear the extra one.</em>`;
+            return;
+        }
+
+        const elitePassives = allPassives.filter(a => a.type.includes("Elite"));
+        if (elitePassives.length > 1) {
+            resTotalDps.textContent = "Error: Too many Elite Passives";
+            slotBreakdownContainer.innerHTML = `<em style="color: #ffaa55;">Only 1 Elite Passive ability may be equipped. Clear the extra one.</em>`;
             return;
         }
 
