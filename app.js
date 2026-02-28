@@ -197,6 +197,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Extraction of duration and interval for entities (turrets, manifestations, drones)
+        let duration = 0;
+        let tickInterval = 0;
+
+        // Regex for "for X seconds" or "lasting X seconds"
+        const durationMatch = desc.match(/(?:for|lasting)\s+(\d+(?:\.\d+)?)\s+seconds/i);
+        if (durationMatch) {
+            duration = parseFloat(durationMatch[1]);
+        }
+
+        // Regex for "every X seconds" or "per X seconds"
+        // Also handle "every seconds" which sometimes appears in data
+        const intervalMatch = desc.match(/(?:every|per)\s+(\d+(?:\.\d+)?)\s+seconds/i);
+        if (intervalMatch) {
+            tickInterval = parseFloat(intervalMatch[1]);
+        } else if (desc.includes("every seconds")) {
+            tickInterval = 1.0;
+        }
+
         return {
             name: ability.name,
             avgDamage,
@@ -208,6 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
             type: ability.type || "Unknown",
             subtype,
             triggerSubtypes,
+            duration,
+            tickInterval,
             originalAbility: ability
         };
     }
@@ -261,6 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Track cooldown state
         const activeCooldowns = allActives.map(() => 0);
         const passiveCooldowns = allPassives.map(() => 0);
+
+        // Track active side-effects (turrets, manifestations, etc.)
+        let activeEffects = [];
 
         const primWeapon = weaponSelect.value;
         const secWeapon = secondaryWeaponSelect.value;
@@ -337,7 +361,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // 3. Proc Passives (Evaluate on every hit)
+                    // 3. Side Effects (Turrets, Drones)
+                    if (action.duration > 0 && action.tickInterval > 0) {
+                        activeEffects.push({
+                            name: action.name + " (Effect)",
+                            duration: action.duration,
+                            tickInterval: action.tickInterval,
+                            nextTick: action.tickInterval, // Start first tick after one interval
+                            avgDamage: action.avgDamage,
+                            subtype: action.subtype
+                        });
+                    }
+
+                    // 4. Proc Passives (Evaluate on every hit)
                     // Simplified: We assume 1 proc max per second, so we check if a passive can proc when we hit
                     // In TSW, passives trigger on crit/pen/hit. Without complex rng, we average out.
                     // For the "maximum once a second" rule, if cooldown > 0, it doesn't proc.
@@ -361,13 +397,45 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // 4. Reduce Cooldowns
+                    // 5. Process Active Effects & Reduce Cooldowns
                     for (let j = 0; j < activeCooldowns.length; j++) {
                         activeCooldowns[j] -= timeTaken;
                     }
                     for (let j = 0; j < passiveCooldowns.length; j++) {
                         passiveCooldowns[j] -= timeTaken;
                     }
+
+                    // Update Active Effects
+                    activeEffects = activeEffects.filter(eff => {
+                        eff.duration -= timeTaken;
+                        eff.nextTick -= timeTaken;
+
+                        while (eff.nextTick <= 0 && eff.duration >= 0) {
+                            // Effect Ticks!
+                            totalDamage += eff.avgDamage;
+                            if (!statsBreakdown[eff.name]) statsBreakdown[eff.name] = { damage: 0, casts: 0 };
+                            statsBreakdown[eff.name].casts++;
+                            statsBreakdown[eff.name].damage += eff.avgDamage;
+
+                            // Also entities can proc passives! (Some do in TSW)
+                            // We'll allow it for now
+                            for (let p = 0; p < allPassives.length; p++) {
+                                const passive = allPassives[p];
+                                if (passiveCooldowns[p] <= 0) {
+                                    if (passive.triggerSubtypes.length > 0) {
+                                        if (!passive.triggerSubtypes.includes(eff.subtype)) continue;
+                                    }
+                                    totalDamage += passive.avgDamage;
+                                    statsBreakdown[passive.name].casts++;
+                                    statsBreakdown[passive.name].damage += passive.avgDamage;
+                                    passiveCooldowns[p] = 1.0;
+                                }
+                            }
+
+                            eff.nextTick += eff.tickInterval;
+                        }
+                        return eff.duration > 0;
+                    });
 
                     castSomething = true;
                     break; // Back to top priority
@@ -409,6 +477,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
+                        // Side Effects (Turrets, Drones)
+                        if (action.duration > 0 && action.tickInterval > 0) {
+                            activeEffects.push({
+                                name: action.name + " (Effect)",
+                                duration: action.duration,
+                                tickInterval: action.tickInterval,
+                                nextTick: action.tickInterval,
+                                avgDamage: action.avgDamage,
+                                subtype: action.subtype
+                            });
+                        }
+
                         // Proc Passives 
                         for (let p = 0; p < allPassives.length; p++) {
                             const passive = allPassives[p];
@@ -427,13 +507,40 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        // Reduce Cooldowns
+                        // Reduce Cooldowns & Update Side Effects
                         for (let j = 0; j < activeCooldowns.length; j++) {
                             activeCooldowns[j] -= timeTaken;
                         }
                         for (let j = 0; j < passiveCooldowns.length; j++) {
                             passiveCooldowns[j] -= timeTaken;
                         }
+
+                        activeEffects = activeEffects.filter(eff => {
+                            eff.duration -= timeTaken;
+                            eff.nextTick -= timeTaken;
+                            while (eff.nextTick <= 0 && eff.duration >= 0) {
+                                totalDamage += eff.avgDamage;
+                                if (!statsBreakdown[eff.name]) statsBreakdown[eff.name] = { damage: 0, casts: 0 };
+                                statsBreakdown[eff.name].casts++;
+                                statsBreakdown[eff.name].damage += eff.avgDamage;
+
+                                // Entities proc passives
+                                for (let p = 0; p < allPassives.length; p++) {
+                                    const passive = allPassives[p];
+                                    if (passiveCooldowns[p] <= 0) {
+                                        if (passive.triggerSubtypes.length > 0) {
+                                            if (!passive.triggerSubtypes.includes(eff.subtype)) continue;
+                                        }
+                                        totalDamage += passive.avgDamage;
+                                        statsBreakdown[passive.name].casts++;
+                                        statsBreakdown[passive.name].damage += passive.avgDamage;
+                                        passiveCooldowns[p] = 1.0;
+                                    }
+                                }
+                                eff.nextTick += eff.tickInterval;
+                            }
+                            return eff.duration > 0;
+                        });
 
                         castSomething = true;
                         break;
