@@ -30,6 +30,93 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalPassiveSelects = [];
     const auxPassiveSelects = [];
 
+    // --- ICON SYSTEM ---
+    // Cache: ability name (lowercase) -> resolved CDN URL or null
+    const iconCache = new Map();
+    const FANDOM_API = 'https://secretworld.fandom.com/api.php';
+
+    // Batch fetch icon URLs for up to 50 ability names at once.
+    // Populates iconCache for all names in the batch.
+    async function fetchIconBatch(abilityNames) {
+        const unfetched = abilityNames.filter(n => !iconCache.has(n.toLowerCase()));
+        if (unfetched.length === 0) return;
+
+        // Mark all as pending (null) to prevent duplicate requests
+        unfetched.forEach(n => iconCache.set(n.toLowerCase(), null));
+
+        const titles = unfetched.map(n => `File:Ability - ${n.toLowerCase()}.png`).join('|');
+        const url = `${FANDOM_API}?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            Object.values(data.query.pages).forEach(page => {
+                if (page.imageinfo && page.imageinfo[0]) {
+                    // Extract the ability name from the file title: "File:Ability - foo bar.png" -> "foo bar"
+                    const match = page.title.match(/^File:Ability - (.+)\.png$/i);
+                    if (match) iconCache.set(match[1].toLowerCase(), page.imageinfo[0].url);
+                }
+            });
+        } catch (e) { /* silently fail */ }
+    }
+
+    // Fallback: fetch a single icon URL (used if prefetch missed it)
+    async function fetchIconUrl(abilityName) {
+        const key = abilityName.toLowerCase();
+        if (iconCache.has(key)) return iconCache.get(key);
+        await fetchIconBatch([abilityName]);
+        return iconCache.get(key) || null;
+    }
+
+    // Pre-fill the cache for ALL abilities in parallel batches of 50.
+    // Fires immediately on load so icons are ready before the user clicks anything.
+    async function prefetchAllIcons() {
+        const allNames = [...new Set(tswData.map(a => a.name))];
+        const BATCH = 50;
+        const batches = [];
+        for (let i = 0; i < allNames.length; i += BATCH) {
+            batches.push(allNames.slice(i, i + BATCH));
+        }
+        // Fire all batches in parallel
+        await Promise.all(batches.map(batch => fetchIconBatch(batch)));
+    }
+
+    function getIconBox(wrapper) {
+        return wrapper.querySelector('.slot-icon-box');
+    }
+
+    function setIconBoxState(box, state, url) {
+        if (!box) return;
+        if (state === 'empty') {
+            box.classList.remove('has-icon');
+            box.innerHTML = '<div class="slot-icon-placeholder"></div>';
+        } else if (state === 'loading') {
+            box.classList.remove('has-icon');
+            box.innerHTML = '<div class="slot-icon-loading"></div>';
+        } else if (state === 'loaded' && url) {
+            box.classList.add('has-icon');
+            box.innerHTML = `<img src="${url}" alt="" draggable="false" />`;
+        }
+    }
+
+    async function updateSlotIcon(select, wrapper) {
+        const box = getIconBox(wrapper);
+        if (!select.value || !tswData[select.value]) {
+            setIconBoxState(box, 'empty');
+            return;
+        }
+        const ability = tswData[select.value];
+        const key = ability.name.toLowerCase();
+        if (iconCache.has(key)) {
+            const url = iconCache.get(key);
+            setIconBoxState(box, url ? 'loaded' : 'empty', url);
+            return;
+        }
+        // Cache miss — show spinner and fetch (shouldn't happen after prefetch completes)
+        setIconBoxState(box, 'loading');
+        const url = await fetchIconUrl(ability.name);
+        setIconBoxState(box, url ? 'loaded' : 'empty', url);
+    }
+
     // Enforce only 1 Elite Active across all 7 active slots
     function enforceOneEliteActive(changedSelect) {
         if (!changedSelect.value) return; // selecting "None" is always fine
@@ -53,54 +140,104 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 1; i <= 7; i++) {
             const select = document.createElement('select');
             select.id = `active-ability-${i}`;
-            select.addEventListener('change', () => {
-                enforceOneEliteActive(select);
-                calculate();
-            });
-            activeSelects.push(select);
 
             const wrapper = document.createElement('div');
             wrapper.className = 'slot-wrapper';
+
+            const iconBox = document.createElement('div');
+            iconBox.className = 'slot-icon-box';
+            iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+
             wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
+            wrapper.appendChild(iconBox);
             wrapper.appendChild(select);
             activeContainer.appendChild(wrapper);
+
+            select.addEventListener('change', () => {
+                enforceOneEliteActive(select);
+                updateSlotIcon(select, wrapper);
+                calculate();
+            });
+            activeSelects.push(select);
         }
 
         // Aux Active (1 slot)
+        const auxWrapper = document.createElement('div');
+        auxWrapper.className = 'slot-wrapper';
+        const auxIconBox = document.createElement('div');
+        auxIconBox.className = 'slot-icon-box';
+        auxIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+        auxWrapper.innerHTML = '<span class="slot-label">Aux</span>';
+        auxWrapper.appendChild(auxIconBox);
         const auxSelect = document.createElement('select');
         auxSelect.id = `aux-active-1`;
-        auxSelect.addEventListener('change', calculate);
+        auxWrapper.appendChild(auxSelect);
+        auxActiveContainer.appendChild(auxWrapper);
+        auxSelect.addEventListener('change', () => {
+            updateSlotIcon(auxSelect, auxWrapper);
+            calculate();
+        });
         auxActiveSelects.push(auxSelect);
-        auxActiveContainer.appendChild(auxSelect);
 
         // Elite Passive (1 slot)
+        const eliteWrapper = document.createElement('div');
+        eliteWrapper.className = 'slot-wrapper';
+        const eliteIconBox = document.createElement('div');
+        eliteIconBox.className = 'slot-icon-box';
+        eliteIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+        eliteWrapper.innerHTML = '<span class="slot-label">Elite</span>';
+        eliteWrapper.appendChild(eliteIconBox);
         const eliteSelect = document.createElement('select');
         eliteSelect.id = `elite-passive-1`;
-        eliteSelect.addEventListener('change', calculate);
+        eliteWrapper.appendChild(eliteSelect);
+        elitePassiveContainer.appendChild(eliteWrapper);
+        eliteSelect.addEventListener('change', () => {
+            updateSlotIcon(eliteSelect, eliteWrapper);
+            calculate();
+        });
         elitePassiveSelects.push(eliteSelect);
-        elitePassiveContainer.appendChild(eliteSelect);
 
         // Normal Passives (6 slots)
         for (let i = 1; i <= 6; i++) {
             const select = document.createElement('select');
             select.id = `normal-passive-${i}`;
-            select.addEventListener('change', calculate);
-            normalPassiveSelects.push(select);
 
             const wrapper = document.createElement('div');
             wrapper.className = 'slot-wrapper';
+
+            const iconBox = document.createElement('div');
+            iconBox.className = 'slot-icon-box';
+            iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+
             wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
+            wrapper.appendChild(iconBox);
             wrapper.appendChild(select);
             normalPassivesContainer.appendChild(wrapper);
+
+            select.addEventListener('change', () => {
+                updateSlotIcon(select, wrapper);
+                calculate();
+            });
+            normalPassiveSelects.push(select);
         }
 
         // Aux Passive (1 slot)
+        const auxPassWrapper = document.createElement('div');
+        auxPassWrapper.className = 'slot-wrapper';
+        const auxPassIconBox = document.createElement('div');
+        auxPassIconBox.className = 'slot-icon-box';
+        auxPassIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+        auxPassWrapper.innerHTML = '<span class="slot-label">Aux</span>';
+        auxPassWrapper.appendChild(auxPassIconBox);
         const auxPassSelect = document.createElement('select');
         auxPassSelect.id = `aux-passive-1`;
-        auxPassSelect.addEventListener('change', calculate);
+        auxPassWrapper.appendChild(auxPassSelect);
+        auxPassiveContainer.appendChild(auxPassWrapper);
+        auxPassSelect.addEventListener('change', () => {
+            updateSlotIcon(auxPassSelect, auxPassWrapper);
+            calculate();
+        });
         auxPassiveSelects.push(auxPassSelect);
-        auxPassiveContainer.appendChild(auxPassSelect);
-
     }
 
     // Data - check if loaded
@@ -477,16 +614,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const div = document.createElement('div');
             div.style.background = 'rgba(0,0,0,0.2)';
-            div.style.padding = '0.5rem';
-            div.style.borderRadius = 'var(--border-radius)';
+            div.style.padding = '0.5rem 0.75rem';
+            div.style.borderRadius = '8px';
             div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            div.style.gap = '0.75rem';
 
-            div.innerHTML = `
-                <span><strong>${stat.name}</strong> (${stat.casts} casts)</span>
-                <span>${Math.round(itemDps).toLocaleString()} DPS (${percent}%)</span>
-            `;
+            // Icon element (loads async below)
+            const iconEl = document.createElement('img');
+            iconEl.className = 'breakdown-icon';
+            iconEl.alt = '';
+            iconEl.style.display = 'none'; // hidden until loaded
+
+            const nameSpan = document.createElement('span');
+            nameSpan.style.flex = '1';
+            nameSpan.style.minWidth = '0';
+            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span>`;
+
+            const dpsSpan = document.createElement('span');
+            dpsSpan.style.whiteSpace = 'nowrap';
+            dpsSpan.style.color = 'var(--accent)';
+            dpsSpan.style.fontWeight = '600';
+            dpsSpan.textContent = `${Math.round(itemDps).toLocaleString()} DPS (${percent}%)`;
+
+            div.appendChild(iconEl);
+            div.appendChild(nameSpan);
+            div.appendChild(dpsSpan);
             slotBreakdownContainer.appendChild(div);
+
+            // Fetch icon async and show when ready (strip " (Effect)" suffix for proc names)
+            const lookupName = stat.name.replace(/ \(Effect\)$/, '');
+            const cachedUrl = iconCache.get(lookupName.toLowerCase());
+            if (cachedUrl) {
+                iconEl.src = cachedUrl;
+                iconEl.style.display = '';
+            } else if (cachedUrl === undefined) {
+                // Not yet fetched
+                fetchIconUrl(lookupName).then(url => {
+                    if (url) { iconEl.src = url; iconEl.style.display = ''; }
+                });
+            }
         });
     }
 
