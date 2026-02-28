@@ -176,6 +176,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const castTime = Math.max(ability.cast_time || 1.0, 1.0);
         const cooldown = ability.cooldown || 0;
 
+        // Extraction of subtypes from description
+        let subtype = "";
+        const desc = ability.description || "";
+        const subtypes = ["Strike", "Blast", "Focus", "Frenzy", "Burst", "Chain"];
+        for (const s of subtypes) {
+            if (desc.includes(s + " attack") || desc.includes(s + " ability")) {
+                subtype = s;
+                break;
+            }
+        }
+
+        // Extraction of trigger requirements for passives
+        let triggerSubtypes = [];
+        if (ability.type && ability.type.includes("Passive")) {
+            for (const s of subtypes) {
+                if (desc.includes(s + " attacks") || desc.includes(s + " abilities")) {
+                    triggerSubtypes.push(s);
+                }
+            }
+        }
+
         return {
             name: ability.name,
             avgDamage,
@@ -185,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
             isConsumer: (ability.scaling_1 > 0 || ability.scaling_5 > 0) && (ability.cooldown === 0 || ability.cooldown === 4.0), // Focus/Strike consumers have 4s CD
             weapon: ability.weapon,
             type: ability.type || "Unknown",
+            subtype,
+            triggerSubtypes,
             originalAbility: ability
         };
     }
@@ -321,6 +344,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let p = 0; p < allPassives.length; p++) {
                         const passive = allPassives[p];
                         if (passiveCooldowns[p] <= 0) {
+                            // Check if passive has subtype requirements
+                            if (passive.triggerSubtypes.length > 0) {
+                                if (!passive.triggerSubtypes.includes(action.subtype)) {
+                                    continue; // Doesn't match
+                                }
+                            }
+
                             // Proc!
                             totalDamage += passive.avgDamage;
                             statsBreakdown[passive.name].casts++;
@@ -383,6 +413,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (let p = 0; p < allPassives.length; p++) {
                             const passive = allPassives[p];
                             if (passiveCooldowns[p] <= 0) {
+                                // Check if passive has subtype requirements
+                                if (passive.triggerSubtypes.length > 0) {
+                                    if (!passive.triggerSubtypes.includes(action.subtype)) {
+                                        continue; // Doesn't match
+                                    }
+                                }
+
                                 totalDamage += passive.avgDamage;
                                 statsBreakdown[passive.name].casts++;
                                 statsBreakdown[passive.name].damage += passive.avgDamage;
