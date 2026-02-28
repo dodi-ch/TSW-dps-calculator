@@ -312,9 +312,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const isCrit = Math.random() < (critChance / 100);
             const finalMult = (isCrit ? (critPower / 100) : 1.0) * damageMult;
 
+            // Signet % bonuses: apply subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
+            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0 };
+            let signetMult = 1.0;
+            if (ability.subtype && sBonus.subtype[ability.subtype]) {
+                signetMult += sBonus.subtype[ability.subtype] / 100;
+            }
+            if (ability.weapon && sBonus.weapon[ability.weapon]) {
+                signetMult += sBonus.weapon[ability.weapon] / 100;
+            }
+
             // Use scaling * cp for base damage
             const rawBaseDmg = (ability.scalingToUse || 0) * cp;
-            const actualDmg = rawBaseDmg * finalMult;
+            const actualDmg = rawBaseDmg * finalMult * signetMult;
 
             totalDamage += actualDmg;
             if (!statsBreakdown[ability.name]) statsBreakdown[ability.name] = { damage: 0, casts: 0 };
@@ -326,7 +336,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (passiveCooldowns[p] <= 0) {
                     if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) return;
 
-                    const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult;
+                    // Passives inherit the same signet multiplier as the triggering hit
+                    let pSignetMult = 1.0;
+                    if (passive.subtype && sBonus.subtype[passive.subtype]) {
+                        pSignetMult += sBonus.subtype[passive.subtype] / 100;
+                    }
+                    if (passive.weapon && sBonus.weapon[passive.weapon]) {
+                        pSignetMult += sBonus.weapon[passive.weapon] / 100;
+                    }
+
+                    const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
                     totalDamage += pActualDmg;
                     statsBreakdown[passive.name].casts++;
                     statsBreakdown[passive.name].damage += pActualDmg;
@@ -474,13 +493,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7]
             }
         },
-        signets: {
-            21: { stat: 'attack-rating', value: [47, 94, 141] }, // Violence
-            56: { stat: 'attack-rating', value: [0, 0, 117] },  // Chernobog
-            23: { stat: 'heal-rating', value: [47, 94, 141] },   // Amelioration
-        },
         stat_mapping: { 1: 'critical-rating', 2: 'critical-power', 3: 'penetration-rating', 4: 'hit-rating' },
-        wtype_mapping: { 1: 'Blade', 2: 'Hammer', 3: 'Fist', 4: 'Blood', 5: 'Chaos', 6: 'Elementalism', 7: 'Shotgun', 8: 'Pistol', 9: 'Assault Rifle' }
+        wtype_mapping: { 1: 'Blade', 2: 'Hammer', 3: 'Fist', 4: 'Blood', 5: 'Chaos', 6: 'Elementalism', 7: 'Shotgun', 8: 'Pistol', 9: 'Assault Rifle' },
+        // weapon: weapon slot signets; head: head slot signets; minor: minor talisman signets; major: major talisman signets
+        signets: {
+            // --- Weapon signets (flat rating bonuses) ---
+            21: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence
+            56: { slot: 'weapon', stat: 'attack-rating', value: [0, 0, 117] },   // Chernobog
+
+            // --- Weapon signets (% bonus) ---
+            // Laceration: +crit damage % (8/16/24%) when you critically hit (15s duration, 15s CD = ~100% uptime after first proc)
+            // We model it as a flat crit power increase on the importer
+            6: { slot: 'weapon', stat: 'crit-power-pct', value: [8, 16, 24] }, // Laceration
+
+            // --- Head signets (% damage by type - applied via signetDamageMult in simulation) ---
+            // These are passive % boosts active all the time
+            16: { slot: 'head', stat: 'affliction-dmg-pct', value: [7, 14, 21] }, // Corruption (affliction)
+
+            // --- Minor talisman signets (attack subtype % or weapon type %) ---
+            24: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Strike', value: [1.5, 3, 4.5] }, // Assassination
+            25: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Blast', value: [1.5, 3, 4.5] }, // Barrage
+            26: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Focus', value: [1.5, 3, 4.5] }, // Cleaving
+            27: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Chaos', value: [1, 2, 3] },     // Distortion (Chaos weapon)
+            28: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Assault Rifle', value: [1, 2, 3] },     // Execution
+            29: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Elementalism', value: [1, 2, 3] },     // Flux
+            30: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Pistol', value: [1, 2, 3] },     // Liquidation
+            31: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Frenzy', value: [1.5, 3, 4.5] }, // Rage
+            32: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Chain', value: [1.5, 3, 4.5] }, // Recursion
+            33: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Fist', value: [1, 2, 3] },     // Serration
+            34: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Shotgun', value: [1, 2, 3] },     // Shards
+            35: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Hammer', value: [1, 2, 3] },     // Shattering
+            36: { slot: 'minor', stat: 'subtype-dmg-pct', subtype: 'Burst', value: [1.5, 3, 4.5] }, // Storms
+            37: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Blade', value: [1, 2, 3] },     // Swords
+            38: { slot: 'minor', stat: 'weapon-dmg-pct', weapon: 'Blood', value: [1, 2, 3] },     // Tomes
+
+            // --- Major talisman signets ---
+            23: { slot: 'major', stat: 'attack-rating', value: [47, 94, 141] }, // Amelioration (heal - not DPS relevant)
+        }
     };
 
     function parseTswcalcUrl() {
@@ -497,6 +546,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let critPowerRating = 0;
         let penRating = 0;
         let hitRating = 0;
+
+        // Accumulated percentage-based signet bonuses applied during simulation
+        // Format: { subtype: { 'Strike': 5, 'Blast': 3, ... }, weapon: { 'Blade': 3 }, critPowerPct: 24 }
+        const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0 };
 
         const slots = [
             { id: 'weapon', type: 'weapon', group: 'weapon' },
@@ -538,10 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 attackRating += TSWCALC_DATA.talismanRating[slot.group][qlIdx] || 0;
             }
 
+            // Glyphs
             [{ id: primStatId, dist: primDist }, { id: secStatId, dist: secDist }].forEach(g => {
                 const statName = TSWCALC_DATA.stat_mapping[g.id];
                 if (statName && TSWCALC_DATA.glyphData[statName]) {
-                    const base = TSWCALC_DATA.glyphData[statName][slot.group][g.dist];
+                    const glyphGroup = (slot.group === 'weapon') ? 'head' : slot.group; // weapons use head-size glyphs
+                    const base = TSWCALC_DATA.glyphData[statName][glyphGroup] ? TSWCALC_DATA.glyphData[statName][glyphGroup][g.dist] : 0;
                     const mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
                     const val = base * mult;
 
@@ -552,22 +607,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Signets
             const signet = TSWCALC_DATA.signets[signetId];
             if (signet && signetQual > 0) {
-                const bonus = signet.value[signetQual - 1] || 0;
-                if (signet.stat === 'attack-rating') attackRating += bonus;
+                const qualIndex = signetQual - 1; // 1=Normal, 2=Elite, 3=Epic
+                const bonus = signet.value[qualIndex] || 0;
+
+                switch (signet.stat) {
+                    case 'attack-rating':
+                        attackRating += bonus;
+                        break;
+                    case 'crit-power-pct':
+                        // Laceration: add directly to critPower % after calculation
+                        signetBonuses.critPowerPct += bonus;
+                        break;
+                    case 'subtype-dmg-pct':
+                        // e.g. Assassination gives +% to Strike abilities
+                        if (signet.subtype) {
+                            signetBonuses.subtype[signet.subtype] = (signetBonuses.subtype[signet.subtype] || 0) + bonus;
+                        }
+                        break;
+                    case 'weapon-dmg-pct':
+                        // e.g. Swords gives +% to Blade abilities
+                        if (signet.weapon) {
+                            signetBonuses.weapon[signet.weapon] = (signetBonuses.weapon[signet.weapon] || 0) + bonus;
+                        }
+                        break;
+                    // Other stats (heal-rating, etc.) are not DPS relevant
+                }
             }
         });
 
         const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
         const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
-        const critPower = Math.sqrt(5 * critPowerRating + 625);
+        // Apply Laceration's flat crit power % on top of the rated crit power
+        const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
 
         cpInput.value = cp;
         hitRatingInput.value = Math.round(hitRating);
         critChanceInput.value = critChance.toFixed(1);
         critPowerInput.value = critPower.toFixed(1);
         penRatingInput.value = Math.round(penRating);
+
+        // Store signet bonuses for calculate() to pick up
+        window._signetBonuses = signetBonuses;
 
         updateAbilityDropdowns();
         calculate();
