@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const cpInput = document.getElementById('combat-power');
+    const attackRatingInput = document.getElementById('attack-rating');
     const hitRatingInput = document.getElementById('hit-rating');
     const critChanceInput = document.getElementById('crit-chance');
     const critPowerInput = document.getElementById('crit-power');
     const penRatingInput = document.getElementById('pen-rating');
+    const penChanceInput = document.getElementById('pen-chance');
     const targetEnemySelect = document.getElementById('target-enemy');
     const enemyStatsDisplay = document.getElementById('enemy-stats-display');
 
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
     const resourcesInput = document.getElementById('resources-used');
     const simTimeInput = document.getElementById('simulation-time');
+    const dustSignetCheckbox = document.getElementById('signet-dust');
 
     const resTotalDps = document.getElementById('res-total-dps');
     const slotBreakdownContainer = document.getElementById('slot-breakdown-container');
@@ -24,60 +27,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const auxPassiveContainer = document.getElementById('aux-passive-container');
 
     // Dropdown arrays to keep track of them
-    const activeSelects = [];
+    const activeSelects = [];       // 6 normal actives
+    const eliteActiveSelects = [];  // 1 elite active
     const auxActiveSelects = [];
     const elitePassiveSelects = [];
     const normalPassiveSelects = [];
     const auxPassiveSelects = [];
 
     // --- ICON SYSTEM ---
-    // Cache: ability name (lowercase) -> resolved CDN URL or null
+    // Cache: ability name (lowercase) -> resolved local file URL or null
     const iconCache = new Map();
-    const FANDOM_API = 'https://secretworld.fandom.com/api.php';
 
-    // Batch fetch icon URLs for up to 50 ability names at once.
-    // Populates iconCache for all names in the batch.
-    async function fetchIconBatch(abilityNames) {
-        const unfetched = abilityNames.filter(n => !iconCache.has(n.toLowerCase()));
-        if (unfetched.length === 0) return;
-
-        // Mark all as pending (null) to prevent duplicate requests
-        unfetched.forEach(n => iconCache.set(n.toLowerCase(), null));
-
-        const titles = unfetched.map(n => `File:Ability - ${n.toLowerCase()}.png`).join('|');
-        const url = `${FANDOM_API}?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            Object.values(data.query.pages).forEach(page => {
-                if (page.imageinfo && page.imageinfo[0]) {
-                    // Extract the ability name from the file title: "File:Ability - foo bar.png" -> "foo bar"
-                    const match = page.title.match(/^File:Ability - (.+)\.png$/i);
-                    if (match) iconCache.set(match[1].toLowerCase(), page.imageinfo[0].url);
-                }
-            });
-        } catch (e) { /* silently fail */ }
-    }
-
-    // Fallback: fetch a single icon URL (used if prefetch missed it)
-    async function fetchIconUrl(abilityName) {
-        const key = abilityName.toLowerCase();
-        if (iconCache.has(key)) return iconCache.get(key);
-        await fetchIconBatch([abilityName]);
-        return iconCache.get(key) || null;
-    }
-
-    // Pre-fill the cache for ALL abilities in parallel batches of 50.
-    // Fires immediately on load so icons are ready before the user clicks anything.
-    async function prefetchAllIcons() {
-        const allNames = [...new Set(tswData.map(a => a.name))];
-        const BATCH = 50;
-        const batches = [];
-        for (let i = 0; i < allNames.length; i += BATCH) {
-            batches.push(allNames.slice(i, i + BATCH));
-        }
-        // Fire all batches in parallel
-        await Promise.all(batches.map(batch => fetchIconBatch(batch)));
+    function getLocalIconUrlForAbility(ability) {
+        if (!ability || !ability.weapon || !ability.name) return null;
+        const folder = ability.weapon; // e.g. "Blade", "Assault Rifle"
+        const fileName = `Ability - ${ability.name.toLowerCase()}.png`;
+        return `ability_icons/${folder}/${fileName}`;
     }
 
     function getIconBox(wrapper) {
@@ -98,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function updateSlotIcon(select, wrapper) {
+    function updateSlotIcon(select, wrapper) {
         const box = getIconBox(wrapper);
         if (!select.value || !tswData[select.value]) {
             setIconBoxState(box, 'empty');
@@ -106,38 +71,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const ability = tswData[select.value];
         const key = ability.name.toLowerCase();
-        if (iconCache.has(key)) {
-            const url = iconCache.get(key);
-            setIconBoxState(box, url ? 'loaded' : 'empty', url);
-            return;
+        let url = iconCache.get(key);
+        if (!url) {
+            url = getLocalIconUrlForAbility(ability);
+            if (url) iconCache.set(key, url);
         }
-        // Cache miss — show spinner and fetch (shouldn't happen after prefetch completes)
-        setIconBoxState(box, 'loading');
-        const url = await fetchIconUrl(ability.name);
         setIconBoxState(box, url ? 'loaded' : 'empty', url);
     }
 
-    // Enforce only 1 Elite Active across all 7 active slots
-    function enforceOneEliteActive(changedSelect) {
-        if (!changedSelect.value) return; // selecting "None" is always fine
-        const ability = tswData[changedSelect.value];
-        if (!ability || !(ability.type || '').includes('Elite')) return; // not an elite, no conflict
+    // Custom dropdown rendering (icons inside list, text to the right)
+    function updateCustomDropdownForSelect(select, filteredData, emptyLabel) {
+        const wrapper = select.closest('.slot-wrapper');
+        if (!wrapper) return;
 
-        // If this IS an elite, clear all OTHER active slots that also have an elite
-        activeSelects.forEach(sel => {
-            if (sel === changedSelect) return; // skip the one we just changed
-            if (!sel.value) return;
-            const other = tswData[sel.value];
-            if (other && (other.type || '').includes('Elite')) {
-                sel.value = ''; // deselect
+        const display = wrapper.querySelector('.ability-dropdown-display');
+        const list = wrapper.querySelector('.ability-dropdown-list');
+        if (!display || !list) return;
+
+        const currentVal = select.value;
+        const currentAbility = tswData[currentVal];
+        display.textContent = currentAbility ? currentAbility.name : emptyLabel;
+
+        list.innerHTML = '';
+
+        filteredData.forEach(ability => {
+            const globalIndex = tswData.indexOf(ability);
+            const item = document.createElement('div');
+            item.className = 'ability-dropdown-item';
+
+            const iconUrl = getLocalIconUrlForAbility(ability);
+            if (iconUrl) {
+                const img = document.createElement('img');
+                img.src = iconUrl;
+                img.alt = '';
+                img.draggable = false;
+                item.appendChild(img);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'ability-dropdown-item-noicon';
+                item.appendChild(placeholder);
             }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = ability.name;
+            item.appendChild(nameSpan);
+
+            item.addEventListener('click', () => {
+                select.value = String(globalIndex);
+                select.dispatchEvent(new Event('change'));
+                display.textContent = ability.name;
+                list.style.display = 'none';
+            });
+
+            list.appendChild(item);
         });
     }
 
     // Initialize all the UI elements
     function initUI() {
-        // Active Abilities (7 slots)
-        for (let i = 1; i <= 7; i++) {
+        function createOrderInput(select, defaultOrder) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '1';
+            input.step = '1';
+            input.className = 'slot-order-input';
+            input.value = String(defaultOrder);
+            select.dataset.order = String(defaultOrder);
+            input.addEventListener('input', () => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val) && val > 0) {
+                    select.dataset.order = String(val);
+                    calculate();
+                }
+            });
+            return input;
+        }
+        // Active Abilities (6 normal slots)
+        for (let i = 1; i <= 6; i++) {
             const select = document.createElement('select');
             select.id = `active-ability-${i}`;
 
@@ -150,16 +160,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
             wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
             wrapper.appendChild(iconBox);
+
+            const orderInput = createOrderInput(select, i);
+            wrapper.appendChild(orderInput);
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'ability-search-input';
+            searchInput.placeholder = 'Search...';
+            searchInput.addEventListener('input', () => {
+                select.dataset.searchTerm = searchInput.value;
+                updateAbilityDropdowns();
+            });
+            wrapper.appendChild(searchInput);
+
+            const display = document.createElement('div');
+            display.className = 'ability-dropdown-display';
+            display.textContent = '-- None --';
+            wrapper.appendChild(display);
+
+            const list = document.createElement('div');
+            list.className = 'ability-dropdown-list';
+            wrapper.appendChild(list);
+
+            display.addEventListener('click', () => {
+                list.style.display = list.style.display === 'block' ? 'none' : 'block';
+            });
+
             wrapper.appendChild(select);
+            select.style.display = 'none';
             activeContainer.appendChild(wrapper);
 
             select.addEventListener('change', () => {
-                enforceOneEliteActive(select);
                 updateSlotIcon(select, wrapper);
                 calculate();
             });
             activeSelects.push(select);
         }
+
+        // Elite Active (1 dedicated slot)
+        const eliteActiveWrapper = document.createElement('div');
+        eliteActiveWrapper.className = 'slot-wrapper';
+        const eliteActiveIconBox = document.createElement('div');
+        eliteActiveIconBox.className = 'slot-icon-box';
+        eliteActiveIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
+        eliteActiveWrapper.innerHTML = '<span class="slot-label">Elite</span>';
+        eliteActiveWrapper.appendChild(eliteActiveIconBox);
+        const eliteActiveSelect = document.createElement('select');
+        eliteActiveSelect.id = 'elite-active-1';
+        const eliteOrderInput = createOrderInput(eliteActiveSelect, 7);
+        eliteActiveWrapper.appendChild(eliteOrderInput);
+        const eliteActiveSearchInput = document.createElement('input');
+        eliteActiveSearchInput.type = 'text';
+        eliteActiveSearchInput.className = 'ability-search-input';
+        eliteActiveSearchInput.placeholder = 'Search...';
+        eliteActiveSearchInput.addEventListener('input', () => {
+            eliteActiveSelect.dataset.searchTerm = eliteActiveSearchInput.value;
+            updateAbilityDropdowns();
+        });
+        eliteActiveWrapper.appendChild(eliteActiveSearchInput);
+        const eliteActiveDisplay = document.createElement('div');
+        eliteActiveDisplay.className = 'ability-dropdown-display';
+        eliteActiveDisplay.textContent = '-- None --';
+        eliteActiveWrapper.appendChild(eliteActiveDisplay);
+        const eliteActiveList = document.createElement('div');
+        eliteActiveList.className = 'ability-dropdown-list';
+        eliteActiveWrapper.appendChild(eliteActiveList);
+        eliteActiveDisplay.addEventListener('click', () => {
+            eliteActiveList.style.display = eliteActiveList.style.display === 'block' ? 'none' : 'block';
+        });
+        eliteActiveWrapper.appendChild(eliteActiveSelect);
+        eliteActiveSelect.style.display = 'none';
+        activeContainer.appendChild(eliteActiveWrapper);
+        eliteActiveSelect.addEventListener('change', () => {
+            updateSlotIcon(eliteActiveSelect, eliteActiveWrapper);
+            calculate();
+        });
+        eliteActiveSelects.push(eliteActiveSelect);
 
         // Aux Active (1 slot)
         const auxWrapper = document.createElement('div');
@@ -171,7 +248,33 @@ document.addEventListener('DOMContentLoaded', () => {
         auxWrapper.appendChild(auxIconBox);
         const auxSelect = document.createElement('select');
         auxSelect.id = `aux-active-1`;
+        const auxOrderInput = createOrderInput(auxSelect, 8);
+        auxWrapper.appendChild(auxOrderInput);
+        const auxSearchInput = document.createElement('input');
+        auxSearchInput.type = 'text';
+        auxSearchInput.className = 'ability-search-input';
+        auxSearchInput.placeholder = 'Search...';
+        auxSearchInput.addEventListener('input', () => {
+            auxSelect.dataset.searchTerm = auxSearchInput.value;
+            updateAbilityDropdowns();
+        });
+        auxWrapper.appendChild(auxSearchInput);
+
+        const auxDisplay = document.createElement('div');
+        auxDisplay.className = 'ability-dropdown-display';
+        auxDisplay.textContent = '-- None --';
+        auxWrapper.appendChild(auxDisplay);
+
+        const auxList = document.createElement('div');
+        auxList.className = 'ability-dropdown-list';
+        auxWrapper.appendChild(auxList);
+
+        auxDisplay.addEventListener('click', () => {
+            auxList.style.display = auxList.style.display === 'block' ? 'none' : 'block';
+        });
+
         auxWrapper.appendChild(auxSelect);
+        auxSelect.style.display = 'none';
         auxActiveContainer.appendChild(auxWrapper);
         auxSelect.addEventListener('change', () => {
             updateSlotIcon(auxSelect, auxWrapper);
@@ -189,7 +292,31 @@ document.addEventListener('DOMContentLoaded', () => {
         eliteWrapper.appendChild(eliteIconBox);
         const eliteSelect = document.createElement('select');
         eliteSelect.id = `elite-passive-1`;
+        const eliteSearchInput = document.createElement('input');
+        eliteSearchInput.type = 'text';
+        eliteSearchInput.className = 'ability-search-input';
+        eliteSearchInput.placeholder = 'Search...';
+        eliteSearchInput.addEventListener('input', () => {
+            eliteSelect.dataset.searchTerm = eliteSearchInput.value;
+            updateAbilityDropdowns();
+        });
+        eliteWrapper.appendChild(eliteSearchInput);
+
+        const eliteDisplay = document.createElement('div');
+        eliteDisplay.className = 'ability-dropdown-display';
+        eliteDisplay.textContent = '-- None --';
+        eliteWrapper.appendChild(eliteDisplay);
+
+        const eliteList = document.createElement('div');
+        eliteList.className = 'ability-dropdown-list';
+        eliteWrapper.appendChild(eliteList);
+
+        eliteDisplay.addEventListener('click', () => {
+            eliteList.style.display = eliteList.style.display === 'block' ? 'none' : 'block';
+        });
+
         eliteWrapper.appendChild(eliteSelect);
+        eliteSelect.style.display = 'none';
         elitePassiveContainer.appendChild(eliteWrapper);
         eliteSelect.addEventListener('change', () => {
             updateSlotIcon(eliteSelect, eliteWrapper);
@@ -211,7 +338,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
             wrapper.appendChild(iconBox);
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'ability-search-input';
+            searchInput.placeholder = 'Search...';
+            searchInput.addEventListener('input', () => {
+                select.dataset.searchTerm = searchInput.value;
+                updateAbilityDropdowns();
+            });
+            wrapper.appendChild(searchInput);
+
+            const display = document.createElement('div');
+            display.className = 'ability-dropdown-display';
+            display.textContent = '-- None --';
+            wrapper.appendChild(display);
+
+            const list = document.createElement('div');
+            list.className = 'ability-dropdown-list';
+            wrapper.appendChild(list);
+
+            display.addEventListener('click', () => {
+                list.style.display = list.style.display === 'block' ? 'none' : 'block';
+            });
+
             wrapper.appendChild(select);
+            select.style.display = 'none';
             normalPassivesContainer.appendChild(wrapper);
 
             select.addEventListener('change', () => {
@@ -231,7 +383,31 @@ document.addEventListener('DOMContentLoaded', () => {
         auxPassWrapper.appendChild(auxPassIconBox);
         const auxPassSelect = document.createElement('select');
         auxPassSelect.id = `aux-passive-1`;
+        const auxPassSearchInput = document.createElement('input');
+        auxPassSearchInput.type = 'text';
+        auxPassSearchInput.className = 'ability-search-input';
+        auxPassSearchInput.placeholder = 'Search...';
+        auxPassSearchInput.addEventListener('input', () => {
+            auxPassSelect.dataset.searchTerm = auxPassSearchInput.value;
+            updateAbilityDropdowns();
+        });
+        auxPassWrapper.appendChild(auxPassSearchInput);
+
+        const auxPassDisplay = document.createElement('div');
+        auxPassDisplay.className = 'ability-dropdown-display';
+        auxPassDisplay.textContent = '-- None --';
+        auxPassWrapper.appendChild(auxPassDisplay);
+
+        const auxPassList = document.createElement('div');
+        auxPassList.className = 'ability-dropdown-list';
+        auxPassWrapper.appendChild(auxPassList);
+
+        auxPassDisplay.addEventListener('click', () => {
+            auxPassList.style.display = auxPassList.style.display === 'block' ? 'none' : 'block';
+        });
+
         auxPassWrapper.appendChild(auxPassSelect);
+        auxPassSelect.style.display = 'none';
         auxPassiveContainer.appendChild(auxPassWrapper);
         auxPassSelect.addEventListener('change', () => {
             updateSlotIcon(auxPassSelect, auxPassWrapper);
@@ -267,12 +443,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Filtering Helpers
     function populateDropdowns(selectElements, filterFn, emptyLabel = "-- None --") {
-        const filteredData = tswData.filter(filterFn);
-        filteredData.sort((a, b) => a.name.localeCompare(b.name));
+        const baseData = tswData.filter(filterFn).sort((a, b) => a.name.localeCompare(b.name));
 
         selectElements.forEach(select => {
             // save current selection to attempt to restore it
             const currentVal = select.value;
+            const searchTerm = (select.dataset.searchTerm || "").toLowerCase();
+
+            const filteredData = searchTerm
+                ? baseData.filter(a => a.name.toLowerCase().includes(searchTerm))
+                : baseData;
+
             select.innerHTML = `<option value="">${emptyLabel}</option>`;
 
             filteredData.forEach(a => {
@@ -287,6 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
                 select.value = currentVal;
             }
+
+            // Update custom dropdown UI (icons + text list)
+            updateCustomDropdownForSelect(select, filteredData, emptyLabel);
         });
     }
 
@@ -305,7 +489,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSelectedWeapon = (weapon) => weapon === prim || weapon === sec || prim === "All";
         const getType = (a) => a.type || "";
 
-        populateDropdowns(activeSelects, a => isSelectedWeapon(a.weapon) && (getType(a).includes("Active") || getType(a) === ""));
+        // Normal actives: Active (or no type) but NOT Elite
+        populateDropdowns(
+            activeSelects,
+            a => isSelectedWeapon(a.weapon) &&
+                (getType(a).includes("Active") || getType(a) === "") &&
+                !getType(a).includes("Elite")
+        );
+
+        // Elite active: Active + Elite
+        populateDropdowns(
+            eliteActiveSelects,
+            a => isSelectedWeapon(a.weapon) &&
+                getType(a).includes("Active") &&
+                getType(a).includes("Elite")
+        );
 
         // Aux Actives: Fixed list of auxiliary weapons
         const auxWeapons = ["Rocket Launcher", "Chainsaw", "Quantum", "Whiplash", "Flamethrower"];
@@ -327,10 +525,47 @@ document.addEventListener('DOMContentLoaded', () => {
     function getAbilityStats(ability, cp, critChance, critPower, penChance, resourcesUsed) {
         if (!ability) return null;
 
+        const desc = ability.description || "";
+
+        // --- Resource usage semantics ---
+        // Some abilities require a fixed number of resources but their damage
+        // does NOT scale with additional resources. Others explicitly say
+        // "based on the number of resources consumed". We derive simple flags
+        // from the description so the simulation can treat them correctly.
+        let resourceRequirement = 0;
+        let damageScalesWithResources = false;
+
+        // Detect explicit "Consumes X <Weapon> Resources"
+        const fixedConsumeMatch = desc.match(/Consumes?\s+(\d+)\s+\w+\s+Resources?/i);
+        if (fixedConsumeMatch) {
+            resourceRequirement = parseInt(fixedConsumeMatch[1], 10) || 0;
+        }
+
+        // Detect "Consumes all <Weapon> Resources"
+        if (/Consumes all\s+\w+\s+Resources?/i.test(desc)) {
+            // Treat "all" as "whatever the user configured" (resourcesUsed)
+            resourceRequirement = resourcesUsed || 5;
+        }
+
+        // Detect that damage/heal output actually scales with resources
+        if (/based on the number of resources consumed/i.test(desc) ||
+            /Damage scales based on the number of resources consumed/i.test(desc)) {
+            damageScalesWithResources = true;
+        }
+
+        // If this ability has a fixed requirement but no text indicating
+        // that damage scales with resources, clamp the effective resources
+        // used to that requirement so damage doesn't change with the slider.
+        let effectiveResources = resourcesUsed;
+        if (resourceRequirement > 0 && !damageScalesWithResources) {
+            effectiveResources = resourceRequirement;
+        }
+
+        // --- Scaling selection ---
         let scalingToUse = ability.scaling || 0;
         if (ability.scaling_5 > 0 && ability.scaling_1 > 0) {
-            scalingToUse = ability.scaling_1 + ((resourcesUsed - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
-        } else if (ability.scaling_5 > 0 && resourcesUsed === 5) {
+            scalingToUse = ability.scaling_1 + ((effectiveResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+        } else if (ability.scaling_5 > 0 && effectiveResources === 5) {
             scalingToUse = ability.scaling_5;
         }
 
@@ -345,7 +580,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Extraction of subtypes from description
         let subtype = "";
-        const desc = ability.description || "";
         const subtypes = ["Strike", "Blast", "Focus", "Frenzy", "Burst", "Chain"];
         for (const s of subtypes) {
             if (desc.includes(s + " attack") || desc.includes(s + " ability")) {
@@ -396,27 +630,87 @@ document.addEventListener('DOMContentLoaded', () => {
             duration,
             tickInterval,
             scalingToUse,
+            resourceRequirement,
+            damageScalesWithResources,
             originalAbility: ability
         };
     }
 
     function calculate() {
         const cp = parseFloat(cpInput.value) || 0;
-        const hitRating = parseFloat(hitRatingInput.value) || 0;
-        const critChance = parseFloat(critChanceInput.value) || 0;
-        const critPower = parseFloat(critPowerInput.value) || 0;
-        const penRating = parseFloat(penRatingInput.value) || 0;
+        const hitRatingGlobal = parseFloat(hitRatingInput.value) || 0;
+        const critChanceGlobal = parseFloat(critChanceInput.value) || 0;
+        const critPowerGlobal = parseFloat(critPowerInput.value) || 0;
+        const penChanceGlobal = parseFloat(penChanceInput.value) || 0;
         const targetResources = parseInt(resourcesInput.value) || 5;
         const simTimeMins = parseFloat(simTimeInput.value) || 3;
         const targetSeconds = simTimeMins * 60;
 
-        const actives = activeSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, 0, targetResources));
-        const auxActives = auxActiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, 0, targetResources));
-        const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, 0, 5));
-        const normPass = normalPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, 0, 5));
-        const auxPass = auxPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChance, critPower, 0, 5));
+        // Update global toggle for Dust of the Black Pharaoh
+        if (dustSignetCheckbox) {
+            window._dustSignetActive = !!dustSignetCheckbox.checked;
+        }
 
-        const allActives = [...actives, ...auxActives];
+        // Helper: given a weapon name, return the effective ratings & derived stats
+        // taking into account that weapon-specific glyph ratings only affect that weapon.
+        function getStatsForWeapon(weaponName) {
+            const pools = window._weaponRatingPools;
+
+            if (!pools || !weaponName) {
+                return {
+                    hitRating: hitRatingGlobal,
+                    critChance: critChanceGlobal,
+                    critPower: critPowerGlobal,
+                    penRating: parseFloat(penRatingInput.value) || 0,
+                    penChance: penChanceGlobal
+                };
+            }
+
+            const base = pools.base || { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
+            const w1 = (pools.weapon1Name === weaponName) ? (pools.weapon1 || {}) : {};
+            const w2 = (pools.weapon2Name === weaponName) ? (pools.weapon2 || {}) : {};
+
+            const totalCritRating = (base.critRating || 0) + (w1.critRating || 0) + (w2.critRating || 0);
+            const totalCritPowerRating = (base.critPowerRating || 0) + (w1.critPowerRating || 0) + (w2.critPowerRating || 0);
+            const totalPenRating = (base.penRating || 0) + (w1.penRating || 0) + (w2.penRating || 0);
+            const totalHitRating = (base.hitRating || 0) + (w1.hitRating || 0) + (w2.hitRating || 0);
+
+            // Use the same formulas as the importer for rating -> % conversions
+            const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (totalCritRating / 790.3)) + 1));
+            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0 };
+            const critPower = Math.sqrt(5 * totalCritPowerRating + 625) + (sBonus.critPowerPct || 0);
+
+            return {
+                hitRating: totalHitRating,
+                critChance,
+                critPower,
+                penRating: totalPenRating,
+                penChance: penChanceGlobal
+            };
+        }
+
+        function collectActivesWithOrder(selects, resourcesForActives) {
+            return selects
+                .map(sel => {
+                    const ability = tswData[sel.value];
+                    if (!ability) return null;
+                    const stats = getAbilityStats(ability, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, resourcesForActives);
+                    const orderVal = parseFloat(sel.dataset.order || '');
+                    stats.orderPriority = !isNaN(orderVal) && orderVal > 0 ? orderVal : 0;
+                    return stats;
+                })
+                .filter(Boolean);
+        }
+
+        const actives = collectActivesWithOrder(activeSelects, targetResources);
+        const eliteActives = collectActivesWithOrder(eliteActiveSelects, targetResources);
+        const auxActives = collectActivesWithOrder(auxActiveSelects, targetResources);
+        const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
+        const normPass = normalPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
+        const auxPass = auxPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
+
+        let allActives = [...actives, ...eliteActives, ...auxActives];
+        allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
         if (allActives.length === 0) {
@@ -425,7 +719,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const eliteActives = actives.filter(a => a.type.includes("Elite"));
         if (eliteActives.length > 1) {
             resTotalDps.textContent = "Error: Too many Elite Actives";
             slotBreakdownContainer.innerHTML = `<em style="color: #ffaa55;">Only 1 Elite Active ability may be equipped. Clear the extra one.</em>`;
@@ -449,6 +742,9 @@ document.addEventListener('DOMContentLoaded', () => {
         [...allActives, ...allPassives].forEach(a => {
             statsBreakdown[a.name] = { damage: 0, casts: 0 };
         });
+        // Pre-create a separate line for Dust of the Black Pharaoh procs
+        const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
+        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0 };
 
         const activeCooldowns = allActives.map(() => 0);
         const passiveCooldowns = allPassives.map(() => 0);
@@ -458,12 +754,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const secWeapon = secondaryWeaponSelect.value;
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
 
-        function performAttack(ability) {
+        function performAttack(ability, weaponForStats) {
             // Deterministic Combat Logic
+            const stats = getStatsForWeapon(weaponForStats || ability.weapon);
+            const hitRating = stats.hitRating;
+            const penRating = stats.penRating;
+            const penChance = stats.penChance;
+            const critChance = stats.critChance;
+            const critPower = stats.critPower;
             let damageMult = 1.0;
             const isEvaded = enemy.evadeRating > hitRating;
             const isGlanced = !isEvaded && enemy.defenseRating > hitRating;
-            const isPenetrated = penRating > enemy.blockRating;
+            const guaranteedPen = penRating > enemy.blockRating;
+            const randomPen = Math.random() < (penChance / 100);
+            const isPenetrated = guaranteedPen || randomPen;
 
             if (isEvaded) {
                 damageMult = 0;
@@ -490,10 +794,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawBaseDmg = (ability.scalingToUse || 0) * cp;
             const actualDmg = rawBaseDmg * finalMult * signetMult;
 
-            totalDamage += actualDmg;
+            // Dust of the Black Pharaoh: whenever you critically hit,
+            // you have a 20% chance to deal an additional hit for 100%
+            // of the damage dealt. We record these extra hits separately.
+            let finalDamage = actualDmg;
+            const dustActive = !!window._dustSignetActive;
+            const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
+            if (dustActive && isCrit) {
+                if (Math.random() < 0.20) {
+                    finalDamage += actualDmg;
+                    // Track the extra hit as its own breakdown entry
+                    if (!statsBreakdown[DUST_NAME]) {
+                        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0 };
+                    }
+                    statsBreakdown[DUST_NAME].casts++;
+                    statsBreakdown[DUST_NAME].damage += actualDmg;
+                }
+            }
+
+            totalDamage += finalDamage;
             if (!statsBreakdown[ability.name]) statsBreakdown[ability.name] = { damage: 0, casts: 0 };
             statsBreakdown[ability.name].casts++;
-            statsBreakdown[ability.name].damage += actualDmg;
+            statsBreakdown[ability.name].damage += finalDamage;
 
             // Proc Passives (Evaluate on every hit)
             allPassives.forEach((passive, p) => {
@@ -529,9 +851,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isPrim = action.weapon === primWeapon;
                 const isSec = action.weapon === secWeapon;
 
+                const reqResources = action.resourceRequirement || targetResources;
+
                 if (action.isConsumer) {
-                    if (isPrim && primResources < targetResources) canCast = false;
-                    if (isSec && secResources < targetResources) canCast = false;
+                    if (isPrim && primResources < reqResources) canCast = false;
+                    if (isSec && secResources < reqResources) canCast = false;
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
                     // Logic for builders: don't overbuild
                     if (isPrim && primResources >= 5) canCast = false;
@@ -539,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (canCast) {
-                    performAttack(action);
+                    performAttack(action, action.weapon);
 
                     const timeTaken = action.castTime;
                     time += timeTaken;
@@ -547,8 +871,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Resources
                     if (action.isConsumer) {
-                        if (isPrim) primResources -= targetResources;
-                        if (isSec) secResources -= targetResources;
+                        if (isPrim) primResources -= reqResources;
+                        if (isSec) secResources -= reqResources;
                     } else if (action.tree !== "Aux") {
                         primResources = Math.min(5, primResources + 1);
                         if (secWeapon !== "None") secResources = Math.min(5, secResources + 1);
@@ -556,14 +880,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Effects
                     if (action.duration > 0 && action.tickInterval > 0) {
-                        activeEffects.push({
-                            name: action.name + " (Effect)",
-                            duration: action.duration,
-                            tickInterval: action.tickInterval,
-                            nextTick: action.tickInterval,
-                            subtype: action.subtype,
-                            scalingToUse: action.scalingToUse
-                        });
+                    activeEffects.push({
+                        name: action.name + " (Effect)",
+                        duration: action.duration,
+                        tickInterval: action.tickInterval,
+                        nextTick: action.tickInterval,
+                        subtype: action.subtype,
+                        scalingToUse: action.scalingToUse,
+                        weapon: action.weapon
+                    });
                     }
 
                     // CD reduction
@@ -573,9 +898,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Effect Ticks
                     activeEffects = activeEffects.filter(eff => {
                         eff.duration -= timeTaken;
-                        eff.nextTick -= timeTaken;
-                        while (eff.nextTick <= 0 && eff.duration >= 0) {
-                            performAttack({ name: eff.name, subtype: eff.subtype, scalingToUse: eff.scalingToUse });
+                            eff.nextTick -= timeTaken;
+                            while (eff.nextTick <= 0 && eff.duration >= 0) {
+                                performAttack({
+                                    name: eff.name,
+                                    subtype: eff.subtype,
+                                    scalingToUse: eff.scalingToUse,
+                                    weapon: eff.weapon
+                                }, eff.weapon);
                             eff.nextTick += eff.tickInterval;
                         }
                         return eff.duration > 0;
@@ -607,6 +937,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...statsBreakdown[name]
             }))
             .sort((a, b) => b.damage - a.damage);
+
+        // Store for sharing
+        window._lastDpsBreakdown = {
+            totalDamage,
+            targetSeconds,
+            simTimeMins,
+            stats: sortedStats
+        };
 
         sortedStats.forEach(stat => {
             const itemDps = stat.damage / targetSeconds;
@@ -642,17 +980,21 @@ document.addEventListener('DOMContentLoaded', () => {
             div.appendChild(dpsSpan);
             slotBreakdownContainer.appendChild(div);
 
-            // Fetch icon async and show when ready (strip " (Effect)" suffix for proc names)
+            // Fetch icon from local folder (strip " (Effect)" suffix for proc names)
             const lookupName = stat.name.replace(/ \(Effect\)$/, '');
             const cachedUrl = iconCache.get(lookupName.toLowerCase());
             if (cachedUrl) {
                 iconEl.src = cachedUrl;
                 iconEl.style.display = '';
             } else if (cachedUrl === undefined) {
-                // Not yet fetched
-                fetchIconUrl(lookupName).then(url => {
-                    if (url) { iconEl.src = url; iconEl.style.display = ''; }
-                });
+                // Not yet cached – try to resolve from tswData by name
+                const ability = tswData.find(a => a.name === lookupName);
+                const url = getLocalIconUrlForAbility(ability);
+                if (url) {
+                    iconCache.set(lookupName.toLowerCase(), url);
+                    iconEl.src = url;
+                    iconEl.style.display = '';
+                }
             }
         });
     }
@@ -742,7 +1084,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let hitRating = 0;
 
         // Accumulated percentage-based signet bonuses applied during simulation
-        // Format: { subtype: { 'Strike': 5, 'Blast': 3, ... }, weapon: { 'Blade': 3 }, critPowerPct: 24 }
+        // Format: {
+        //   subtype: { 'Strike': 5, 'Blast': 3, ... },
+        //   weapon: { 'Blade': 3 },
+        //   critPowerPct: 24
+        // }
         const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0 };
 
         const slots = [
@@ -756,6 +1102,14 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'waist', type: 'talisman', group: 'minor' },
             { id: 'occult', type: 'talisman', group: 'minor' }
         ];
+
+        // Track base (talisman) vs weapon-specific glyph ratings
+        let baseCritRating = 0;
+        let baseCritPowerRating = 0;
+        let basePenRating = 0;
+        let baseHitRating = 0;
+        let weapon1Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
+        let weapon2Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
 
         slots.forEach(slot => {
             const data = params.get(slot.id);
@@ -794,10 +1148,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
                     const val = base * mult;
 
-                    if (statName === 'critical-rating') critRating += val;
-                    if (statName === 'critical-power') critPowerRating += val;
-                    if (statName === 'penetration-rating') penRating += val;
-                    if (statName === 'hit-rating') hitRating += val;
+                    // If this glyph is on a weapon, keep it weapon-specific;
+                    // otherwise, treat it as a global (talisman) rating.
+                    const isWeaponSlot = slot.type === 'weapon';
+                    const targetBucket = !isWeaponSlot
+                        ? 'base'
+                        : (slot.id === 'weapon' ? 'weapon1' : (slot.id === 'weapon2' ? 'weapon2' : 'base'));
+
+                    function addToBucket(bucket, field, amount) {
+                        if (bucket === 'base') {
+                            if (field === 'critical-rating') baseCritRating += amount;
+                            if (field === 'critical-power') baseCritPowerRating += amount;
+                            if (field === 'penetration-rating') basePenRating += amount;
+                            if (field === 'hit-rating') baseHitRating += amount;
+                        } else if (bucket === 'weapon1') {
+                            if (field === 'critical-rating') weapon1Glyph.critRating += amount;
+                            if (field === 'critical-power') weapon1Glyph.critPowerRating += amount;
+                            if (field === 'penetration-rating') weapon1Glyph.penRating += amount;
+                            if (field === 'hit-rating') weapon1Glyph.hitRating += amount;
+                        } else if (bucket === 'weapon2') {
+                            if (field === 'critical-rating') weapon2Glyph.critRating += amount;
+                            if (field === 'critical-power') weapon2Glyph.critPowerRating += amount;
+                            if (field === 'penetration-rating') weapon2Glyph.penRating += amount;
+                            if (field === 'hit-rating') weapon2Glyph.hitRating += amount;
+                        }
+                    }
+
+                    addToBucket(targetBucket, statName, val);
                 }
             });
 
@@ -832,19 +1209,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Aggregate totals for display (all sources)
+        critRating = baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
+        critPowerRating = baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
+        penRating = basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
+        hitRating = baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
+
         const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
         const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
         // Apply Laceration's flat crit power % on top of the rated crit power
         const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
 
         cpInput.value = cp;
+        if (attackRatingInput) {
+            attackRatingInput.value = Math.round(attackRating);
+        }
         hitRatingInput.value = Math.round(hitRating);
         critChanceInput.value = critChance.toFixed(1);
         critPowerInput.value = critPower.toFixed(1);
         penRatingInput.value = Math.round(penRating);
 
-        // Store signet bonuses for calculate() to pick up
+        // Store signet bonuses and weapon-specific rating pools for calculate() to pick up
         window._signetBonuses = signetBonuses;
+        window._weaponRatingPools = {
+            base: {
+                critRating: baseCritRating,
+                critPowerRating: baseCritPowerRating,
+                penRating: basePenRating,
+                hitRating: baseHitRating
+            },
+            weapon1: weapon1Glyph,
+            weapon2: weapon2Glyph,
+            weapon1Name: weaponSelect.value,
+            weapon2Name: secondaryWeaponSelect.value
+        };
 
         updateAbilityDropdowns();
         calculate();
@@ -857,12 +1255,145 @@ document.addEventListener('DOMContentLoaded', () => {
     resourcesInput.addEventListener('input', calculate);
     simTimeInput.addEventListener('input', calculate);
 
+    const copyBreakdownBtn = document.getElementById('copy-breakdown-btn');
+    const importBreakdownInput = document.getElementById('import-breakdown-input');
+    const importBreakdownBtn = document.getElementById('import-breakdown-btn');
+
+    if (copyBreakdownBtn) {
+        copyBreakdownBtn.addEventListener('click', () => {
+            const data = window._lastDpsBreakdown;
+            if (!data || !data.stats || data.stats.length === 0) {
+                alert('No DPS breakdown available yet. Run a simulation first.');
+                return;
+            }
+
+            const lines = [];
+            lines.push(`Total DPS: ${Math.round((data.totalDamage / data.targetSeconds) || 0)} over ${data.simTimeMins} minutes`);
+            lines.push('');
+            lines.push('Ability / Source\tCasts\tDPS\tPercent');
+
+            data.stats.forEach(stat => {
+                const itemDps = stat.damage / data.targetSeconds;
+                const percent = ((stat.damage / data.totalDamage) * 100).toFixed(1);
+                lines.push(`${stat.name}\t${stat.casts}\t${Math.round(itemDps)}\t${percent}%`);
+            });
+
+            lines.push('');
+            lines.push('JSON:');
+            lines.push(JSON.stringify(data, null, 2));
+
+            const text = lines.join('\n');
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('DPS breakdown copied to clipboard.');
+                }).catch(() => {
+                    alert('Failed to copy to clipboard.');
+                });
+            } else {
+                // Fallback
+                prompt('Copy the DPS breakdown below:', text);
+            }
+        });
+    }
+
+    function renderImportedBreakdown(data) {
+        if (!data || !Array.isArray(data.stats) || !data.totalDamage || !data.targetSeconds) return;
+
+        const totalDamage = data.totalDamage;
+        const targetSeconds = data.targetSeconds;
+        const simTimeMins = data.simTimeMins || (targetSeconds / 60);
+
+        const finalDps = totalDamage / targetSeconds;
+        resTotalDps.textContent = Math.round(finalDps).toLocaleString() + ` DPS (over ${simTimeMins}m, imported)`;
+
+        slotBreakdownContainer.innerHTML = '';
+        const sortedStats = data.stats.slice().sort((a, b) => b.damage - a.damage);
+
+        sortedStats.forEach(stat => {
+            const itemDps = stat.damage / targetSeconds;
+            const percent = ((stat.damage / totalDamage) * 100).toFixed(1);
+
+            const div = document.createElement('div');
+            div.style.background = 'rgba(0,0,0,0.2)';
+            div.style.padding = '0.5rem 0.75rem';
+            div.style.borderRadius = '8px';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '0.75rem';
+
+            const iconEl = document.createElement('img');
+            iconEl.className = 'breakdown-icon';
+            iconEl.alt = '';
+            iconEl.style.display = 'none';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.style.flex = '1';
+            nameSpan.style.minWidth = '0';
+            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span>`;
+
+            const dpsSpan = document.createElement('span');
+            dpsSpan.style.whiteSpace = 'nowrap';
+            dpsSpan.style.color = 'var(--accent)';
+            dpsSpan.style.fontWeight = '600';
+            dpsSpan.textContent = `${Math.round(itemDps).toLocaleString()} DPS (${percent}%)`;
+
+            div.appendChild(iconEl);
+            div.appendChild(nameSpan);
+            div.appendChild(dpsSpan);
+            slotBreakdownContainer.appendChild(div);
+
+            const lookupName = stat.name.replace(/ \(Effect\)$/, '');
+            const cachedUrl = iconCache.get(lookupName.toLowerCase());
+            if (cachedUrl) {
+                iconEl.src = cachedUrl;
+                iconEl.style.display = '';
+            } else if (cachedUrl === undefined) {
+                const ability = tswData.find(a => a.name === lookupName);
+                const url = getLocalIconUrlForAbility(ability);
+                if (url) {
+                    iconCache.set(lookupName.toLowerCase(), url);
+                    iconEl.src = url;
+                    iconEl.style.display = '';
+                }
+            }
+        });
+    }
+
+    if (importBreakdownBtn && importBreakdownInput) {
+        importBreakdownBtn.addEventListener('click', () => {
+            const text = (importBreakdownInput.value || '').trim();
+            if (!text) {
+                alert('Paste a shared DPS breakdown first.');
+                return;
+            }
+
+            let jsonPart = text;
+            const idx = text.indexOf('JSON:');
+            if (idx !== -1) {
+                jsonPart = text.slice(idx + 5).trim();
+            }
+
+            try {
+                const data = JSON.parse(jsonPart);
+                if (!data || !Array.isArray(data.stats)) {
+                    alert('Could not find a valid JSON DPS breakdown in the pasted text.');
+                    return;
+                }
+                window._lastDpsBreakdown = data;
+                renderImportedBreakdown(data);
+            } catch (e) {
+                alert('Failed to parse JSON from pasted breakdown text.');
+            }
+        });
+    }
+
     const importBtn = document.getElementById('import-btn');
     if (importBtn) {
         importBtn.addEventListener('click', parseTswcalcUrl);
     }
 
-    [cpInput, hitRatingInput, critChanceInput, critPowerInput, penRatingInput].forEach(input => {
+    [cpInput, hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput].forEach(input => {
         input.addEventListener('input', calculate);
     });
 

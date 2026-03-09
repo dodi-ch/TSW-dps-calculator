@@ -20,7 +20,13 @@
             <h2>Import Build from tswcalc</h2>
             <div class="form-group" style="flex-direction: row; align-items: flex-end; gap: 1rem; margin-bottom: 0;">
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label for="tswcalc-url">tswcalc URL</label>
+                    <label for="tswcalc-url">
+                        tswcalc URL
+                        <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                            style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--accent); text-decoration: underline;">
+                            Open tswcalc
+                        </a>
+                    </label>
                     <input type="text" id="tswcalc-url" placeholder="https://joakibj.github.io/tswcalc/#weapon=...">
                 </div>
                 <button id="import-btn" class="btn-primary"
@@ -36,6 +42,10 @@
                     <input type="number" id="combat-power" value="1000" min="0">
                 </div>
                 <div class="form-group">
+                    <label for="attack-rating">Attack Rating (from gear)</label>
+                    <input type="number" id="attack-rating" value="0" min="0" readonly>
+                </div>
+                <div class="form-group">
                     <label for="hit-rating">Hit Rating</label>
                     <input type="number" id="hit-rating" value="0" min="0">
                 </div>
@@ -49,9 +59,15 @@
                         <input type="number" id="crit-power" value="25" min="25">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="pen-rating">Penetration Rating</label>
-                    <input type="number" id="pen-rating" value="0" min="0">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="pen-rating">Penetration Rating</label>
+                        <input type="number" id="pen-rating" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="pen-chance">Penetration Chance (%)</label>
+                        <input type="number" id="pen-chance" value="0" min="0" max="100">
+                    </div>
                 </div>
             </section>
 
@@ -63,6 +79,13 @@
                         <option value="training-puppet">Training Puppet</option>
                         <option value="eidolon">Eidolon</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Special Head Signets</label>
+                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+                        <input type="checkbox" id="signet-dust" style="width: auto; margin: 0;">
+                        <span>Dust of the Black Pharaoh (on-crit extra hit)</span>
+                    </label>
                 </div>
                 <div id="enemy-stats-display"
                     style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
@@ -87,7 +110,7 @@
                 </div>
                 <div class="abilities-grid">
                     <div class="ability-slot-group">
-                        <h3>Active Abilities (1-7)</h3>
+                        <h3>Active Abilities (1-6 + Elite)</h3>
                         <div id="active-abilities-container">
                             <!-- 7 selectors will be added via JS -->
                         </div>
@@ -138,6 +161,24 @@
                         </div>
                     </div>
 
+                    <button id="copy-breakdown-btn" class="btn-primary"
+                        style="margin-top: 0.5rem; padding: 0.4rem 0.9rem; font-size: 0.8rem; align-self: flex-start;">
+                        Copy DPS breakdown
+                    </button>
+
+                    <div class="form-group" id="import-breakdown-group" style="margin-top: 0.75rem;">
+                        <label for="import-breakdown-input"
+                            title="Paste a shared DPS breakdown (including the JSON section) to view it here.">
+                            Import DPS breakdown (shared text)
+                        </label>
+                        <textarea id="import-breakdown-input" rows="3"
+                            style="width: 100%; resize: vertical; font-size: 0.8rem;"></textarea>
+                        <button id="import-breakdown-btn" class="btn-primary"
+                            style="margin-top: 0.35rem; padding: 0.35rem 0.9rem; font-size: 0.8rem; align-self: flex-start;">
+                            Load imported breakdown
+                        </button>
+                    </div>
+
                     <h3 style="margin-top: 1.5rem; color: var(--text-secondary); font-size: 1rem;">Slot Breakdown</h3>
                     <div id="slot-breakdown-container"
                         style="display: flex; flex-direction: column; gap: 0.5rem; text-align: left; margin-top: 1rem;">
@@ -147,9 +188,6 @@
             </section>
         </main>
 
-        <footer>
-            <p>Built with ❤️ for The Secret World.</p>
-        </footer>
     </div>
 
     <script src="data.js"></script>
