@@ -753,6 +753,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const primWeapon = weaponSelect.value;
         const secWeapon = secondaryWeaponSelect.value;
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
+        const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
+        let powerLineStartTime = null;
 
         function performAttack(ability, weaponForStats) {
             // Deterministic Combat Logic
@@ -790,8 +792,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 signetMult += sBonus.weapon[ability.weapon] / 100;
             }
 
-            // Use scaling * cp for base damage
-            const rawBaseDmg = (ability.scalingToUse || 0) * cp;
+            // Special handling for Power Line-Voltaic Detonation:
+            // First cast: applies the Power Line tether (no big hit).
+            // Second cast (while tether is active): Voltaic Detonation whose damage
+            // scales with the time waited, up to +200% (3x base) at 10 seconds.
+            let rawBaseDmg;
+            if (ability.name === POWER_LINE_NAME) {
+                if (powerLineStartTime == null) {
+                    // Start Power Line tether – minimal direct damage, main value is in detonation.
+                    powerLineStartTime = time;
+                    rawBaseDmg = 0;
+                } else {
+                    const elapsed = Math.max(0, time - powerLineStartTime);
+                    const stacks = Math.max(1, Math.min(10, Math.floor(elapsed)));
+                    const baseDetonation = 226 * (1 + 2 * (stacks / 10)); // up to +200% at 10 stacks
+                    // Tie to CP loosely: scale with cp relative to a 1000 CP baseline
+                    rawBaseDmg = baseDetonation * (cp / 1000);
+                    powerLineStartTime = null;
+                }
+            } else {
+                // Use scaling * cp for base damage
+                rawBaseDmg = (ability.scalingToUse || 0) * cp;
+            }
+
             const actualDmg = rawBaseDmg * finalMult * signetMult;
 
             // Dust of the Black Pharaoh: whenever you critically hit,
