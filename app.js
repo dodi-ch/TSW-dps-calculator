@@ -632,6 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scalingToUse,
             resourceRequirement,
             damageScalesWithResources,
+            isManifestation: ability.name.toLowerCase().includes("manifestation"),
             originalAbility: ability
         };
     }
@@ -745,6 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-create a separate line for Dust of the Black Pharaoh procs
         const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
         statsBreakdown[DUST_NAME] = { damage: 0, casts: 0 };
+        const ELE_OVERLOAD_NAME = 'Elemental Overload (Proc)';
+        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0 };
 
         const activeCooldowns = allActives.map(() => 0);
         const passiveCooldowns = allPassives.map(() => 0);
@@ -752,9 +755,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const primWeapon = weaponSelect.value;
         const secWeapon = secondaryWeaponSelect.value;
+        const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
         const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
         let powerLineStartTime = null;
+        let elementalFuryEndTime = 0;
 
         function performAttack(ability, weaponForStats) {
             // Deterministic Combat Logic
@@ -815,7 +820,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 rawBaseDmg = (ability.scalingToUse || 0) * cp;
             }
 
-            const actualDmg = rawBaseDmg * finalMult * signetMult;
+            // Elemental Fury Proc: When any Elemental Manifestation ability deals damage, you deal 7.5% more damage for 5 seconds.
+            // Requires an equipped Elementalism Focus.
+            if (hasElementalWeapon && ability.isManifestation && ability.weapon === 'Elementalism') {
+                elementalFuryEndTime = time + 5.0;
+            }
+
+            // Apply Elemental Fury buff if active
+            const eleFuryMult = (hasElementalWeapon && time <= elementalFuryEndTime) ? 1.075 : 1.0;
+
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult;
 
             // Dust of the Black Pharaoh: whenever you critically hit,
             // you have a 20% chance to deal an additional hit for 100%
@@ -832,6 +846,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     statsBreakdown[DUST_NAME].casts++;
                     statsBreakdown[DUST_NAME].damage += actualDmg;
+                }
+            }
+
+            // Elemental Overload Proc
+            // "Your Elemental abilities have a 33% chance to deal 105 magical damage to 6 enemies around the target."
+            // "Requires an equipped Elementalism Focus."
+            // Note: Single target DPS calc, so we only apply the damage once. Base 105 damage loosely scaled to 1000 CP.
+            const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
+            if (hasElementalWeapon && ability.weapon === 'Elementalism') {
+                if (Math.random() < 0.33) {
+                    const ELE_OVERLOAD_NAME = 'Elemental Overload (Proc)';
+                    if (!statsBreakdown[ELE_OVERLOAD_NAME]) {
+                        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0 };
+                    }
+                    const eleBaseDmg = 105 * (cp / 1000);
+                    // Procs inherit the triggering hit's finalMult (crit/pen/glance)
+                    const eleActualDmg = eleBaseDmg * finalMult;
+
+                    totalDamage += eleActualDmg;
+                    statsBreakdown[ELE_OVERLOAD_NAME].casts++;
+                    statsBreakdown[ELE_OVERLOAD_NAME].damage += eleActualDmg;
                 }
             }
 
@@ -903,15 +938,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Effects
                     if (action.duration > 0 && action.tickInterval > 0) {
-                    activeEffects.push({
-                        name: action.name + " (Effect)",
-                        duration: action.duration,
-                        tickInterval: action.tickInterval,
-                        nextTick: action.tickInterval,
-                        subtype: action.subtype,
-                        scalingToUse: action.scalingToUse,
-                        weapon: action.weapon
-                    });
+                        activeEffects.push({
+                            name: action.name + " (Effect)",
+                            duration: action.duration,
+                            tickInterval: action.tickInterval,
+                            nextTick: action.tickInterval,
+                            subtype: action.subtype,
+                            scalingToUse: action.scalingToUse,
+                            weapon: action.weapon,
+                            isManifestation: action.isManifestation
+                        });
                     }
 
                     // CD reduction
@@ -921,14 +957,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Effect Ticks
                     activeEffects = activeEffects.filter(eff => {
                         eff.duration -= timeTaken;
-                            eff.nextTick -= timeTaken;
-                            while (eff.nextTick <= 0 && eff.duration >= 0) {
-                                performAttack({
-                                    name: eff.name,
-                                    subtype: eff.subtype,
-                                    scalingToUse: eff.scalingToUse,
-                                    weapon: eff.weapon
-                                }, eff.weapon);
+                        eff.nextTick -= timeTaken;
+                        while (eff.nextTick <= 0 && eff.duration >= 0) {
+                            performAttack({
+                                name: eff.name,
+                                subtype: eff.subtype,
+                                scalingToUse: eff.scalingToUse,
+                                weapon: eff.weapon,
+                                isManifestation: eff.isManifestation
+                            }, eff.weapon);
                             eff.nextTick += eff.tickInterval;
                         }
                         return eff.duration > 0;
