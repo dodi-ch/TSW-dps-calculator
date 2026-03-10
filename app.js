@@ -1534,4 +1534,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     initUI();
     updateAbilityDropdowns();
+    calculate();
 });
