@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const cpInput = document.getElementById('combat-power');
     const attackRatingInput = document.getElementById('attack-rating');
+    const weaponPowerInput = document.getElementById('weapon-power');
     const hitRatingInput = document.getElementById('hit-rating');
     const critChanceInput = document.getElementById('crit-chance');
     const critPowerInput = document.getElementById('crit-power');
@@ -1284,6 +1285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (attackRatingInput) {
             attackRatingInput.value = Math.round(attackRating);
         }
+        if (weaponPowerInput) {
+            weaponPowerInput.value = Math.round(weaponPower);
+        }
         hitRatingInput.value = Math.round(hitRating);
         critChanceInput.value = critChance.toFixed(1);
         critPowerInput.value = critPower.toFixed(1);
@@ -1448,13 +1452,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const importBtn = document.getElementById('import-btn');
     if (importBtn) {
         importBtn.addEventListener('click', parseTswcalcUrl);
     }
 
-    [cpInput, hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput].forEach(input => {
-        input.addEventListener('input', calculate);
+    function updateCombatPower() {
+        const attackRating = parseFloat(attackRatingInput.value) || 0;
+        const weaponPower = parseFloat(weaponPowerInput?.value) || 528;
+        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        cpInput.value = cp;
+    }
+
+    [attackRatingInput, weaponPowerInput].forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                updateCombatPower();
+                calculate();
+            });
+        }
+    });
+
+    [hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput].forEach(input => {
+        if (input) input.addEventListener('input', calculate);
     });
 
     // Init
