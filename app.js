@@ -1142,205 +1142,229 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function parseTswcalcUrl() {
         const urlInput = document.getElementById('tswcalc-url');
-        const url = urlInput.value.trim();
-        if (!url || !url.includes('#')) return;
+        const url = (urlInput.value || '').trim();
+        if (!url) {
+            alert('Please enter a tswcalc URL first.');
+            return;
+        }
 
-        const fragment = url.split('#')[1];
-        const params = new URLSearchParams(fragment);
+        if (!url.includes('#')) {
+            alert('Invalid tswcalc URL format. Please ensure it contains a "#" fragment.');
+            return;
+        }
 
-        let attackRating = 0;
-        let weaponPower = 75;
-        let critRating = 0;
-        let critPowerRating = 0;
-        let penRating = 0;
-        let hitRating = 0;
+        try {
+            // Handle both #weapon=... and #/weapon=... formats
+            let fragment = url.split('#')[1];
+            if (fragment.startsWith('/')) {
+                fragment = fragment.substring(1);
+            }
+            const params = new URLSearchParams(fragment);
 
-        // Accumulated percentage-based signet bonuses applied during simulation
-        // Format: {
-        //   subtype: { 'Strike': 5, 'Blast': 3, ... },
-        //   weapon: { 'Blade': 3 },
-        //   critPowerPct: 24,
-        //   globalDmgPct: 3
-        // }
-        const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
-
-        const slots = [
-            { id: 'weapon', type: 'weapon', group: 'weapon' },
-            { id: 'weapon2', type: 'weapon', group: 'weapon' },
-            { id: 'head', type: 'talisman', group: 'head' },
-            { id: 'ring', type: 'talisman', group: 'major' },
-            { id: 'neck', type: 'talisman', group: 'major' },
-            { id: 'wrist', type: 'talisman', group: 'major' },
-            { id: 'luck', type: 'talisman', group: 'minor' },
-            { id: 'waist', type: 'talisman', group: 'minor' },
-            { id: 'occult', type: 'talisman', group: 'minor' }
-        ];
-
-        // Track base (talisman) vs weapon-specific glyph ratings
-        let baseCritRating = 0;
-        let baseCritPowerRating = 0;
-        let basePenRating = 0;
-        let baseHitRating = 0;
-        let weapon1Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
-        let weapon2Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
-
-        slots.forEach(slot => {
-            const data = params.get(slot.id);
-            if (!data) return;
-
-            const vals = data.split(',');
-            const qlIdx = parseInt(vals[0]);
-            const itemId = parseInt(vals[1]);
-            const glyphQlIdx = parseInt(vals[2]);
-            const primStatId = parseInt(vals[3]);
-            const secStatId = parseInt(vals[4]);
-            const primDist = parseInt(vals[5]);
-            const secDist = parseInt(vals[6]);
-            const signetQual = parseInt(vals[7]) || 0;
-            const signetId = parseInt(vals[8]) || 0;
-
-            if (slot.type === 'weapon') {
-                if (slot.id === 'weapon') {
-                    weaponPower = TSWCALC_DATA.weaponPower[`10.${qlIdx}`] || (qlIdx === 11 ? 528 : 75);
-                    const wName = TSWCALC_DATA.wtype_mapping[itemId];
-                    if (wName) weaponSelect.value = wName;
-                } else if (slot.id === 'weapon2') {
-                    const wName2 = TSWCALC_DATA.wtype_mapping[itemId];
-                    if (wName2) secondaryWeaponSelect.value = wName2;
-                }
-            } else if (slot.type === 'talisman') {
-                // Role check: itemId 1=Tank, 2=Healer, 3=DPS, default to DPS if unknown/special
-                const isDpsRole = itemId === 3 || itemId === 82 || itemId === 84 || itemId === 86 || itemId >= 200 || (itemId !== 1 && itemId !== 2 && itemId !== 81 && itemId !== 83 && itemId !== 85 && itemId !== 202 && itemId !== 203 && itemId !== 205 && itemId !== 207);
-                if (isDpsRole) {
-                    attackRating += TSWCALC_DATA.talismanRating[slot.group][qlIdx] || 0;
-                }
+            if (!params.has('weapon') && !params.has('head')) {
+                alert('This does not look like a valid tswcalc build URL.');
+                return;
             }
 
-            // Glyphs
-            [{ id: primStatId, dist: primDist }, { id: secStatId, dist: secDist }].forEach(g => {
-                const statName = TSWCALC_DATA.stat_mapping[g.id];
-                if (statName && TSWCALC_DATA.glyphData[statName]) {
-                    const isWeaponSlot = slot.type === 'weapon';
-                    const glyphGroup = isWeaponSlot ? 'head' : slot.group; // weapons use head-size glyphs
-                    const base = TSWCALC_DATA.glyphData[statName][glyphGroup] ? TSWCALC_DATA.glyphData[statName][glyphGroup][g.dist] : 0;
+            let attackRating = 0;
+            let weaponPower = 75;
+            let critRating = 0;
+            let critPowerRating = 0;
+            let penRating = 0;
+            let hitRating = 0;
 
-                    // QL 11.0 factors: 4.0 for Pen/Hit, 3.42 for Crit/Power
-                    // Weapon glyphs use a ~0.89 reduction factor compared to talismans
-                    let mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
-                    if (isWeaponSlot && glyphQlIdx === 11) mult *= 0.89;
+            // Accumulated percentage-based signet bonuses applied during simulation
+            // Format: {
+            //   subtype: { 'Strike': 5, 'Blast': 3, ... },
+            //   weapon: { 'Blade': 3 },
+            //   critPowerPct: 24,
+            //   globalDmgPct: 3
+            // }
+            const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
 
-                    const val = base * mult;
+            const slots = [
+                { id: 'weapon', type: 'weapon', group: 'weapon' },
+                { id: 'weapon2', type: 'weapon', group: 'weapon' },
+                { id: 'head', type: 'talisman', group: 'head' },
+                { id: 'ring', type: 'talisman', group: 'major' },
+                { id: 'neck', type: 'talisman', group: 'major' },
+                { id: 'wrist', type: 'talisman', group: 'major' },
+                { id: 'luck', type: 'talisman', group: 'minor' },
+                { id: 'waist', type: 'talisman', group: 'minor' },
+                { id: 'occult', type: 'talisman', group: 'minor' }
+            ];
 
-                    // If this glyph is on a weapon, keep it weapon-specific;
-                    // otherwise, treat it as a global (talisman) rating.
-                    const targetBucket = !isWeaponSlot
-                        ? 'base'
-                        : (slot.id === 'weapon' ? 'weapon1' : (slot.id === 'weapon2' ? 'weapon2' : 'base'));
+            // Track base (talisman) vs weapon-specific glyph ratings
+            let baseCritRating = 0;
+            let baseCritPowerRating = 0;
+            let basePenRating = 0;
+            let baseHitRating = 0;
+            let weapon1Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
+            let weapon2Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
 
-                    function addToBucket(bucket, field, amount) {
-                        if (bucket === 'base') {
-                            if (field === 'critical-rating') baseCritRating += amount;
-                            if (field === 'critical-power') baseCritPowerRating += amount;
-                            if (field === 'penetration-rating') basePenRating += amount;
-                            if (field === 'hit-rating') baseHitRating += amount;
-                        } else if (bucket === 'weapon1') {
-                            if (field === 'critical-rating') weapon1Glyph.critRating += amount;
-                            if (field === 'critical-power') weapon1Glyph.critPowerRating += amount;
-                            if (field === 'penetration-rating') weapon1Glyph.penRating += amount;
-                            if (field === 'hit-rating') weapon1Glyph.hitRating += amount;
-                        } else if (bucket === 'weapon2') {
-                            if (field === 'critical-rating') weapon2Glyph.critRating += amount;
-                            if (field === 'critical-power') weapon2Glyph.critPowerRating += amount;
-                            if (field === 'penetration-rating') weapon2Glyph.penRating += amount;
-                            if (field === 'hit-rating') weapon2Glyph.hitRating += amount;
-                        }
+            slots.forEach(slot => {
+                const data = params.get(slot.id);
+                if (!data) return;
+
+                const vals = data.split(',');
+                const qlIdx = parseInt(vals[0]);
+                const itemId = parseInt(vals[1]);
+                const glyphQlIdx = parseInt(vals[2]);
+                const primStatId = parseInt(vals[3]);
+                const secStatId = parseInt(vals[4]);
+                const primDist = parseInt(vals[5]);
+                const secDist = parseInt(vals[6]);
+                const signetQual = parseInt(vals[7]) || 0;
+                const signetId = parseInt(vals[8]) || 0;
+
+                if (slot.type === 'weapon') {
+                    if (slot.id === 'weapon') {
+                        weaponPower = TSWCALC_DATA.weaponPower[`10.${qlIdx}`] || (qlIdx === 11 ? 528 : 75);
+                        const wName = TSWCALC_DATA.wtype_mapping[itemId];
+                        if (wName) weaponSelect.value = wName;
+                    } else if (slot.id === 'weapon2') {
+                        const wName2 = TSWCALC_DATA.wtype_mapping[itemId];
+                        if (wName2) secondaryWeaponSelect.value = wName2;
                     }
+                } else if (slot.type === 'talisman') {
+                    // Role check: itemId 1=Tank, 2=Healer, 3=DPS, default to DPS if unknown/special
+                    const isDpsRole = itemId === 3 || itemId === 82 || itemId === 84 || itemId === 86 || itemId >= 200 || (itemId !== 1 && itemId !== 2 && itemId !== 81 && itemId !== 83 && itemId !== 85 && itemId !== 202 && itemId !== 203 && itemId !== 205 && itemId !== 207);
+                    if (isDpsRole) {
+                        attackRating += TSWCALC_DATA.talismanRating[slot.group][qlIdx] || 0;
+                    }
+                }
 
-                    addToBucket(targetBucket, statName, val);
+                // Glyphs
+                [{ id: primStatId, dist: primDist }, { id: secStatId, dist: secDist }].forEach(g => {
+                    const statName = TSWCALC_DATA.stat_mapping[g.id];
+                    if (statName && TSWCALC_DATA.glyphData[statName]) {
+                        const isWeaponSlot = slot.type === 'weapon';
+                        const glyphGroup = isWeaponSlot ? 'head' : slot.group; // weapons use head-size glyphs
+                        const base = TSWCALC_DATA.glyphData[statName][glyphGroup] ? TSWCALC_DATA.glyphData[statName][glyphGroup][g.dist] : 0;
+
+                        // QL 11.0 factors: 4.0 for Pen/Hit, 3.42 for Crit/Power
+                        // Weapon glyphs use a ~0.89 reduction factor compared to talismans
+                        let mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
+                        if (isWeaponSlot && glyphQlIdx === 11) mult *= 0.89;
+
+                        const val = base * mult;
+
+                        // If this glyph is on a weapon, keep it weapon-specific;
+                        // otherwise, treat it as a global (talisman) rating.
+                        const targetBucket = !isWeaponSlot
+                            ? 'base'
+                            : (slot.id === 'weapon' ? 'weapon1' : (slot.id === 'weapon2' ? 'weapon2' : 'base'));
+
+                        function addToBucket(bucket, field, amount) {
+                            if (bucket === 'base') {
+                                if (field === 'critical-rating') baseCritRating += amount;
+                                if (field === 'critical-power') baseCritPowerRating += amount;
+                                if (field === 'penetration-rating') basePenRating += amount;
+                                if (field === 'hit-rating') baseHitRating += amount;
+                            } else if (bucket === 'weapon1') {
+                                if (field === 'critical-rating') weapon1Glyph.critRating += amount;
+                                if (field === 'critical-power') weapon1Glyph.critPowerRating += amount;
+                                if (field === 'penetration-rating') weapon1Glyph.penRating += amount;
+                                if (field === 'hit-rating') weapon1Glyph.hitRating += amount;
+                            } else if (bucket === 'weapon2') {
+                                if (field === 'critical-rating') weapon2Glyph.critRating += amount;
+                                if (field === 'critical-power') weapon2Glyph.critPowerRating += amount;
+                                if (field === 'penetration-rating') weapon2Glyph.penRating += amount;
+                                if (field === 'hit-rating') weapon2Glyph.hitRating += amount;
+                            }
+                        }
+
+                        addToBucket(targetBucket, statName, val);
+                    }
+                });
+
+                // Signets
+                const signet = TSWCALC_DATA.signets[signetId];
+                if (signet && signetQual > 0) {
+                    const qualIndex = signetQual - 1; // 1=Normal, 2=Elite, 3=Epic
+                    const bonus = signet.value[qualIndex] || 0;
+
+                    switch (signet.stat) {
+                        case 'attack-rating':
+                            attackRating += bonus;
+                            break;
+                        case 'crit-power-pct':
+                            // Laceration: add directly to critPower % after calculation
+                            signetBonuses.critPowerPct += bonus;
+                            break;
+                        case 'dmg-pct':
+                            // Venice, Nure-onna's Coils, etc.
+                            signetBonuses.globalDmgPct += bonus;
+                            break;
+                        case 'subtype-dmg-pct':
+                            // e.g. Assassination gives +% to Strike abilities
+                            if (signet.subtype) {
+                                signetBonuses.subtype[signet.subtype] = (signetBonuses.subtype[signet.subtype] || 0) + bonus;
+                            }
+                            break;
+                        case 'weapon-dmg-pct':
+                            // e.g. Swords gives +% to Blade abilities
+                            if (signet.weapon) {
+                                signetBonuses.weapon[signet.weapon] = (signetBonuses.weapon[signet.weapon] || 0) + bonus;
+                            }
+                            break;
+                        // Other stats (heal-rating, etc.) are not DPS relevant
+                    }
                 }
             });
 
-            // Signets
-            const signet = TSWCALC_DATA.signets[signetId];
-            if (signet && signetQual > 0) {
-                const qualIndex = signetQual - 1; // 1=Normal, 2=Elite, 3=Epic
-                const bonus = signet.value[qualIndex] || 0;
+            // Aggregate totals for display (all sources)
+            critRating = 40 + baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
+            critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
+            penRating = 40 + basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
+            hitRating = 40 + baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
 
-                switch (signet.stat) {
-                    case 'attack-rating':
-                        attackRating += bonus;
-                        break;
-                    case 'crit-power-pct':
-                        // Laceration: add directly to critPower % after calculation
-                        signetBonuses.critPowerPct += bonus;
-                        break;
-                    case 'dmg-pct':
-                        // Venice, Nure-onna's Coils, etc.
-                        signetBonuses.globalDmgPct += bonus;
-                        break;
-                    case 'subtype-dmg-pct':
-                        // e.g. Assassination gives +% to Strike abilities
-                        if (signet.subtype) {
-                            signetBonuses.subtype[signet.subtype] = (signetBonuses.subtype[signet.subtype] || 0) + bonus;
-                        }
-                        break;
-                    case 'weapon-dmg-pct':
-                        // e.g. Swords gives +% to Blade abilities
-                        if (signet.weapon) {
-                            signetBonuses.weapon[signet.weapon] = (signetBonuses.weapon[signet.weapon] || 0) + bonus;
-                        }
-                        break;
-                    // Other stats (heal-rating, etc.) are not DPS relevant
-                }
+            // Final Display AR = Gear + Signets (matches tswcalc's total)
+            // Note: the 347 constant was removed as it was a workaround for the ring mismatch.
+
+            const baseARBonus = 805; // Standard base AR from full skill points
+            const totalARForCP = attackRating + baseARBonus;
+
+            const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalARForCP / 1400)) + 1))) * (1 + (weaponPower / 375)));
+            const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
+            // Apply Laceration's flat crit power % on top of the rated crit power
+            const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
+
+            cpInput.value = cp;
+            if (attackRatingInput) {
+                attackRatingInput.value = Math.round(attackRating);
             }
-        });
+            if (weaponPowerInput) {
+                weaponPowerInput.value = Math.round(weaponPower);
+            }
+            hitRatingInput.value = Math.round(hitRating);
+            critChanceInput.value = critChance.toFixed(1);
+            critPowerInput.value = critPower.toFixed(1);
+            penRatingInput.value = Math.round(penRating);
 
-        // Aggregate totals for display (all sources)
-        critRating = 40 + baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
-        critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
-        penRating = 40 + basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
-        hitRating = 40 + baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
+            // Store signet bonuses and weapon-specific rating pools for calculate() to pick up
+            window._signetBonuses = signetBonuses;
+            window._weaponRatingPools = {
+                base: {
+                    critRating: baseCritRating,
+                    critPowerRating: baseCritPowerRating,
+                    penRating: basePenRating,
+                    hitRating: baseHitRating
+                },
+                weapon1: weapon1Glyph,
+                weapon2: weapon2Glyph,
+                weapon1Name: weaponSelect.value,
+                weapon2Name: secondaryWeaponSelect.value
+            };
 
-        // Final Display AR = Gear + Signets (matches tswcalc's total)
-        // Note: the 347 constant was removed as it was a workaround for the ring mismatch.
+            updateAbilityDropdowns();
+            calculate();
 
-        const baseARBonus = 805; // Standard base AR from full skill points
-        const totalARForCP = attackRating + baseARBonus;
-
-        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalARForCP / 1400)) + 1))) * (1 + (weaponPower / 375)));
-        const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
-        // Apply Laceration's flat crit power % on top of the rated crit power
-        const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
-
-        cpInput.value = cp;
-        if (attackRatingInput) {
-            attackRatingInput.value = Math.round(attackRating);
+            console.log('Successfully imported build from tswcalc');
+        } catch (err) {
+            console.error('Failed to parse tswcalc URL:', err);
+            alert('An error occurred while parsing the tswcalc URL. Check the console for details.');
         }
-        if (weaponPowerInput) {
-            weaponPowerInput.value = Math.round(weaponPower);
-        }
-        hitRatingInput.value = Math.round(hitRating);
-        critChanceInput.value = critChance.toFixed(1);
-        critPowerInput.value = critPower.toFixed(1);
-        penRatingInput.value = Math.round(penRating);
-
-        // Store signet bonuses and weapon-specific rating pools for calculate() to pick up
-        window._signetBonuses = signetBonuses;
-        window._weaponRatingPools = {
-            base: {
-                critRating: baseCritRating,
-                critPowerRating: baseCritPowerRating,
-                penRating: basePenRating,
-                hitRating: baseHitRating
-            },
-            weapon1: weapon1Glyph,
-            weapon2: weapon2Glyph,
-            weapon1Name: weaponSelect.value,
-            weapon2Name: secondaryWeaponSelect.value
-        };
-
-        updateAbilityDropdowns();
-        calculate();
     }
 
     targetEnemySelect.addEventListener('change', updateAbilityDropdowns);
