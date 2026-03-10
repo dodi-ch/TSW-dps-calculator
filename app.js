@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dustSignetCheckbox = document.getElementById('signet-dust');
 
     const resTotalDps = document.getElementById('res-total-dps');
+    const importBtn = document.getElementById('import-btn');
     const slotBreakdownContainer = document.getElementById('slot-breakdown-container');
 
     // Containers for dynamically generated select elements
@@ -1078,19 +1079,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Mapping for Rating based on QL (0-10) and Distribution (0-4)
             'critical-rating': {
                 head: [0, 56, 112, 167, 223], major: [0, 50, 101, 151, 202], minor: [0, 32, 65, 97, 130],
-                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0]
+                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0, 3.42]
             },
             'critical-power': {
                 head: [0, 77, 155, 232, 310], major: [0, 70, 140, 209, 279], minor: [0, 45, 90, 135, 180],
-                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0]
+                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0, 3.42]
             },
             'penetration-rating': {
                 head: [0, 50, 101, 151, 202], major: [0, 46, 91, 137, 182], minor: [0, 29, 59, 88, 117],
-                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7]
+                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7, 4.0]
             },
             'hit-rating': {
                 head: [0, 50, 101, 151, 202], major: [0, 46, 91, 137, 182], minor: [0, 29, 59, 88, 117],
-                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7]
+                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7, 4.0]
             }
         },
         stat_mapping: { 1: 'critical-rating', 2: 'critical-power', 3: 'penetration-rating', 4: 'hit-rating' },
@@ -1098,9 +1099,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // weapon: weapon slot signets; head: head slot signets; minor: minor talisman signets; major: major talisman signets
         signets: {
             // --- Weapon signets (flat rating bonuses) ---
-            1: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence (ID 1 in tswcalc)
-            21: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence (ID 21 in app.js)
+            1: { slot: 'weapon', stat: 'dmg-pct', value: [5, 10, 15] }, // Aggression (ID 1 in tswcalc)
+            21: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence
             56: { slot: 'weapon', stat: 'attack-rating', value: [0, 0, 117] },   // Chernobog
+            62: { slot: 'ring', stat: 'attack-rating', value: [38, 78, 117] }, // Howling Oni
             68: { slot: 'wrist', stat: 'attack-rating', value: [38, 78, 117] }, // Repulsor Technology
 
             // --- Weapon signets (% bonus) ---
@@ -1166,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'weapon', type: 'weapon', group: 'weapon' },
             { id: 'weapon2', type: 'weapon', group: 'weapon' },
             { id: 'head', type: 'talisman', group: 'head' },
-            { id: 'ring', type: 'talisman', group: 'minor' },
+            { id: 'ring', type: 'talisman', group: 'major' },
             { id: 'neck', type: 'talisman', group: 'major' },
             { id: 'wrist', type: 'talisman', group: 'major' },
             { id: 'luck', type: 'talisman', group: 'minor' },
@@ -1207,21 +1209,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (wName2) secondaryWeaponSelect.value = wName2;
                 }
             } else if (slot.type === 'talisman') {
-                attackRating += TSWCALC_DATA.talismanRating[slot.group][qlIdx] || 0;
+                // Role check: itemId 1=Tank, 2=Healer, 3=DPS, default to DPS if unknown/special
+                const isDpsRole = itemId === 3 || itemId === 82 || itemId === 84 || itemId === 86 || itemId >= 200 || (itemId !== 1 && itemId !== 2 && itemId !== 81 && itemId !== 83 && itemId !== 85 && itemId !== 202 && itemId !== 203 && itemId !== 205 && itemId !== 207);
+                if (isDpsRole) {
+                    attackRating += TSWCALC_DATA.talismanRating[slot.group][qlIdx] || 0;
+                }
             }
 
             // Glyphs
             [{ id: primStatId, dist: primDist }, { id: secStatId, dist: secDist }].forEach(g => {
                 const statName = TSWCALC_DATA.stat_mapping[g.id];
                 if (statName && TSWCALC_DATA.glyphData[statName]) {
-                    const glyphGroup = (slot.group === 'weapon') ? 'head' : slot.group; // weapons use head-size glyphs
+                    const isWeaponSlot = slot.type === 'weapon';
+                    const glyphGroup = isWeaponSlot ? 'head' : slot.group; // weapons use head-size glyphs
                     const base = TSWCALC_DATA.glyphData[statName][glyphGroup] ? TSWCALC_DATA.glyphData[statName][glyphGroup][g.dist] : 0;
-                    const mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
+
+                    // QL 11.0 factors: 4.0 for Pen/Hit, 3.42 for Crit/Power
+                    // Weapon glyphs use a ~0.89 reduction factor compared to talismans
+                    let mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
+                    if (isWeaponSlot && glyphQlIdx === 11) mult *= 0.89;
+
                     const val = base * mult;
 
                     // If this glyph is on a weapon, keep it weapon-specific;
                     // otherwise, treat it as a global (talisman) rating.
-                    const isWeaponSlot = slot.type === 'weapon';
                     const targetBucket = !isWeaponSlot
                         ? 'base'
                         : (slot.id === 'weapon' ? 'weapon1' : (slot.id === 'weapon2' ? 'weapon2' : 'base'));
@@ -1285,15 +1296,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Aggregate totals for display (all sources)
-        critRating = baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
-        critPowerRating = baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
-        penRating = basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
-        hitRating = baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
+        critRating = 40 + baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
+        critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
+        penRating = 40 + basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
+        hitRating = 40 + baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
 
-        // Add Inherent Base AR (assumed Full SP/AP by tswcalc)
-        attackRating += 347;
+        // Final Display AR = Gear + Signets (matches tswcalc's total)
+        // Note: the 347 constant was removed as it was a workaround for the ring mismatch.
 
-        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        const baseARBonus = 805; // Standard base AR from full skill points
+        const totalARForCP = attackRating + baseARBonus;
+
+        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalARForCP / 1400)) + 1))) * (1 + (weaponPower / 375)));
         const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
         // Apply Laceration's flat crit power % on top of the rated crit power
         const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
