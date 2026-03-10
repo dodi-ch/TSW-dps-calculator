@@ -788,9 +788,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const isCrit = Math.random() < (critChance / 100);
             const finalMult = (isCrit ? (critPower / 100) : 1.0) * damageMult;
 
-            // Signet % bonuses: apply subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
-            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0 };
+            // Signet % bonuses: apply global, subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
+            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
             let signetMult = 1.0;
+            if (sBonus.globalDmgPct) {
+                signetMult += sBonus.globalDmgPct / 100;
+            }
             if (ability.subtype && sBonus.subtype[ability.subtype]) {
                 signetMult += sBonus.subtype[ability.subtype] / 100;
             }
@@ -1067,9 +1070,9 @@ document.addEventListener('DOMContentLoaded', () => {
             "10.6": 464, "10.7": 475, "10.8": 492, "10.9": 510, "11.0": 528
         },
         talismanRating: {
-            head: { 0: 559, 1: 596, 2: 636, 3: 682, 4: 735, 5: 788, 6: 846, 7: 936, 8: 1011, 9: 1077, 10: 1144 },
-            major: { 0: 505, 1: 538, 2: 575, 3: 616, 4: 664, 5: 712, 6: 764, 7: 845, 8: 913, 9: 972, 10: 1033 },
-            minor: { 0: 325, 1: 346, 2: 369, 3: 396, 4: 427, 5: 458, 6: 491, 7: 543, 8: 587, 9: 625, 10: 664 }
+            head: { 0: 559, 1: 596, 2: 636, 3: 682, 4: 735, 5: 788, 6: 846, 7: 936, 8: 1011, 9: 1077, 10: 1144, 11: 1144 },
+            major: { 0: 505, 1: 538, 2: 575, 3: 616, 4: 664, 5: 712, 6: 764, 7: 845, 8: 913, 9: 972, 10: 1033, 11: 1033 },
+            minor: { 0: 325, 1: 346, 2: 369, 3: 396, 4: 427, 5: 458, 6: 491, 7: 543, 8: 587, 9: 625, 10: 664, 11: 664 }
         },
         glyphData: {
             // Mapping for Rating based on QL (0-10) and Distribution (0-4)
@@ -1095,8 +1098,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // weapon: weapon slot signets; head: head slot signets; minor: minor talisman signets; major: major talisman signets
         signets: {
             // --- Weapon signets (flat rating bonuses) ---
-            21: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence
+            1: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence (ID 1 in tswcalc)
+            21: { slot: 'weapon', stat: 'attack-rating', value: [47, 94, 141] }, // Violence (ID 21 in app.js)
             56: { slot: 'weapon', stat: 'attack-rating', value: [0, 0, 117] },   // Chernobog
+            68: { slot: 'wrist', stat: 'attack-rating', value: [38, 78, 117] }, // Repulsor Technology
 
             // --- Weapon signets (% bonus) ---
             // Laceration: +crit damage % (8/16/24%) when you critically hit (15s duration, 15s CD = ~100% uptime after first proc)
@@ -1126,6 +1131,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Major talisman signets ---
             23: { slot: 'major', stat: 'attack-rating', value: [47, 94, 141] }, // Amelioration (heal - not DPS relevant)
+
+            // --- Generic Damage % signets ---
+            59: { slot: 'waist', stat: 'dmg-pct', value: [0.5, 1, 1.5] }, // Venice
+            65: { slot: 'occult', stat: 'dmg-pct', value: [0.5, 1, 1.5] }, // Nure-onna's Coils
         }
     };
 
@@ -1148,15 +1157,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Format: {
         //   subtype: { 'Strike': 5, 'Blast': 3, ... },
         //   weapon: { 'Blade': 3 },
-        //   critPowerPct: 24
+        //   critPowerPct: 24,
+        //   globalDmgPct: 3
         // }
-        const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0 };
+        const signetBonuses = { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
 
         const slots = [
             { id: 'weapon', type: 'weapon', group: 'weapon' },
             { id: 'weapon2', type: 'weapon', group: 'weapon' },
             { id: 'head', type: 'talisman', group: 'head' },
-            { id: 'ring', type: 'talisman', group: 'major' },
+            { id: 'ring', type: 'talisman', group: 'minor' },
             { id: 'neck', type: 'talisman', group: 'major' },
             { id: 'wrist', type: 'talisman', group: 'major' },
             { id: 'luck', type: 'talisman', group: 'minor' },
@@ -1253,6 +1263,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Laceration: add directly to critPower % after calculation
                         signetBonuses.critPowerPct += bonus;
                         break;
+                    case 'dmg-pct':
+                        // Venice, Nure-onna's Coils, etc.
+                        signetBonuses.globalDmgPct += bonus;
+                        break;
                     case 'subtype-dmg-pct':
                         // e.g. Assassination gives +% to Strike abilities
                         if (signet.subtype) {
@@ -1275,6 +1289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         critPowerRating = baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
         penRating = basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
         hitRating = baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
+
+        // Add Inherent Base AR (assumed Full SP/AP by tswcalc)
+        attackRating += 347;
 
         const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
         const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
