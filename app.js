@@ -913,8 +913,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 let canCast = true;
                 const isPrim = action.weapon === primWeapon;
                 const isSec = action.weapon === secWeapon;
+                const isValidWeapon = isPrim || isSec || primWeapon === "All";
 
                 const reqResources = action.resourceRequirement || targetResources;
+
+                // Abilities can only be cast from equipped weapons (unless primary is "All")
+                if (!isValidWeapon) {
+                    continue;
+                }
 
                 if (action.isConsumer) {
                     if (isPrim && primResources < reqResources) canCast = false;

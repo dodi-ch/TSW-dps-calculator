@@ -908,16 +908,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 let canCast = true;
                 const isPrim = action.weapon === primWeapon;
                 const isSec = action.weapon === secWeapon;
+                const isValidWeapon = isPrim || isSec || primWeapon === "All";
 
                 const reqResources = action.resourceRequirement || targetResources;
+
+                // Abilities can only be cast from equipped weapons (unless primary is "All")
+                if (!isValidWeapon) {
+                    continue;
+                }
 
                 if (action.isConsumer) {
                     if (isPrim && primResources < reqResources) canCast = false;
                     if (isSec && secResources < reqResources) canCast = false;
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
-                    // Logic for builders: don't overbuild
-                    if (isPrim && primResources >= 5) canCast = false;
-                    if (isSec && secResources >= 5) canCast = false;
+                    // Builders can always cast - they generate resources
+                    canCast = true;
                 }
 
                 if (canCast) {
