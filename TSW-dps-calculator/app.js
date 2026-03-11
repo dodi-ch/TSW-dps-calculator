@@ -12,9 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const weaponSelect = document.getElementById('weapon-type');
     const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
+    const auxWeaponSelect = document.getElementById('auxiliary-weapon-type');
     const resourcesInput = document.getElementById('resources-used');
     const simTimeInput = document.getElementById('simulation-time');
     const dustSignetCheckbox = document.getElementById('signet-dust');
+
+    // list of auxiliary weapons we treat specially (should match data.js content)
+    const AUX_WEAPONS = ["Rocket Launcher", "Chainsaw", "Quantum", "Flamethrower"];
+
 
     const resTotalDps = document.getElementById('res-total-dps');
     const slotBreakdownContainer = document.getElementById('slot-breakdown-container');
@@ -427,8 +432,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const sortedWeapons = Array.from(weapons).sort();
 
     sortedWeapons.forEach(w => {
-        // Exclude Aux/Deviations from main weapons list if they are in there
-        if (w === "Aux" || w === "Anima Deviations" || w === "") return;
+        // Exclude placeholders
+        if (!w || w === "Aux" || w === "Anima Deviations") return;
+
+        // auxiliary weapons are their own category and should not show up in
+        // the primary/secondary drop‑downs. push them into the aux dropdown
+        if (AUX_WEAPONS.includes(w)) {
+            const opt = document.createElement('option');
+            opt.value = w;
+            opt.textContent = w;
+            auxWeaponSelect.appendChild(opt);
+            return;
+        }
 
         const option1 = document.createElement('option');
         option1.value = w;
@@ -440,6 +455,9 @@ document.addEventListener('DOMContentLoaded', () => {
         option2.textContent = w;
         secondaryWeaponSelect.appendChild(option2);
     });
+
+    // default aux selector to show all aux abilities
+    auxWeaponSelect.value = "All";
 
     // Filtering Helpers
     function populateDropdowns(selectElements, filterFn, emptyLabel = "-- None --") {
@@ -505,9 +523,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 getType(a).includes("Elite")
         );
 
-        // Aux Actives: Fixed list of auxiliary weapons
-        const auxWeapons = ["Rocket Launcher", "Chainsaw", "Quantum", "Whiplash", "Flamethrower"];
-        populateDropdowns(auxActiveSelects, a => auxWeapons.includes(a.weapon) && getType(a).includes("Active"));
+        // Aux Actives: Filter by the selected auxiliary weapon (or show all)
+        const selectedAux = auxWeaponSelect.value;
+        populateDropdowns(auxActiveSelects, a =>
+            AUX_WEAPONS.includes(a.weapon) &&
+            (selectedAux === 'All' || a.weapon === selectedAux) &&
+            getType(a).includes("Active")
+        );
 
         // Elite Passives: Any weapon (regardless of selection), type contains Elite and Passive
         populateDropdowns(elitePassiveSelects, a => getType(a).includes("Elite") && getType(a).includes("Passive"));
@@ -515,8 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Normal Passives: Any weapon (regardless of selection), type contains Passive, NOT Elite
         populateDropdowns(normalPassiveSelects, a => getType(a).includes("Passive") && !getType(a).includes("Elite"));
 
-        // Aux Passives: Use aux weapon list
-        populateDropdowns(auxPassiveSelects, a => auxWeapons.includes(a.weapon) && getType(a).includes("Passive"));
+        // Aux Passives: analogous filtering
+        populateDropdowns(auxPassiveSelects, a =>
+            AUX_WEAPONS.includes(a.weapon) &&
+            (selectedAux === 'All' || a.weapon === selectedAux) &&
+            getType(a).includes("Passive")
+        );
 
         calculate();
     }
@@ -1352,6 +1378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     targetEnemySelect.addEventListener('change', calculate);
     weaponSelect.addEventListener('change', updateAbilityDropdowns);
     secondaryWeaponSelect.addEventListener('change', updateAbilityDropdowns);
+    auxWeaponSelect.addEventListener('change', updateAbilityDropdowns);
     resourcesInput.addEventListener('input', calculate);
     simTimeInput.addEventListener('input', calculate);
 
