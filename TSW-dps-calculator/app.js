@@ -714,6 +714,13 @@ document.addEventListener('DOMContentLoaded', () => {
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
+        // Debug logging
+        console.log("Selected actives:", allActives.map(a => a.name));
+        console.log("allActives length:", allActives.length);
+        allActives.forEach((a, i) => {
+            console.log(`  [${i}] ${a.name} - weapon=${a.weapon}, isConsumer=${a.isConsumer}, cooldown=${a.cooldown}`);
+        });
+
         if (allActives.length === 0) {
             resTotalDps.textContent = "0";
             slotBreakdownContainer.innerHTML = "<em>No active abilities selected</em>";
@@ -903,7 +910,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 0; i < allActives.length; i++) {
                 const action = allActives[i];
-                if (activeCooldowns[i] > 0) continue;
+                if (activeCooldowns[i] > 0) {
+                    if (action.name === "Molten Steel") {
+                        console.log(`${action.name}: cd blocked (${activeCooldowns[i].toFixed(2)}s remaining)`);
+                    }
+                    continue;
+                }
 
                 let canCast = true;
                 const isPrim = action.weapon === primWeapon;
@@ -914,18 +926,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
                 if (!isValidWeapon) {
+                    if (action.name === "Molten Steel") {
+                        console.log(`${action.name}: weapon mismatch. action.weapon=${action.weapon}, primWeapon=${primWeapon}, secWeapon=${secWeapon}`);
+                    }
                     continue;
                 }
 
+                if (action.name === "Molten Steel") {
+                    console.log(`Checking ${action.name}: isConsumer=${action.isConsumer}, isPrim=${isPrim}, isSec=${isSec}, primResources=${primResources}, secResources=${secResources}, reqResources=${reqResources}`);
+                }
+
                 if (action.isConsumer) {
-                    if (isPrim && primResources < reqResources) canCast = false;
-                    if (isSec && secResources < reqResources) canCast = false;
+                    if (isPrim && primResources < reqResources) {
+                        canCast = false;
+                        if (action.name === "Molten Steel") console.log(`${action.name}: insufficient primary resources ${primResources}/${reqResources}`);
+                    }
+                    if (isSec && secResources < reqResources) {
+                        canCast = false;
+                        if (action.name === "Molten Steel") console.log(`${action.name}: insufficient secondary resources ${secResources}/${reqResources}`);
+                    }
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
                     // Builders can always cast - they generate resources
                     canCast = true;
                 }
 
                 if (canCast) {
+                    if (action.name === "Molten Steel") {
+                        console.log(`Casting ${action.name} at time ${time.toFixed(2)}s`);
+                    }
                     performAttack(action, action.weapon);
 
                     const timeTaken = action.castTime;
@@ -939,6 +967,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (action.tree !== "Aux") {
                         primResources = Math.min(5, primResources + 1);
                         if (secWeapon !== "None") secResources = Math.min(5, secResources + 1);
+                        if (action.name === "Ignite") {
+                            console.log(`After ${action.name}: primResources=${primResources}, secResources=${secResources}`);
+                        }
                     }
 
                     // Effects
@@ -977,7 +1008,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     castSomething = true;
-                    break;
+                    // Only break if a consumer cast (since they consume resources)
+                    // Builders should continue so other abilities can cast
+                    if (action.isConsumer) {
+                        break;
+                    }
                 }
             }
 
