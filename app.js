@@ -778,7 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
         const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
-        let powerLineStartTime = null;
+        // previous tether state tracking is no longer needed when we auto‑detonate
         let elementalFuryEndTime = 0;
 
         function performAttack(ability, weaponForStats) {
@@ -821,24 +821,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 signetMult += sBonus.weapon[ability.weapon] / 100;
             }
 
-            // Special handling for Power Line-Voltaic Detonation:
-            // First cast: applies the Power Line tether (no big hit).
-            // Second cast (while tether is active): Voltaic Detonation whose damage
-            // scales with the time waited, up to +200% (3x base) at 10 seconds.
+            // Special handling for Power Line-Voltaic Detonation: assume the player
+            // always follows up with the detonation after 9s, i.e. the ability is
+            // effectively a single cast that does both the tether ticks and the
+            // max‑stack explosion. CP is assumed non‑zero.
             let rawBaseDmg;
             if (ability.name === POWER_LINE_NAME) {
-                if (powerLineStartTime == null) {
-                    // Start Power Line tether – minimal direct damage, main value is in detonation.
-                    powerLineStartTime = time;
-                    rawBaseDmg = 0;
-                } else {
-                    const elapsed = Math.max(0, time - powerLineStartTime);
-                    const stacks = Math.max(1, Math.min(10, Math.floor(elapsed)));
-                    const baseDetonation = 226 * (1 + 2 * (stacks / 10)); // up to +200% at 10 stacks
-                    // Tie to CP loosely: scale with cp relative to a 1000 CP baseline
-                    rawBaseDmg = baseDetonation * (cp / 1000);
-                    powerLineStartTime = null;
-                }
+                const cpFactor = (cp > 0 ? cp / 1000 : 1);
+                const tetherDamage = 14 * 10;            // ten ticks worth
+                const detonationBase = 226 * 3;          // 3x base at 10 stacks
+                rawBaseDmg = tetherDamage + detonationBase * cpFactor;
             } else {
                 // Use scaling * cp for base damage
                 rawBaseDmg = (ability.scalingToUse || 0) * cp;
