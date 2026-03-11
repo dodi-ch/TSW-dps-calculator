@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dustSignetCheckbox = document.getElementById('signet-dust');
 
     // list of auxiliary weapons we treat specially (should match data.js content)
-    const AUX_WEAPONS = ["Rocket Launcher", "Chainsaw", "Quantum", "Flamethrower"];
+    // there are five aux weapons in the game: chainsaw, flamethrower, quantum, rocket launcher and whip
+    const AUX_WEAPONS = ["Rocket Launcher", "Chainsaw", "Quantum", "Flamethrower", "Whip"];
 
 
     const resTotalDps = document.getElementById('res-total-dps');
@@ -457,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // default aux selector to show all aux abilities
-    auxWeaponSelect.value = "All";
+    auxWeaponSelect.value = "";
 
     // Filtering Helpers
     function populateDropdowns(selectElements, filterFn, emptyLabel = "-- None --") {
@@ -524,10 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         // Aux Actives: Filter by the selected auxiliary weapon (or show all)
-        const selectedAux = auxWeaponSelect.value;
+        const selectedAux = auxWeaponSelect.value; // blank means no filter
         populateDropdowns(auxActiveSelects, a =>
             AUX_WEAPONS.includes(a.weapon) &&
-            (selectedAux === 'All' || a.weapon === selectedAux) &&
+            (!selectedAux || a.weapon === selectedAux) &&
             getType(a).includes("Active")
         );
 
@@ -540,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Aux Passives: analogous filtering
         populateDropdowns(auxPassiveSelects, a =>
             AUX_WEAPONS.includes(a.weapon) &&
-            (selectedAux === 'All' || a.weapon === selectedAux) &&
+            (!selectedAux || a.weapon === selectedAux) &&
             getType(a).includes("Passive")
         );
 
