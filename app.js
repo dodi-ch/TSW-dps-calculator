@@ -771,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const penChance = stats.penChance;
             const critChance = stats.critChance;
             const critPower = stats.critPower;
+            const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
             let damageMult = 1.0;
             const isEvaded = enemy.evadeRating > hitRating;
             const isGlanced = !isEvaded && enemy.defenseRating > hitRating;
@@ -787,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Crit check (Probabilistic)
             const isCrit = Math.random() < (critChance / 100);
-            const finalMult = (isCrit ? (critPower / 100) : 1.0) * damageMult;
+            const finalMult = (isCrit ? (1 + critPower / 100) : 1.0) * damageMult;
 
             // Signet % bonuses: apply global, subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
             const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
@@ -858,7 +859,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // "Your Elemental abilities have a 33% chance to deal 105 magical damage to 6 enemies around the target."
             // "Requires an equipped Elementalism Focus."
             // Note: Single target DPS calc, so we only apply the damage once. Base 105 damage loosely scaled to 1000 CP.
-            const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
             if (hasElementalWeapon && ability.weapon === 'Elementalism') {
                 if (Math.random() < 0.33) {
                     const ELE_OVERLOAD_NAME = 'Elemental Overload (Proc)';
@@ -920,9 +920,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (isPrim && primResources < reqResources) canCast = false;
                     if (isSec && secResources < reqResources) canCast = false;
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
-                    // Logic for builders: don't overbuild
-                    if (isPrim && primResources >= 5) canCast = false;
-                    if (isSec && secResources >= 5) canCast = false;
+                    // Builders can always cast - they generate resources
+                    canCast = true;
                 }
 
                 if (canCast) {

@@ -785,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Crit check (Probabilistic)
             const isCrit = Math.random() < (critChance / 100);
-            const finalMult = (isCrit ? (critPower / 100) : 1.0) * damageMult;
+            const finalMult = (isCrit ? (1 + critPower / 100) : 1.0) * damageMult;
 
             // Signet % bonuses: apply subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
             const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0 };
