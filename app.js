@@ -1145,23 +1145,47 @@ document.addEventListener('DOMContentLoaded', () => {
             major: { 0: 505, 1: 538, 2: 575, 3: 616, 4: 664, 5: 712, 6: 764, 7: 845, 8: 913, 9: 972, 10: 1033, 11: 1033 },
             minor: { 0: 325, 1: 346, 2: 369, 3: 396, 4: 427, 5: 458, 6: 491, 7: 543, 8: 587, 9: 625, 10: 664, 11: 664 }
         },
+        // glyph QL index in URL: 0=QL10.0, 1=QL10.1, 2=QL10.2, 3=QL10.3, 4=QL10.4, 5=QL10.5, 11=QL11.0
+        glyphQlMap: ['10.0', '10.1', '10.2', '10.3', '10.4', '10.5', null, null, null, null, null, '11.0'],
+        // Direct lookup: glyphData[stat][qlStr][slotGroup][dist] = rating value
+        // Data sourced directly from tswcalc-data.min.js (joakibj.github.io/tswcalc)
+        // Weapon slots use their own 'weapon' key (same values as 'head' in tswcalc data)
         glyphData: {
-            // Mapping for Rating based on QL (0-10) and Distribution (0-4)
             'critical-rating': {
-                head: [0, 56, 112, 167, 223], major: [0, 50, 101, 151, 202], minor: [0, 32, 65, 97, 130],
-                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0, 3.42]
+                '10.0': { head: [0,56,112,167,223], weapon: [0,56,112,167,223], major: [0,50,101,151,202], minor: [0,32,65,97,130] },
+                '10.1': { head: [0,60,120,181,241], weapon: [0,60,120,181,241], major: [0,54,109,163,217], minor: [0,35,70,105,140] },
+                '10.2': { head: [0,65,130,195,260], weapon: [0,65,130,195,260], major: [0,59,117,176,235], minor: [0,38,75,113,151] },
+                '10.3': { head: [0,71,141,212,283], weapon: [0,71,141,212,283], major: [0,64,127,191,255], minor: [0,41,82,123,164] },
+                '10.4': { head: [0,77,155,232,309], weapon: [0,77,155,232,309], major: [0,70,140,209,279], minor: [0,45,90,135,180] },
+                '10.5': { head: [0,84,168,252,336], weapon: [0,84,168,252,336], major: [0,76,151,227,303], minor: [0,49,97,146,195] },
+                '11.0': { head: [0,0,181,0,362],    weapon: [0,0,181,0,362],    major: [0,0,163,0,327],    minor: [0,0,105,0,210] }
             },
             'critical-power': {
-                head: [0, 77, 155, 232, 310], major: [0, 70, 140, 209, 279], minor: [0, 45, 90, 135, 180],
-                ql_mult: [1, 1.08, 1.22, 1.3, 1.39, 1.48, 1.54, 1.63, 1.76, 1.9, 2.0, 3.42]
+                '10.0': { head: [0,60,119,179,238], weapon: [0,60,119,179,238], major: [0,54,108,161,215], minor: [0,35,69,104,138] },
+                '10.1': { head: [0,64,128,191,255], weapon: [0,64,128,191,255], major: [0,58,115,173,231], minor: [0,37,74,111,148] },
+                '10.2': { head: [0,68,136,205,273], weapon: [0,68,136,205,273], major: [0,62,123,185,246], minor: [0,40,79,119,158] },
+                '10.3': { head: [0,73,145,218,291], weapon: [0,73,145,218,291], major: [0,66,128,197,263], minor: [0,42,84,127,169] },
+                '10.4': { head: [0,77,155,232,310], weapon: [0,77,155,232,310], major: [0,70,140,210,280], minor: [0,45,90,135,180] },
+                '10.5': { head: [0,82,164,246,328], weapon: [0,82,164,246,328], major: [0,74,148,222,296], minor: [0,48,95,143,191] },
+                '11.0': { head: [0,0,173,0,347],    weapon: [0,0,173,0,347],    major: [0,0,156,0,313],    minor: [0,0,100,0,201] }
             },
             'penetration-rating': {
-                head: [0, 50, 101, 151, 202], major: [0, 46, 91, 137, 182], minor: [0, 29, 59, 88, 117],
-                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7, 4.0]
+                '10.0': { head: [0,50,101,151,202], weapon: [0,50,101,151,202], major: [0,46,91,137,182],  minor: [0,29,59,88,117] },
+                '10.1': { head: [0,56,111,166,221], weapon: [0,56,111,166,221], major: [0,50,100,150,200], minor: [0,32,64,96,129] },
+                '10.2': { head: [0,61,123,184,245], weapon: [0,61,123,184,245], major: [0,55,111,166,221], minor: [0,36,71,107,142] },
+                '10.3': { head: [0,69,138,207,276], weapon: [0,69,138,207,276], major: [0,62,125,187,249], minor: [0,40,80,120,160] },
+                '10.4': { head: [0,80,160,240,319], weapon: [0,80,160,240,319], major: [0,72,144,216,288], minor: [0,46,93,139,185] },
+                '10.5': { head: [0,91,182,272,363], weapon: [0,91,182,272,363], major: [0,82,164,246,328], minor: [0,53,105,158,211] },
+                '11.0': { head: [0,0,203,0,407],    weapon: [0,0,203,0,407],    major: [0,0,183,0,367],    minor: [0,0,118,0,236] }
             },
             'hit-rating': {
-                head: [0, 50, 101, 151, 202], major: [0, 46, 91, 137, 182], minor: [0, 29, 59, 88, 117],
-                ql_mult: [1, 1.12, 1.22, 1.36, 1.58, 1.8, 1.88, 2.05, 2.3, 2.5, 2.7, 4.0]
+                '10.0': { head: [0,50,101,151,202], weapon: [0,50,101,151,202], major: [0,46,91,137,182],  minor: [0,29,59,88,117] },
+                '10.1': { head: [0,56,111,166,221], weapon: [0,56,111,166,221], major: [0,50,100,150,200], minor: [0,32,64,96,129] },
+                '10.2': { head: [0,61,123,184,245], weapon: [0,61,123,184,245], major: [0,55,111,166,221], minor: [0,36,71,107,142] },
+                '10.3': { head: [0,69,138,207,276], weapon: [0,69,138,207,276], major: [0,62,125,187,249], minor: [0,40,80,120,160] },
+                '10.4': { head: [0,80,160,240,319], weapon: [0,80,160,240,319], major: [0,72,144,216,288], minor: [0,46,93,139,185] },
+                '10.5': { head: [0,91,182,272,363], weapon: [0,91,182,272,363], major: [0,82,164,246,328], minor: [0,53,105,158,211] },
+                '11.0': { head: [0,0,203,0,407],    weapon: [0,0,203,0,407],    major: [0,0,183,0,367],    minor: [0,0,118,0,236] }
             }
         },
         stat_mapping: { 1: 'critical-rating', 2: 'critical-power', 3: 'penetration-rating', 4: 'hit-rating' },
@@ -1304,20 +1328,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Glyphs
+                // Glyphs — use direct lookup table (stat → qlStr → slotGroup → dist)
                 [{ id: primStatId, dist: primDist }, { id: secStatId, dist: secDist }].forEach(g => {
                     const statName = TSWCALC_DATA.stat_mapping[g.id];
-                    if (statName && TSWCALC_DATA.glyphData[statName]) {
+                    if (statName && g.dist > 0 && TSWCALC_DATA.glyphData[statName]) {
                         const isWeaponSlot = slot.type === 'weapon';
-                        const glyphGroup = isWeaponSlot ? 'head' : slot.group; // weapons use head-size glyphs
-                        const base = TSWCALC_DATA.glyphData[statName][glyphGroup] ? TSWCALC_DATA.glyphData[statName][glyphGroup][g.dist] : 0;
-
-                        // QL 11.0 factors: 4.0 for Pen/Hit, 3.42 for Crit/Power
-                        // Weapon glyphs use a ~0.89 reduction factor compared to talismans
-                        let mult = TSWCALC_DATA.glyphData[statName].ql_mult[glyphQlIdx] || 1;
-                        if (isWeaponSlot && glyphQlIdx === 11) mult *= 0.89;
-
-                        const val = base * mult;
+                        const glyphGroup = isWeaponSlot ? 'weapon' : slot.group;
+                        const qlStr = TSWCALC_DATA.glyphQlMap[glyphQlIdx] || '10.0';
+                        const qlTable = TSWCALC_DATA.glyphData[statName][qlStr];
+                        const val = (qlTable && qlTable[glyphGroup]) ? (qlTable[glyphGroup][g.dist] || 0) : 0;
 
                         // If this glyph is on a weapon, keep it weapon-specific;
                         // otherwise, treat it as a global (talisman) rating.
