@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function getLocalIconUrlForAbility(ability) {
         if (!ability || !ability.weapon || !ability.name) return null;
         const folder = ability.weapon; // e.g. "Blade", "Assault Rifle"
-        const fileName = `Ability - ${ability.name.toLowerCase()}.png`;
+        const fileName = `${ability.name.toLowerCase()}.png`;
         return `ability_icons/${folder}/${fileName}`;
     }
 
