@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getLocalIconUrlForAbility(ability) {
         if (!ability || !ability.weapon || !ability.name) return null;
-        const folder = ability.weapon; // e.g. "Blade", "Assault Rifle"
-        const fileName = `${ability.name.toLowerCase()}.png`;
+        const folder = ability.weapon === "Quantum" ? "Quantum Brace" : ability.weapon;
+        const fileName = ability.icon || `${ability.name.toLowerCase()}.png`;
         return `ability_icons/${folder}/${fileName}`;
     }
 
@@ -507,20 +507,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSelectedWeapon = (weapon) => weapon === prim || weapon === sec || prim === "All";
         const getType = (a) => a.type || "";
 
-        // Normal actives: Active (or no type) but NOT Elite
+        // Normal actives: Active (or no type) but NOT Elite, NOT Auxiliary
         populateDropdowns(
             activeSelects,
             a => isSelectedWeapon(a.weapon) &&
                 (getType(a).includes("Active") || getType(a) === "") &&
-                !getType(a).includes("Elite")
+                !getType(a).includes("Elite") &&
+                !AUX_WEAPONS.includes(a.weapon)
         );
 
-        // Elite active: Active + Elite
+        // Elite active: Active + Elite, NOT Auxiliary
         populateDropdowns(
             eliteActiveSelects,
             a => isSelectedWeapon(a.weapon) &&
                 getType(a).includes("Active") &&
-                getType(a).includes("Elite")
+                getType(a).includes("Elite") &&
+                !AUX_WEAPONS.includes(a.weapon)
         );
 
         // Aux Actives: Filter by the selected auxiliary weapon (or show all)
@@ -534,8 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Elite Passives: Any weapon (regardless of selection), type contains Elite and Passive
         populateDropdowns(elitePassiveSelects, a => getType(a).includes("Elite") && getType(a).includes("Passive"));
 
-        // Normal Passives: Any weapon (regardless of selection), type contains Passive, NOT Elite
-        populateDropdowns(normalPassiveSelects, a => getType(a).includes("Passive") && !getType(a).includes("Elite"));
+        // Normal Passives: Any weapon (regardless of selection), type contains Passive, NOT Elite, NOT Auxiliary
+        populateDropdowns(normalPassiveSelects, a => getType(a).includes("Passive") && !getType(a).includes("Elite") && !AUX_WEAPONS.includes(a.weapon));
 
         // Aux Passives: analogous filtering
         populateDropdowns(auxPassiveSelects, a =>
@@ -721,7 +723,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .map(sel => {
                     const ability = tswData[sel.value];
                     if (!ability) return null;
-                    const stats = getAbilityStats(ability, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, resourcesForActives);
+                    const wStats = getStatsForWeapon(ability.weapon);
+                    const stats = getAbilityStats(ability, cp, wStats.critChance, wStats.critPower, wStats.penChance, resourcesForActives);
                     const orderVal = parseFloat(sel.dataset.order || '');
                     stats.orderPriority = !isNaN(orderVal) && orderVal > 0 ? orderVal : 0;
                     return stats;
@@ -738,9 +741,18 @@ document.addEventListener('DOMContentLoaded', () => {
             elite: eliteActives.map(a => a.name),
             aux: auxActives.map(a => a.name)
         });
-        const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
-        const normPass = normalPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
-        const auxPass = auxPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => getAbilityStats(a, cp, critChanceGlobal, critPowerGlobal, penChanceGlobal, 5));
+        const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => {
+            const wStats = getStatsForWeapon(a.weapon);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+        });
+        const normPass = normalPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => {
+            const wStats = getStatsForWeapon(a.weapon);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+        });
+        const auxPass = auxPassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => {
+            const wStats = getStatsForWeapon(a.weapon);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+        });
 
         let allActives = [...actives, ...eliteActives, ...auxActives];
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
@@ -1313,7 +1325,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (slot.type === 'weapon') {
                     if (slot.id === 'weapon') {
-                        weaponPower = TSWCALC_DATA.weaponPower[`10.${qlIdx}`] || (qlIdx === 11 ? 528 : 75);
+                        const wpKey = qlIdx === 11 ? '11.0' : `10.${qlIdx}`;
+                        weaponPower = TSWCALC_DATA.weaponPower[wpKey] || 75;
                         const wName = TSWCALC_DATA.wtype_mapping[itemId];
                         if (wName) weaponSelect.value = wName;
                     } else if (slot.id === 'weapon2') {
@@ -1403,10 +1416,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Aggregate totals for display (all sources)
-            critRating = 40 + baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
-            critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
-            penRating = 40 + basePenRating + weapon1Glyph.penRating + weapon2Glyph.penRating;
-            hitRating = 40 + baseHitRating + weapon1Glyph.hitRating + weapon2Glyph.hitRating;
+            critRating = 40 + baseCritRating + weapon1Glyph.critRating;
+            critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating;
+            penRating = 40 + basePenRating + weapon1Glyph.penRating;
+            hitRating = 40 + baseHitRating + weapon1Glyph.hitRating;
 
             // Final Display AR = Gear + Signets (matches tswcalc's total)
             // Note: the 347 constant was removed as it was a workaround for the ring mismatch.
@@ -1604,7 +1617,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCombatPower() {
         const attackRating = parseFloat(attackRatingInput.value) || 0;
         const weaponPower = parseFloat(weaponPowerInput?.value) || 528;
-        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        const totalAR = attackRating + 805;
+        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalAR / 1400)) + 1))) * (1 + (weaponPower / 375)));
         cpInput.value = cp;
     }
 

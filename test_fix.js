@@ -146,10 +146,11 @@ slots.forEach(slot => {
     });
 });
 
-const critRating = 40 + baseCritRating + weapon1Glyph.critRating + weapon2Glyph.critRating;
-const critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating + weapon2Glyph.critPowerRating;
-const penRating  = 40 + basePenRating  + weapon1Glyph.penRating  + weapon2Glyph.penRating;
-const hitRating  = 40 + baseHitRating  + weapon1Glyph.hitRating  + weapon2Glyph.hitRating;
+// Aggregate totals for display (Primary Weapon only, matching updated app.js)
+const critRating = 40 + baseCritRating + weapon1Glyph.critRating;
+const critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating;
+const penRating  = 40 + basePenRating  + weapon1Glyph.penRating;
+const hitRating  = 40 + baseHitRating  + weapon1Glyph.hitRating;
 
 const baseARBonus = 805;
 const totalARForCP = attackRating + baseARBonus;

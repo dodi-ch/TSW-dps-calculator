@@ -13,6 +13,24 @@ def clean_name(name):
     name = re.sub(r'\s+Proc$', '', name, flags=re.IGNORECASE)
     return name.strip()
 
+def build_icon_map():
+    icon_map = {}
+    base_dir = 'ability_icons'
+    if not os.path.exists(base_dir):
+        return icon_map
+        
+    for weapon_dir in os.listdir(base_dir):
+        w_path = os.path.join(base_dir, weapon_dir)
+        if os.path.isdir(w_path):
+            if weapon_dir not in icon_map:
+                icon_map[weapon_dir] = {}
+            for fname in os.listdir(w_path):
+                if fname.lower().endswith('.png'):
+                    name_part = fname[:-4]
+                    norm = ''.join(c for c in name_part.lower() if c.isalnum())
+                    icon_map[weapon_dir][norm] = fname
+    return icon_map
+
 def parse_scaling_data():
     scaling_data = {}
     if not os.path.exists('sheet1.csv'):
@@ -52,6 +70,7 @@ def parse_scaling_data():
 
 def integrate():
     scaling_data = parse_scaling_data()
+    icon_map = build_icon_map()
     abilities = []
     
     csv_file = 'TSW Ability Wheel - Abilities.csv'
@@ -101,6 +120,15 @@ def integrate():
                 except:
                     return 0.0
             
+            norm_name = ''.join(c for c in name.lower() if c.isalnum())
+            weapon_folder = weapon
+            if weapon == "Quantum":
+                weapon_folder = "Quantum Brace"
+            
+            icon_filename = None
+            if weapon_folder in icon_map and norm_name in icon_map[weapon_folder]:
+                icon_filename = icon_map[weapon_folder][norm_name]
+            
             ability = {
                 "tree": tree,
                 "name": name,
@@ -112,7 +140,8 @@ def integrate():
                 "cooldown": to_sec(row.get('Cooldown')),
                 "description": description,
                 "type": atype,
-                "weapon": weapon
+                "weapon": weapon,
+                "icon": icon_filename
             }
             abilities.append(ability)
 
