@@ -1416,18 +1416,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Aggregate totals for display (all sources)
-            critRating = 40 + baseCritRating + weapon1Glyph.critRating;
-            critPowerRating = 40 + baseCritPowerRating + weapon1Glyph.critPowerRating;
-            penRating = 40 + basePenRating + weapon1Glyph.penRating;
-            hitRating = 40 + baseHitRating + weapon1Glyph.hitRating;
+            critRating = baseCritRating + weapon1Glyph.critRating;
+            critPowerRating = baseCritPowerRating + weapon1Glyph.critPowerRating;
+            penRating = basePenRating + weapon1Glyph.penRating;
+            hitRating = baseHitRating + weapon1Glyph.hitRating;
 
             // Final Display AR = Gear + Signets (matches tswcalc's total)
-            // Note: the 347 constant was removed as it was a workaround for the ring mismatch.
+            const cpFormula = (ar, wp) => {
+                if (ar < 5200) {
+                    return Math.round((375 - (600 / (Math.pow(Math.E, (ar / 1400)) + 1))) * (1 + (wp / 375)));
+                } else {
+                    const c = (0.00008 * wp) + 0.0301;
+                    return Math.round(204.38 + (0.5471 * wp) + (c * ar));
+                }
+            };
 
-            const baseARBonus = 805; // Standard base AR from full skill points
-            const totalARForCP = attackRating + baseARBonus;
-
-            const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalARForCP / 1400)) + 1))) * (1 + (weaponPower / 375)));
+            const cp = cpFormula(attackRating, weaponPower);
             const critChance = 55.14 - (100.3 / (Math.pow(Math.E, (critRating / 790.3)) + 1));
             // Apply Laceration's flat crit power % on top of the rated crit power
             const critPower = Math.sqrt(5 * critPowerRating + 625) + signetBonuses.critPowerPct;
@@ -1617,8 +1621,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCombatPower() {
         const attackRating = parseFloat(attackRatingInput.value) || 0;
         const weaponPower = parseFloat(weaponPowerInput?.value) || 528;
-        const totalAR = attackRating + 805;
-        const cp = Math.round((375 - (600 / (Math.pow(Math.E, (totalAR / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        
+        let cp;
+        if (attackRating < 5200) {
+            cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        } else {
+            const c = (0.00008 * weaponPower) + 0.0301;
+            cp = Math.round(204.38 + (0.5471 * weaponPower) + (c * attackRating));
+        }
         cpInput.value = cp;
     }
 
