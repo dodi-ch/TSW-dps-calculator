@@ -812,6 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Simulation starting with weapons:", { primWeapon, secWeapon });
         
         const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
+        const hasBladeWeapon = (primWeapon === 'Blade' || secWeapon === 'Blade');
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
         const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
         // previous tether state tracking is no longer needed when we auto‑detonate
@@ -930,6 +931,9 @@ document.addEventListener('DOMContentLoaded', () => {
             allPassives.forEach((passive, p) => {
                 if (passiveCooldowns[p] <= 0) {
                     if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) return;
+                    
+                    // Check for requiresBlade flag (Two Cuts passive)
+                    if (passive.originalAbility && passive.originalAbility.requiresBlade && !hasBladeWeapon) return;
 
                     // Passives inherit the same signet multiplier as the triggering hit
                     let pSignetMult = 1.0;

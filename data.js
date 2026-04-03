@@ -31,8 +31,8 @@ const tswData = [
     "tree": "Enforce",
     "name": "Out for a Kill",
     "scaling": 0.0,
-    "scaling_1": 1.19608,
-    "scaling_5": 2.36832,
+    "scaling_1": 1.196083126,
+    "scaling_5": 2.368324063,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -58,9 +58,9 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Buckshot",
-    "scaling": 1.6558,
+    "scaling": 1.655801697,
     "scaling_1": 0.0,
-    "scaling_5": 1.81116,
+    "scaling_5": 1.811156013,
     "note": "",
     "cast_time": 1.5,
     "cooldown": 10.0,
@@ -86,7 +86,7 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Kneecapper",
-    "scaling": 4.60022,
+    "scaling": 0.7795718244,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -114,7 +114,7 @@ const tswData = [
   {
     "tree": "Control",
     "name": "Powder Burn",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -282,7 +282,7 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Shotgun Wedding",
-    "scaling": 0.86465,
+    "scaling": 0.8646500103,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -338,7 +338,7 @@ const tswData = [
   {
     "tree": "Restricted Access",
     "name": "Takedown",
-    "scaling": 1.56166,
+    "scaling": 1.56166335,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -361,7 +361,7 @@ const tswData = [
     "description": "Whenever you penetrate, you build a counter. Once you reach 3 counters, you gain the Minor Penetration Chance effect, which increases Penetration Chance by 15% for 8 seconds.",
     "type": "Passive",
     "weapon": "Shotgun",
-    "icon": null
+    "icon": "Overpenetration.png"
   },
   {
     "tree": "Restricted Access",
@@ -394,7 +394,7 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Single Barrel",
-    "scaling": 0.6805,
+    "scaling": 0.6804957983,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -403,7 +403,7 @@ const tswData = [
     "description": "Builds 1 resource for each equipped weapon. A single target attack that deals 47 physical damage, or 52 physical damage if the target is Weakened.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": null
+    "icon": "Single Barrel.png"
   },
   {
     "tree": "Close Encounters",
@@ -423,8 +423,8 @@ const tswData = [
     "tree": "Close Encounters",
     "name": "Raging Bullet",
     "scaling": 0.0,
-    "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_1": 1.216069188,
+    "scaling_5": 2.407320637,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -464,7 +464,7 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Invasive Measures",
-    "scaling": 0.27629,
+    "scaling": 0.2762947012,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -478,7 +478,7 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Point Blank",
-    "scaling": 4.60022,
+    "scaling": 0.7486285126,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -521,8 +521,8 @@ const tswData = [
     "tree": "Securing the Perimeter",
     "name": "Shotgun Turret",
     "scaling": 0.0,
-    "scaling_1": 0.18762,
-    "scaling_5": 0.37227,
+    "scaling_1": 0.1876221033,
+    "scaling_5": 0.3722660779,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 10.0,
@@ -688,7 +688,7 @@ const tswData = [
   {
     "tree": "Tactical Surprise",
     "name": "Striker",
-    "scaling": 0.64374,
+    "scaling": 0.643739091,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -745,8 +745,8 @@ const tswData = [
     "tree": "Tactical Surprise",
     "name": "Sure Shot",
     "scaling": 0.0,
-    "scaling_1": 1.19608,
-    "scaling_5": 2.36832,
+    "scaling_1": 1.196083126,
+    "scaling_5": 2.368324063,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -772,7 +772,7 @@ const tswData = [
   {
     "tree": "Tactical Surprise",
     "name": "Bombardment",
-    "scaling": 0.98477,
+    "scaling": 0.9847678648,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -781,12 +781,12 @@ const tswData = [
     "description": "Places a turret at the targeted point. The turret will fire at a random enemy within 7 metres every 2.5 seconds for 20 seconds. Affected enemies are deals 75 physical damage and other enemies within 3 metres are dealt 25 physical damage.",
     "type": "Elite Active",
     "weapon": "Shotgun",
-    "icon": null
+    "icon": "Bombardment.png"
   },
   {
     "tree": "Armed",
     "name": "The Business",
-    "scaling": 0.21458,
+    "scaling": 0.214579697,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -815,8 +815,8 @@ const tswData = [
     "tree": "Armed",
     "name": "Shootout",
     "scaling": 0.0,
-    "scaling_1": 0.54241,
-    "scaling_5": 0.81461,
+    "scaling_1": 0.5424097896,
+    "scaling_5": 0.8146081089,
     "note": "",
     "cast_time": 2.5,
     "cooldown": 4.0,
@@ -870,7 +870,7 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Dirty Tricks",
-    "scaling": 4.60022,
+    "scaling": 0.7106980013,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -982,7 +982,7 @@ const tswData = [
   {
     "tree": "Bullet Hell",
     "name": "Hair Trigger",
-    "scaling": 0.16093,
+    "scaling": 0.1609347727,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1010,9 +1010,9 @@ const tswData = [
   {
     "tree": "Bullet Hell",
     "name": "Start & Finish",
-    "scaling": 0.30278,
-    "scaling_1": 0.92223,
-    "scaling_5": 2.00924,
+    "scaling": 0.30277641,
+    "scaling_1": 0.9222271637,
+    "scaling_5": 2.009244111,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -1039,8 +1039,8 @@ const tswData = [
     "tree": "Bullet Hell",
     "name": "Big Forty Five",
     "scaling": 0.0,
-    "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_1": 1.753394283,
+    "scaling_5": 3.024977673,
     "note": "",
     "cast_time": 1.5,
     "cooldown": 4.0,
@@ -1136,7 +1136,7 @@ const tswData = [
   {
     "tree": "Crossfire",
     "name": "One in the Chamber",
-    "scaling": 0.3683,
+    "scaling": 0.3682952398,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1150,7 +1150,7 @@ const tswData = [
   {
     "tree": "Crossfire",
     "name": "Marked",
-    "scaling": 2.17304,
+    "scaling": 2.173041186,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1262,9 +1262,9 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Bullet Ballet",
-    "scaling": 0.57974,
-    "scaling_1": 0.27597,
-    "scaling_5": 1.44836,
+    "scaling": 0.579742372,
+    "scaling_1": 0.2759732524,
+    "scaling_5": 1.448363221,
     "note": "",
     "cast_time": 2.0,
     "cooldown": 20.0,
@@ -1276,7 +1276,7 @@ const tswData = [
   {
     "tree": "Troubleshooting",
     "name": "Collaboration",
-    "scaling": 0.61647,
+    "scaling": 0.616472625,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1305,8 +1305,8 @@ const tswData = [
     "tree": "Troubleshooting",
     "name": "Bond, Strong Bond",
     "scaling": 0.0,
-    "scaling_1": 0.23924,
-    "scaling_5": 0.3812,
+    "scaling_1": 0.2392429994,
+    "scaling_5": 0.3812004638,
     "note": "",
     "cast_time": 3.0,
     "cooldown": 4.0,
@@ -1332,7 +1332,7 @@ const tswData = [
   {
     "tree": "Troubleshooting",
     "name": "Area Drone",
-    "scaling": 0.46757,
+    "scaling": 0.4675661939,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1570,7 +1570,7 @@ const tswData = [
   {
     "tree": "Engage",
     "name": "Safety Off",
-    "scaling": 0.21443,
+    "scaling": 0.2144252609,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1584,7 +1584,7 @@ const tswData = [
   {
     "tree": "Engage",
     "name": "Extra Bullet",
-    "scaling": 0.09243,
+    "scaling": 0.09242598547,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1626,7 +1626,7 @@ const tswData = [
   {
     "tree": "Engage",
     "name": "Trigger Happy",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1654,7 +1654,7 @@ const tswData = [
   {
     "tree": "Engage",
     "name": "Slow the Advance",
-    "scaling": 3.67997,
+    "scaling": 3.679974269,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1662,6 +1662,20 @@ const tswData = [
     "cooldown": 25.0,
     "description": "GTAoE: Affects up to 6 enemies in a 5 metre radius around the targeted point. A GTAoE that deals 279 physical damage. Affected targets also become Hindered and their movement speed is reduced by 70% for 8 seconds. Also places an area at the targeted point that lasts 8 seconds. Every second it will deal 10 physical damage to up to 6 enemies in a 5 metre radius. Susceptible to Anima Deviation.",
     "type": "Elite Active",
+    "weapon": "Assault Rifle",
+    "icon": "Slow The Advance.png"
+  },
+  {
+    "tree": "Engage",
+    "name": "Slow the Advance DOT",
+    "scaling": 0.1310376594,
+    "scaling_1": 0.0,
+    "scaling_5": 0.0,
+    "note": "",
+    "cast_time": 0.0,
+    "cooldown": 0.0,
+    "description": "Every second, deals 10 physical damage to up to 6 enemies in a 5 metre radius around the targeted point.",
+    "type": "Passive",
     "weapon": "Assault Rifle",
     "icon": "Slow The Advance.png"
   },
@@ -1682,7 +1696,7 @@ const tswData = [
   {
     "tree": "Support",
     "name": "Anima Shot",
-    "scaling": 0.50628,
+    "scaling": 0.506281866,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1739,8 +1753,8 @@ const tswData = [
     "tree": "Support",
     "name": "Fire in the Hole",
     "scaling": 0.0,
-    "scaling_1": 0.60952,
-    "scaling_5": 1.20813,
+    "scaling_1": 0.6095236583,
+    "scaling_5": 1.208127512,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -1767,8 +1781,8 @@ const tswData = [
     "tree": "Take Point",
     "name": "Three Round Burst",
     "scaling": 0.0,
-    "scaling_1": 0.39907,
-    "scaling_5": 0.7892,
+    "scaling_1": 0.3990692355,
+    "scaling_5": 0.7892040852,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -1823,8 +1837,8 @@ const tswData = [
     "tree": "Take Point",
     "name": "Where it Hurts",
     "scaling": 0.0,
-    "scaling_1": 1.19423,
-    "scaling_5": 2.40136,
+    "scaling_1": 1.194229578,
+    "scaling_5": 2.40136438,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 12.0,
@@ -1850,7 +1864,7 @@ const tswData = [
   {
     "tree": "Take Point",
     "name": "Red Mist",
-    "scaling": 5.79643,
+    "scaling": 5.796431011,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -1887,7 +1901,7 @@ const tswData = [
     "description": "Column Dash: Dash backward 10 metres, affecting all enemies in a 6 metre wide column along the way. A column dash attack causing affected targets to become Hindered and reducing their movement speed by 70% for 4 seconds. A grenade is also left at the start location that affects up to 6 enemies, exploding 1.5 seconds after the dash, dealing 77 physical damage in an area around it causing affected targets to become Hindered, reducing their movement speed by 70% for 4 seconds.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": null
+    "icon": "Tactical Retreat.png"
   },
   {
     "tree": "Heavy Fire",
@@ -2046,7 +2060,7 @@ const tswData = [
   {
     "tree": "Bombardment",
     "name": "Shellshocker",
-    "scaling": 0.86664,
+    "scaling": 0.8666354294,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2088,7 +2102,7 @@ const tswData = [
   {
     "tree": "Squad Duty",
     "name": "Anima Burst",
-    "scaling": 0.13997,
+    "scaling": 0.1399720453,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2117,8 +2131,8 @@ const tswData = [
     "tree": "Squad Duty",
     "name": "Transfuse Anima",
     "scaling": 0.0,
-    "scaling_1": 1.04235,
-    "scaling_5": 2.24948,
+    "scaling_1": 1.042345018,
+    "scaling_5": 2.24947982,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -2354,7 +2368,7 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Delicate Strike",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2383,8 +2397,8 @@ const tswData = [
     "tree": "Method",
     "name": "Balanced Blade",
     "scaling": 0.0,
-    "scaling_1": 0.59761,
-    "scaling_5": 1.1843,
+    "scaling_1": 0.5976111438,
+    "scaling_5": 1.184302483,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -2411,8 +2425,8 @@ const tswData = [
     "tree": "Method",
     "name": "Dancing Blade",
     "scaling": 0.0,
-    "scaling_1": 0.54301,
-    "scaling_5": 0.81501,
+    "scaling_1": 0.543012119,
+    "scaling_5": 0.8150145333,
     "note": "",
     "cast_time": 2.5,
     "cooldown": 0.0,
@@ -2438,7 +2452,7 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Stunning Swirl",
-    "scaling": 4.60022,
+    "scaling": 4.600216014,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2466,7 +2480,7 @@ const tswData = [
   {
     "tree": "Technique",
     "name": "Blade Torrent",
-    "scaling": 0.0,
+    "scaling": 0.3267677813,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2522,7 +2536,7 @@ const tswData = [
   {
     "tree": "Technique",
     "name": "Surging Blades",
-    "scaling": 0.0,
+    "scaling": 0.6416727059,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2550,7 +2564,7 @@ const tswData = [
   {
     "tree": "Wind through Grass",
     "name": "Grass Cutter",
-    "scaling": 0.68001,
+    "scaling": 0.6800060357,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2607,8 +2621,8 @@ const tswData = [
     "tree": "Wind through Grass",
     "name": "Destiny",
     "scaling": 0.0,
-    "scaling_1": 0.73646,
-    "scaling_5": 1.9085,
+    "scaling_1": 0.7364581182,
+    "scaling_5": 1.908498274,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -2620,7 +2634,7 @@ const tswData = [
   {
     "tree": "Wind through Grass",
     "name": "Destiny Fulfilled",
-    "scaling": 0.0,
+    "scaling": 0.1642036125,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2634,9 +2648,9 @@ const tswData = [
   {
     "tree": "Wind through Grass",
     "name": "Four Seasons",
-    "scaling": 0.58995,
+    "scaling": 0.5899530987,
     "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_5": 3.398129849,
     "note": "",
     "cast_time": 2.5,
     "cooldown": 20.0,
@@ -2676,7 +2690,7 @@ const tswData = [
   {
     "tree": "Tearing of Sky",
     "name": "Incision",
-    "scaling": 0.13962,
+    "scaling": 0.1396222334,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2718,7 +2732,7 @@ const tswData = [
   {
     "tree": "Tearing of Sky",
     "name": "Steel Echo",
-    "scaling": 0.41396,
+    "scaling": 0.4139598787,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2732,7 +2746,7 @@ const tswData = [
   {
     "tree": "Tearing of Sky",
     "name": "Flight of Daggers",
-    "scaling": 0.55195,
+    "scaling": 0.5519465049,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2760,7 +2774,7 @@ const tswData = [
   {
     "tree": "Crossing River's Edge",
     "name": "Sudden Return",
-    "scaling": 0.3683,
+    "scaling": 0.3682952398,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2788,7 +2802,7 @@ const tswData = [
   {
     "tree": "Crossing River's Edge",
     "name": "Fortunate Strike",
-    "scaling": 0.92024,
+    "scaling": 0.9202417446,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -2901,8 +2915,8 @@ const tswData = [
     "tree": "Runing of the Jagged",
     "name": "Binding Wounds",
     "scaling": 0.0,
-    "scaling_1": 1.19621,
-    "scaling_5": 2.3686,
+    "scaling_1": 1.196214997,
+    "scaling_5": 2.368604965,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -2914,7 +2928,7 @@ const tswData = [
   {
     "tree": "Runing of the Jagged",
     "name": "Finish the Movement",
-    "scaling": 0.27629,
+    "scaling": 0.2762947012,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3012,7 +3026,7 @@ const tswData = [
   {
     "tree": "Sharpening the Sense",
     "name": "Sling Blade",
-    "scaling": 1.23989,
+    "scaling": 1.239894217,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3020,6 +3034,20 @@ const tswData = [
     "cooldown": 15.0,
     "description": "Throws a blade at the target dealing 94 physical damage and causes the target to become Afflicted with a damage over time effect that deals 6 physical damage every seconds for 5 seconds. Generates a large amount of hate.",
     "type": "Active",
+    "weapon": "Blade",
+    "icon": "Sling Blade.png"
+  },
+  {
+    "tree": "Sharpening the Sense",
+    "name": "Sling Blade Afflict",
+    "scaling": 0.07374413734,
+    "scaling_1": 0.0,
+    "scaling_5": 0.0,
+    "note": "",
+    "cast_time": 0.0,
+    "cooldown": 0.0,
+    "description": "When Sling Blade hits an Afflicted target, applies a DOT that deals 6 physical damage every second for 5 seconds.",
+    "type": "Passive",
     "weapon": "Blade",
     "icon": "Sling Blade.png"
   },
@@ -3097,8 +3125,8 @@ const tswData = [
     "tree": "The Cutting Artist",
     "name": "Steel Palace",
     "scaling": 0.0,
-    "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_1": 0.5942212789,
+    "scaling_5": 1.177658143,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -3124,7 +3152,7 @@ const tswData = [
   {
     "tree": "The Cutting Artist",
     "name": "The Art of War",
-    "scaling": 4.36991,
+    "scaling": 4.3699074,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3136,9 +3164,24 @@ const tswData = [
     "icon": "The Art Of War.png"
   },
   {
+    "tree": "Method",
+    "name": "Two Cuts",
+    "scaling": 0.1360012071,
+    "scaling_1": 0.0,
+    "scaling_5": 0.0,
+    "note": "",
+    "cast_time": 0.0,
+    "cooldown": 0.0,
+    "description": "Whenever you hit an enemy with a Blade ability, you apply the Two Cuts effect. Hitting the enemy with a Blade ability consumes this effect to deal 105 damage. Requires an equipped blade.",
+    "type": "Passive",
+    "weapon": "Blade",
+    "icon": "Two Cuts.png",
+    "requiresBlade": true
+  },
+  {
     "tree": "Brawn",
     "name": "Smash",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3195,8 +3238,8 @@ const tswData = [
     "tree": "Brawn",
     "name": "Haymaker",
     "scaling": 0.0,
-    "scaling_1": 1.19621,
-    "scaling_5": 2.3686,
+    "scaling_1": 1.196214997,
+    "scaling_5": 2.368604965,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -3222,7 +3265,7 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Shockwave",
-    "scaling": 4.60022,
+    "scaling": 4.600216014,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3250,7 +3293,7 @@ const tswData = [
   {
     "tree": "Grit",
     "name": "Grand Slam",
-    "scaling": 0.09232,
+    "scaling": 0.09232198733,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3306,7 +3349,7 @@ const tswData = [
   {
     "tree": "Grit",
     "name": "Backhanded",
-    "scaling": 0.7356,
+    "scaling": 0.73559777,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3334,8 +3377,8 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "First Blood",
-    "scaling": 0.62541,
-    "scaling_1": 0.0,
+    "scaling": 0.6254070109,
+    "scaling_1": 0.73559777,
     "scaling_5": 0.0,
     "note": "",
     "cast_time": 1.0,
@@ -3363,8 +3406,8 @@ const tswData = [
     "tree": "Industrial Action",
     "name": "Molten Steel",
     "scaling": 0.0,
-    "scaling_1": 1.14856,
-    "scaling_5": 2.2733,
+    "scaling_1": 1.148564939,
+    "scaling_5": 2.273304849,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -3391,8 +3434,8 @@ const tswData = [
     "tree": "Industrial Action",
     "name": "Bone Breaker",
     "scaling": 0.0,
-    "scaling_1": 1.26273,
-    "scaling_5": 2.50064,
+    "scaling_1": 1.262726536,
+    "scaling_5": 2.500635334,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -3427,7 +3470,7 @@ const tswData = [
     "description": "You gain 4 stacks of epicenter effect. Each attack you preform will expend a stack to grant one stack of upheaval effect and cause a 5 meter AoE around your target which last 5 seconds. Enemies inside this area are dealt 20 damage when the area appears and every second after. Enemies within this area have their movement speed reduced by 30%. Recharge time does not begin until all stacks of Epicenter effect have been expended. Each stack of the Upheaval effect increase your Crit Power by 5% for 8 seconds.",
     "type": "Elite Active",
     "weapon": "Hammer",
-    "icon": null
+    "icon": "Epicenter.png"
   },
   {
     "tree": "Brute Force",
@@ -3488,7 +3531,7 @@ const tswData = [
   {
     "tree": "Brute Force",
     "name": "Tenderizing",
-    "scaling": 0.0,
+    "scaling": 0.09242598547,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3497,7 +3540,7 @@ const tswData = [
     "description": "Whenever you successfully hit a Weakened target, you deal a extra hit for 7 damage.",
     "type": "Passive",
     "weapon": "Hammer",
-    "icon": null
+    "icon": "Tenderising.png"
   },
   {
     "tree": "Brute Force",
@@ -3516,7 +3559,7 @@ const tswData = [
   {
     "tree": "Brute Force",
     "name": "Thunderstruck",
-    "scaling": 0.55195,
+    "scaling": 0.5519465049,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3614,7 +3657,7 @@ const tswData = [
   {
     "tree": "Excessive Damage",
     "name": "Eruption",
-    "scaling": 4.36991,
+    "scaling": 4.3699074,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3628,7 +3671,7 @@ const tswData = [
   {
     "tree": "Sledge Factory",
     "name": "Grip Whip",
-    "scaling": 0.0,
+    "scaling": 0.6276529661,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3693,7 +3736,7 @@ const tswData = [
     "description": "Hammer attack that deals 119 \u2013 236 damage, based on resources consumed. If the target is impaired, you gain the Major Ward that reduces all damage received by 25% for 6 seconds. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": null
+    "icon": "Obsidian Aegis.png"
   },
   {
     "tree": "Sledge Factory",
@@ -3768,7 +3811,7 @@ const tswData = [
   {
     "tree": "Battering Works",
     "name": "Stone\u2019s Throw",
-    "scaling": 0.0,
+    "scaling": 1.51388205,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3833,7 +3876,7 @@ const tswData = [
     "description": "A PBAoE that deals 59 \u2013 117 damage based on resources consumed and increases all affected enemies hate towards you. Grants a hate increasing effect for your next attack.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": null
+    "icon": "Razor Shards.png"
   },
   {
     "tree": "Hammer Pit",
@@ -3908,9 +3951,9 @@ const tswData = [
   {
     "tree": "Hammer Pit",
     "name": "Raging Volcano",
-    "scaling": 1.3342,
+    "scaling": 1.334201623,
     "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_5": 2.658476151,
     "note": "",
     "cast_time": 6.0,
     "cooldown": 30.0,
@@ -3920,9 +3963,23 @@ const tswData = [
     "icon": "Raging Volcano.png"
   },
   {
+    "tree": "Hammer Pit",
+    "name": "Raging Volcano Effect",
+    "scaling": 0.3861640115,
+    "scaling_1": 0.0,
+    "scaling_5": 0.0,
+    "note": "",
+    "cast_time": 0.0,
+    "cooldown": 0.0,
+    "description": "Each stack of Raging Volcano effect causes your abilities to deal an additional 30 damage.",
+    "type": "Passive",
+    "weapon": "Hammer",
+    "icon": "Raging Volcano.png"
+  },
+  {
     "tree": "Feral",
     "name": "Claw",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3978,7 +4035,7 @@ const tswData = [
   {
     "tree": "Feral",
     "name": "Prey of the Weak",
-    "scaling": 0.0,
+    "scaling": 0.2144252609,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -3987,7 +4044,7 @@ const tswData = [
     "description": "Builds 1 resource for each equipped weapon. A single target Burst attack that hits 3 times, dealing 23 physical damage per hit. If the target is Impaired this attack builds 1 additional Fist resource.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": null
+    "icon": "Prey On The Weak.png"
   },
   {
     "tree": "Feral",
@@ -4006,7 +4063,7 @@ const tswData = [
   {
     "tree": "Feral",
     "name": "Go for the Throat",
-    "scaling": 2.30011,
+    "scaling": 2.300108007,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4091,8 +4148,8 @@ const tswData = [
     "tree": "Primal",
     "name": "Wild at Heart",
     "scaling": 0.0,
-    "scaling_1": 1.16842,
-    "scaling_5": 2.22367,
+    "scaling_1": 1.16841913,
+    "scaling_5": 2.223669372,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -4146,9 +4203,9 @@ const tswData = [
   {
     "tree": "The Wilderness",
     "name": "One-Two",
-    "scaling": 0.32164,
-    "scaling_1": 0.84678,
-    "scaling_5": 1.90104,
+    "scaling": 0.3216378913,
+    "scaling_1": 0.8467812386,
+    "scaling_5": 1.901038771,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -4202,7 +4259,7 @@ const tswData = [
   {
     "tree": "The Wilderness",
     "name": "See Red",
-    "scaling": 0.43282,
+    "scaling": 0.4328213599,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4398,7 +4455,7 @@ const tswData = [
   {
     "tree": "The Streets",
     "name": "Gore",
-    "scaling": 2.29983,
+    "scaling": 2.29983383,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4665,8 +4722,8 @@ const tswData = [
     "tree": "Play with Fire",
     "name": "Inner Spark",
     "scaling": 0.0,
-    "scaling_1": 0.10507,
-    "scaling_5": 0.21015,
+    "scaling_1": 0.1050727176,
+    "scaling_5": 0.2101454351,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -4692,7 +4749,7 @@ const tswData = [
   {
     "tree": "Play with Fire",
     "name": "Fired Up",
-    "scaling": 3.26812,
+    "scaling": 3.268123836,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4706,7 +4763,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Shock",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4734,7 +4791,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Combust",
-    "scaling": 2.27926,
+    "scaling": 2.279261106,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4790,7 +4847,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Molten Earth",
-    "scaling": 4.60022,
+    "scaling": 4.600216014,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4818,7 +4875,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Ignite",
-    "scaling": 0.61185,
+    "scaling": 0.6118516976,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4874,7 +4931,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Thor's Hammer",
-    "scaling": 3.39308,
+    "scaling": 3.393081212,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4897,12 +4954,12 @@ const tswData = [
     "description": "Increases the duration of Afflicted effects you apply by 35%. Afflicted effects you apply have a 20% increased chance to critically hit.",
     "type": "Elite Passive",
     "weapon": "Elementalism",
-    "icon": null
+    "icon": "Toxic Affinity.png"
   },
   {
     "tree": "",
     "name": "Electrical Bolt",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4930,7 +4987,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Flame Strike",
-    "scaling": 1.67768,
+    "scaling": 1.677679125,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -4958,7 +5015,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Blaze",
-    "scaling": 2.6694,
+    "scaling": 2.669395956,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5084,7 +5141,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Live Wire",
-    "scaling": 1.10389,
+    "scaling": 1.10389301,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5107,7 +5164,7 @@ const tswData = [
     "description": "Chain: Jumps up to 5 metres 5 times, hitting up to 6 enemies. Builds 1 resource for each equipped weapon. A Chain attack that deals 24 magical damage.",
     "type": "Active",
     "weapon": "Elementalism",
-    "icon": null
+    "icon": "Arc Flash.png"
   },
   {
     "tree": "",
@@ -5182,7 +5239,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Whiteout",
-    "scaling": 0.33156,
+    "scaling": 0.3315649867,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5196,7 +5253,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Ignition",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5224,7 +5281,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Fire Manifestation",
-    "scaling": 0.67107,
+    "scaling": 0.6710716498,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5280,7 +5337,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Hard Reset",
-    "scaling": 4.63695,
+    "scaling": 4.636946267,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5420,7 +5477,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Lightning Manifestation",
-    "scaling": 0.16777,
+    "scaling": 0.1677679125,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5476,7 +5533,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Overload",
-    "scaling": 0.93803,
+    "scaling": 0.938025427,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5490,7 +5547,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Hand of Change",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5518,9 +5575,9 @@ const tswData = [
   {
     "tree": "",
     "name": "Call for Eris",
-    "scaling": 0.92024,
-    "scaling_1": 0.28987,
-    "scaling_5": 0.3127,
+    "scaling": 0.9202417446,
+    "scaling_1": 0.289871186,
+    "scaling_5": 0.3127035055,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -5547,8 +5604,8 @@ const tswData = [
     "tree": "",
     "name": "Schism",
     "scaling": 0.0,
-    "scaling_1": 1.11183,
-    "scaling_5": 2.20282,
+    "scaling_1": 1.111834686,
+    "scaling_5": 2.202822472,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -5574,7 +5631,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Domino Effect",
-    "scaling": 3.91028,
+    "scaling": 3.910282883,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5588,7 +5645,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Gnosis",
-    "scaling": 0.27895,
+    "scaling": 0.2789513811,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5658,7 +5715,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Paradox",
-    "scaling": 1.14956,
+    "scaling": 1.149557649,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5700,7 +5757,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Cutting Thoughts",
-    "scaling": 0.18485,
+    "scaling": 0.1848519709,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5715,8 +5772,8 @@ const tswData = [
     "tree": "",
     "name": "Four Horsemen",
     "scaling": 0.0,
-    "scaling_1": 0.27796,
-    "scaling_5": 0.4487,
+    "scaling_1": 0.2779586715,
+    "scaling_5": 0.4487047126,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -5728,7 +5785,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Ripple Effect",
-    "scaling": 0.11012,
+    "scaling": 0.1101245784,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5743,8 +5800,8 @@ const tswData = [
     "tree": "",
     "name": "Pulling the Strings",
     "scaling": 0.0,
-    "scaling_1": 1.14956,
-    "scaling_5": 2.32195,
+    "scaling_1": 1.149557649,
+    "scaling_5": 2.321947617,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -5770,7 +5827,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Prisoner of Fate",
-    "scaling": 2.0152,
+    "scaling": 2.015200368,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5868,7 +5925,7 @@ const tswData = [
   {
     "tree": "",
     "name": "From the Abyss",
-    "scaling": 0.66214,
+    "scaling": 0.6621372639,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5966,7 +6023,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Eye of Pandemonium",
-    "scaling": 3.67997,
+    "scaling": 0.7655974255,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -5980,7 +6037,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Run Rampant",
-    "scaling": 0.20648,
+    "scaling": 0.2064835846,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6037,8 +6094,8 @@ const tswData = [
     "tree": "",
     "name": "Suffering and Solace",
     "scaling": 0.0,
-    "scaling_1": 1.19621,
-    "scaling_5": 2.3686,
+    "scaling_1": 1.196214997,
+    "scaling_5": 2.368604965,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 0.0,
@@ -6092,7 +6149,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Chaotic Pull",
-    "scaling": 1.20713,
+    "scaling": 1.207134802,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6176,7 +6233,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Shaken Foundations",
-    "scaling": 0.0,
+    "scaling": 0.3267677813,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6205,8 +6262,8 @@ const tswData = [
     "tree": "",
     "name": "Karma",
     "scaling": 0.0,
-    "scaling_1": 0.0,
-    "scaling_5": 0.0,
+    "scaling_1": 0.5456914104,
+    "scaling_5": 1.080598406,
     "note": "",
     "cast_time": 1.0,
     "cooldown": 4.0,
@@ -6260,7 +6317,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Gravitational Anomaly",
-    "scaling": 2.33684,
+    "scaling": 2.33683826,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6274,7 +6331,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Boiling Blood",
-    "scaling": 0.64427,
+    "scaling": 0.6442684922,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6302,7 +6359,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Blood Spike",
-    "scaling": 1.17338,
+    "scaling": 1.173382678,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6330,7 +6387,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Infection",
-    "scaling": 0.0,
+    "scaling": 0.7214773786,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6358,7 +6415,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Cardiac Arrest",
-    "scaling": 4.60022,
+    "scaling": 4.600216014,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6442,7 +6499,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Exsanguinate",
-    "scaling": 0.81501,
+    "scaling": 0.8150145333,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6470,7 +6527,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Bloodline",
-    "scaling": 0.15486,
+    "scaling": 0.1548626884,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6498,7 +6555,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Left Hand of Darkness",
-    "scaling": 0.45918,
+    "scaling": 0.4591801618,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6526,7 +6583,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Bloodshot",
-    "scaling": 1.72037,
+    "scaling": 1.720365635,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6540,7 +6597,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Torture",
-    "scaling": 0.11012,
+    "scaling": 0.1101245784,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6554,7 +6611,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Plague",
-    "scaling": 0.86465,
+    "scaling": 0.8646500103,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6596,7 +6653,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Third Degree",
-    "scaling": 0.30383,
+    "scaling": 0.3038258458,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6610,7 +6667,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Contaminate",
-    "scaling": 0.26843,
+    "scaling": 0.2684286599,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6652,7 +6709,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Gross Anatomy",
-    "scaling": 0.27597,
+    "scaling": 0.2759732524,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6666,7 +6723,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Open Vein",
-    "scaling": 0.0,
+    "scaling": 0.3267677813,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6694,7 +6751,7 @@ const tswData = [
   {
     "tree": "",
     "name": "There Will Be Blood",
-    "scaling": 0.0,
+    "scaling": 0.7203989371,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6876,7 +6933,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Transfuse and Abuse",
-    "scaling": 0.12487,
+    "scaling": 0.1248734059,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -6974,7 +7031,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Arterial Pulse",
-    "scaling": 0.18365,
+    "scaling": 0.1836512651,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7408,7 +7465,7 @@ const tswData = [
   {
     "tree": "Whip",
     "name": "Whip It Good",
-    "scaling": 0.0,
+    "scaling": 0.5454135677,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7534,7 +7591,7 @@ const tswData = [
   {
     "tree": "Chainsaw",
     "name": "Timber",
-    "scaling": 0.0,
+    "scaling": 2.990041138,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7590,7 +7647,7 @@ const tswData = [
   {
     "tree": "Flamethrower",
     "name": "Scorched Earth",
-    "scaling": 0.0,
+    "scaling": 0.2496205767,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7744,7 +7801,7 @@ const tswData = [
   {
     "tree": "Rocket Launcher",
     "name": "Big Red Button",
-    "scaling": 0.0,
+    "scaling": 2.724814064,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7758,7 +7815,7 @@ const tswData = [
   {
     "tree": "Rocket Launcher",
     "name": "Clusterstruck",
-    "scaling": 0.0,
+    "scaling": 2.403651116,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
@@ -7786,7 +7843,7 @@ const tswData = [
   {
     "tree": "Rocket Launcher",
     "name": "Pop Shot",
-    "scaling": 0.0,
+    "scaling": 2.083615055,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
