@@ -188,7 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
             iconBox.className = 'slot-icon-box';
             iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
 
-            wrapper.innerHTML = `<span class="slot-label">Priority</span>`;
+            // Add special label for first slot (builders only)
+            if (i === 1) {
+                wrapper.innerHTML = `<span class="slot-label" style="color: #4CAF50;">Priority (Builders Only)</span>`;
+            } else {
+                wrapper.innerHTML = `<span class="slot-label">Priority</span>`;
+            }
             wrapper.appendChild(iconBox);
 
             const orderInput = createOrderInput(select, i);
@@ -206,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.createElement('input');
             searchInput.type = 'text';
             searchInput.className = 'ability-search-input';
-            searchInput.placeholder = 'Search...';
+            searchInput.placeholder = i === 1 ? 'Search Builders...' : 'Search...';
             searchInput.addEventListener('input', () => {
                 select.dataset.searchTerm = searchInput.value;
                 updateAbilityDropdowns();
@@ -537,6 +542,44 @@ document.addEventListener('DOMContentLoaded', () => {
         'eidolon': { name: 'Eidolon', blockRating: 300, evadeRating: 300, defenseRating: 300 }
     };
 
+    // Helper function to identify builder abilities
+    function isBuilderAbility(ability) {
+        if (!ability || !ability.description) return false;
+        
+        const desc = ability.description.toLowerCase();
+        
+        // Check for explicit "Builds X resource" patterns
+        if (desc.includes('builds 1 resource') || 
+            desc.includes('builds 2 resource') || 
+            desc.includes('builds 3 resource') ||
+            desc.includes('builds 1 assault rifle resource') ||
+            desc.includes('builds 2 assault rifle resource') ||
+            desc.includes('builds 3 assault rifle resource') ||
+            desc.includes('builds 1 blade resource') ||
+            desc.includes('builds 2 blade resource') ||
+            desc.includes('builds 1 fist resource') ||
+            desc.includes('builds 1 hammer resource') ||
+            desc.includes('builds 1 shotgun resource') ||
+            desc.includes('builds 1 pistol resource') ||
+            desc.includes('builds 1 elementalism resource') ||
+            desc.includes('builds 1 blood resource') ||
+            desc.includes('builds 1 chaos resource')) {
+            return true;
+        }
+        
+        // Check for generic "Builds 1 resource for each equipped weapon"
+        if (desc.includes('builds 1 resource for each equipped weapon')) {
+            return true;
+        }
+        
+        // Check for abilities that build additional resources under certain conditions
+        if (desc.includes('builds 2 additional') || desc.includes('builds 3 additional')) {
+            return true;
+        }
+        
+        return false;
+    }
+
     function updateAbilityDropdowns() {
         // Update enemy stats display
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
@@ -547,14 +590,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSelectedWeapon = (weapon) => weapon === prim || weapon === sec || prim === "All";
         const getType = (a) => a.type || "";
 
-        // Normal actives: Active (or no type) but NOT Elite, NOT Auxiliary
-        populateDropdowns(
-            activeSelects,
-            a => isSelectedWeapon(a.weapon) &&
-                (getType(a).includes("Active") || getType(a) === "") &&
-                !getType(a).includes("Elite") &&
-                !AUX_WEAPONS.includes(a.weapon)
-        );
+        // First ability slot - ONLY builders
+        if (activeSelects.length > 0) {
+            populateDropdowns(
+                [activeSelects[0]], // Only the first slot
+                a => isSelectedWeapon(a.weapon) &&
+                    (getType(a).includes("Active") || getType(a) === "") &&
+                    !getType(a).includes("Elite") &&
+                    !AUX_WEAPONS.includes(a.weapon) &&
+                    isBuilderAbility(a)
+            );
+        }
+
+        // Remaining normal actives (slots 2-6): Active (or no type) but NOT Elite, NOT Auxiliary, NOT builders
+        const remainingActiveSelects = activeSelects.slice(1);
+        if (remainingActiveSelects.length > 0) {
+            populateDropdowns(
+                remainingActiveSelects,
+                a => isSelectedWeapon(a.weapon) &&
+                    (getType(a).includes("Active") || getType(a) === "") &&
+                    !getType(a).includes("Elite") &&
+                    !AUX_WEAPONS.includes(a.weapon) &&
+                    !isBuilderAbility(a)
+            );
+        }
 
         // Elite active: Active + Elite, NOT Auxiliary
         populateDropdowns(
