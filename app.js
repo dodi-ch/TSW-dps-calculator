@@ -140,14 +140,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.createElement('input');
             input.type = 'number';
             input.min = '1';
+            input.max = '10';
             input.step = '1';
             input.className = 'slot-order-input';
             input.value = String(defaultOrder);
+            input.placeholder = '1';
+            input.title = 'Priority: 1 = builder (casts first), 2+ = consumers';
             select.dataset.order = String(defaultOrder);
             input.addEventListener('input', () => {
                 const val = parseFloat(input.value);
                 if (!isNaN(val) && val > 0) {
                     select.dataset.order = String(val);
+                    calculate();
+                }
+            });
+            return input;
+        }
+        
+        function createMinResourcesInput(select, defaultMin) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.max = '5';
+            input.step = '1';
+            input.className = 'slot-min-resources-input';
+            input.value = String(defaultMin);
+            input.placeholder = '0';
+            input.title = 'Min Resources: Ability only fires when you have at least this many resources built';
+            select.dataset.minResources = String(defaultMin);
+            input.addEventListener('input', () => {
+                const val = parseInt(input.value);
+                if (!isNaN(val) && val >= 0 && val <= 5) {
+                    select.dataset.minResources = String(val);
                     calculate();
                 }
             });
@@ -165,11 +189,20 @@ document.addEventListener('DOMContentLoaded', () => {
             iconBox.className = 'slot-icon-box';
             iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
 
-            wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
+            wrapper.innerHTML = `<span class="slot-label">Priority</span>`;
             wrapper.appendChild(iconBox);
 
             const orderInput = createOrderInput(select, i);
             wrapper.appendChild(orderInput);
+
+            const minResLabel = document.createElement('span');
+            minResLabel.className = 'slot-min-res-label';
+            minResLabel.textContent = 'Min Res';
+            minResLabel.title = 'Minimum resources required before this ability can fire';
+            wrapper.appendChild(minResLabel);
+
+            const minResInput = createMinResourcesInput(select, 0);
+            wrapper.appendChild(minResInput);
 
             const searchInput = document.createElement('input');
             searchInput.type = 'text';
@@ -211,12 +244,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const eliteActiveIconBox = document.createElement('div');
         eliteActiveIconBox.className = 'slot-icon-box';
         eliteActiveIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-        eliteActiveWrapper.innerHTML = '<span class="slot-label">Elite</span>';
+        eliteActiveWrapper.innerHTML = '<span class="slot-label">Priority</span>';
         eliteActiveWrapper.appendChild(eliteActiveIconBox);
         const eliteActiveSelect = document.createElement('select');
         eliteActiveSelect.id = 'elite-active-1';
         const eliteOrderInput = createOrderInput(eliteActiveSelect, 7);
+        eliteOrderInput.title = 'Priority: 7 = after main abilities (default)';
         eliteActiveWrapper.appendChild(eliteOrderInput);
+        const eliteMinResLabel = document.createElement('span');
+        eliteMinResLabel.className = 'slot-min-res-label';
+        eliteMinResLabel.textContent = 'Min Res';
+        eliteMinResLabel.title = 'Minimum resources required before this ability can fire';
+        eliteActiveWrapper.appendChild(eliteMinResLabel);
+        const eliteMinResInput = createMinResourcesInput(eliteActiveSelect, 0);
+        eliteActiveWrapper.appendChild(eliteMinResInput);
         const eliteActiveSearchInput = document.createElement('input');
         eliteActiveSearchInput.type = 'text';
         eliteActiveSearchInput.className = 'ability-search-input';
@@ -626,9 +667,122 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Extraction of trigger interval (e.g., "every second X ability" or "every 2nd hit")
+        let triggerInterval = 1;
+        const intervalMatch = desc.match(/every\s+(second|third|fourth|fifth)?\s*(\d+)?\s*(st|nd|rd|th)?\s*(hit|ability|attack)/i);
+        if (intervalMatch) {
+            const numWords = { 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5 };
+            const numStr = intervalMatch[2];
+            if (numStr) {
+                triggerInterval = parseInt(numStr) || 1;
+            } else {
+                triggerInterval = numWords[intervalMatch[1]] || 1;
+            }
+        }
+
+        // Extraction of counter threshold (e.g., "once you reach 5 counters", "when the counter reaches 6")
+        let counterThreshold = 0;
+        let counterTriggerCondition = ""; // What triggers the counter to build (hit, penetrate, etc.)
+        let counterResetCondition = ""; // What happens when counter triggers
+        let hasCounterCooldown = false;
+        let counterCooldownTime = 0;
+        
+        // Check for counter-based passives - more comprehensive regex
+        const counterMatch = desc.match(/counter.*?(\d+)|reaches.*?(\d+)|reach.*?(\d+)/i);
+        if (counterMatch) {
+            counterThreshold = parseInt(counterMatch[1] || counterMatch[2] || counterMatch[3]);
+            triggerInterval = counterThreshold;
+            
+            // Extract trigger condition (what builds the counter)
+            if (desc.includes("penetrate")) {
+                counterTriggerCondition = "penetrate";
+            } else if (desc.includes("hit")) {
+                counterTriggerCondition = "hit";
+            } else if (desc.includes("leech ability")) {
+                counterTriggerCondition = "leech";
+            } else if (desc.includes("finish activating")) {
+                counterTriggerCondition = "finish_activating";
+            }
+            
+            // Check for internal cooldown on counter trigger
+            const cooldownMatch = desc.match(/internal recharge time of (\d+)\s*seconds?/i);
+            if (cooldownMatch) {
+                hasCounterCooldown = true;
+                counterCooldownTime = parseInt(cooldownMatch[1]);
+            }
+        }
+
         // Extraction of duration and interval for entities (turrets, manifestations, drones)
         let duration = 0;
         let tickInterval = 0;
+
+        // Debuff condition parsing - what debuffs are required for this ability
+        let requiredDebuffs = [];
+        let bonusDamageWithDebuffs = false;
+        
+        // Check if ability requires specific debuffs
+        if (desc.includes("if the target is Afflicted")) {
+            requiredDebuffs.push("afflicted");
+            bonusDamageWithDebuffs = true;
+        }
+        if (desc.includes("if the target is Weakened")) {
+            requiredDebuffs.push("weakened");
+            bonusDamageWithDebuffs = true;
+        }
+        if (desc.includes("if the target is Hindered")) {
+            requiredDebuffs.push("hindered");
+            bonusDamageWithDebuffs = true;
+        }
+        if (desc.includes("if the target is Impaired")) {
+            requiredDebuffs.push("impaired");
+            bonusDamageWithDebuffs = true;
+        }
+        
+        // Check for bonus damage against debuffed targets (e.g., "or X damage to targets that are Weakened")
+        const bonusDamageMatch = desc.match(/or\s+(\d+)\s*[-–]?\s*\d*\s*(?:physical|magical)?\s*damage\s+to\s+targets\s+that\s+are\s+(\w+)/i);
+        if (bonusDamageMatch) {
+            const debuffType = bonusDamageMatch[2].toLowerCase();
+            if (["afflicted", "weakened", "hindered", "impaired"].includes(debuffType)) {
+                requiredDebuffs.push(debuffType);
+                bonusDamageWithDebuffs = true;
+            }
+        }
+        
+        // Check what debuffs this ability applies
+        let appliedDebuffs = [];
+        let appliedDebuffDurations = {};
+        
+        if (desc.includes("become Afflicted")) {
+            appliedDebuffs.push("afflicted");
+            // Extract duration for affliction
+            const afflictDurationMatch = desc.match(/(\d+)\s*(?:physical|magical)?\s*damage\s+every\s+second\s+for\s+(\d+)\s+seconds/i);
+            if (afflictDurationMatch) {
+                appliedDebuffDurations.afflicted = parseInt(afflictDurationMatch[2]);
+            } else {
+                appliedDebuffDurations.afflicted = 5; // Default duration
+            }
+        }
+        
+        if (desc.includes("become Weakened")) {
+            appliedDebuffs.push("weakened");
+            appliedDebuffDurations.weakened = 10; // Default for weakened
+        }
+        
+        if (desc.includes("become Hindered")) {
+            appliedDebuffs.push("hindered");
+            // Extract duration for hindered
+            const hinderDurationMatch = desc.match(/reduced\s+by\s+\d+%?\s+for\s+(\d+)\s+seconds/i);
+            if (hinderDurationMatch) {
+                appliedDebuffDurations.hindered = parseInt(hinderDurationMatch[1]);
+            } else {
+                appliedDebuffDurations.hindered = 4; // Default duration
+            }
+        }
+        
+        if (desc.includes("become Impaired")) {
+            appliedDebuffs.push("impaired");
+            appliedDebuffDurations.impaired = 3; // Default for impaired
+        }
 
         // Regex for "for X seconds" or "lasting X seconds"
         const durationMatch = desc.match(/(?:for|lasting)\s+(\d+(?:\.\d+)?)\s+seconds/i);
@@ -637,9 +791,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Regex for "every X seconds" or "per X seconds"
-        const intervalMatch = desc.match(/(?:every|per)\s+(\d+(?:\.\d+)?)\s+seconds/i);
-        if (intervalMatch) {
-            tickInterval = parseFloat(intervalMatch[1]);
+        const secondsIntervalMatch = desc.match(/(?:every|per)\s+(\d+(?:\.\d+)?)\s+seconds/i);
+        if (secondsIntervalMatch) {
+            tickInterval = parseFloat(secondsIntervalMatch[1]);
         } else if (desc.includes("every seconds")) {
             tickInterval = 1.0;
         }
@@ -655,12 +809,22 @@ document.addEventListener('DOMContentLoaded', () => {
             type: ability.type || "Unknown",
             subtype,
             triggerSubtypes,
+            triggerInterval,
             duration,
             tickInterval,
             scalingToUse,
             resourceRequirement,
             damageScalesWithResources,
             isManifestation: ability.name.toLowerCase().includes("manifestation"),
+            counterThreshold,
+            counterTriggerCondition,
+            counterResetCondition,
+            hasCounterCooldown,
+            counterCooldownTime,
+            requiredDebuffs,
+            bonusDamageWithDebuffs,
+            appliedDebuffs,
+            appliedDebuffDurations,
             originalAbility: ability
         };
     }
@@ -727,6 +891,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const stats = getAbilityStats(ability, cp, wStats.critChance, wStats.critPower, wStats.penChance, resourcesForActives);
                     const orderVal = parseFloat(sel.dataset.order || '');
                     stats.orderPriority = !isNaN(orderVal) && orderVal > 0 ? orderVal : 0;
+                    const minResVal = parseInt(sel.dataset.minResources || '0');
+                    stats.minResources = !isNaN(minResVal) ? minResVal : 0;
                     return stats;
                 })
                 .filter(Boolean);
@@ -764,6 +930,12 @@ document.addEventListener('DOMContentLoaded', () => {
         allActives.forEach((a, i) => {
             console.log(`  [${i}] ${a.name} - weapon=${a.weapon}, isConsumer=${a.isConsumer}, cooldown=${a.cooldown}`);
         });
+        
+        console.log("Selected passives:", allPassives.map(p => p.name));
+        console.log("allPassives length:", allPassives.length);
+        allPassives.forEach((p, i) => {
+            console.log(`  [${i}] ${p.name} - weapon=${p.weapon}, type=${p.type}, triggerSubtypes=[${p.triggerSubtypes.join(', ')}]`);
+        });
 
         if (allActives.length === 0) {
             resTotalDps.textContent = "0";
@@ -791,8 +963,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalDamage = 0;
 
         const statsBreakdown = {};
-        [...allActives, ...allPassives].forEach(a => {
-            statsBreakdown[a.name] = { damage: 0, casts: 0 };
+        [...allActives, ...allPassives].forEach((a, index) => {
+            const key = index < allActives.length ? `active_${index}_${a.name}` : `passive_${index - allActives.length}_${a.name}`;
+            statsBreakdown[key] = { damage: 0, casts: 0, displayName: a.name };
         });
         // Pre-create a separate line for Dust of the Black Pharaoh procs
         const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
@@ -802,6 +975,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const activeCooldowns = allActives.map(() => 0);
         const passiveCooldowns = allPassives.map(() => 0);
+        const passiveHitCounters = allPassives.map(() => 0);
+        // Enhanced counter tracking for threshold-based passives
+        const passiveCounters = allPassives.map(() => 0); // Current counter value
+        const passiveCounterCooldowns = allPassives.map(() => 0); // Cooldown after counter trigger
+        
+        // Enemy debuff tracking system
+        const enemyDebuffs = {
+            afflicted: false,
+            weakened: false,
+            hindered: false,
+            impaired: false,
+            // Debuffs with durations
+            afflictedDuration: 0,
+            weakenedDuration: 0,
+            hinderedDuration: 0,
+            impairedDuration: 0
+        };
+        
         let activeEffects = [];
 
         let moltenSteelCheckCount = 0;
@@ -818,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // previous tether state tracking is no longer needed when we auto‑detonate
         let elementalFuryEndTime = 0;
 
-        function performAttack(ability, weaponForStats) {
+        function performAttack(ability, weaponForStats, debuffState = {}) {
             // Deterministic Combat Logic
             const stats = getStatsForWeapon(weaponForStats || ability.weapon);
             const hitRating = stats.hitRating;
@@ -882,7 +1073,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply Elemental Fury buff if active
             const eleFuryMult = (hasElementalWeapon && time <= elementalFuryEndTime) ? 1.075 : 1.0;
 
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult;
+            // Apply debuff-based damage bonuses
+            let debuffDamageMult = 1.0;
+            if (ability.bonusDamageWithDebuffs && ability.requiredDebuffs.length > 0) {
+                // Check if required debuffs are active
+                const allDebuffsActive = ability.requiredDebuffs.every(debuff => debuffState[debuff]);
+                if (allDebuffsActive) {
+                    // Extract bonus damage from description (this is a simplified approach)
+                    // In a full implementation, we'd parse the exact bonus values
+                    debuffDamageMult = 1.2; // 20% bonus as an example
+                    console.log(`${ability.name} gets debuff bonus damage (x${debuffDamageMult})`);
+                }
+            }
+
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * debuffDamageMult;
 
             // Dust of the Black Pharaoh: whenever you critically hit,
             // you have a 20% chance to deal an additional hit for 100%
@@ -923,17 +1127,81 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             totalDamage += finalDamage;
-            if (!statsBreakdown[ability.name]) statsBreakdown[ability.name] = { damage: 0, casts: 0 };
-            statsBreakdown[ability.name].casts++;
-            statsBreakdown[ability.name].damage += finalDamage;
+            // Find the correct key for this ability based on its index in allActives
+            const abilityIndex = allActives.findIndex(a => a === ability);
+            const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${ability.name}` : ability.name;
+            if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, displayName: ability.name };
+            statsBreakdown[abilityKey].casts++;
+            statsBreakdown[abilityKey].damage += finalDamage;
 
             // Proc Passives (Evaluate on every hit)
+            console.log(`Passive check for ${ability.name} (subtype: ${ability.subtype}, weapon: ${ability.weapon})`);
             allPassives.forEach((passive, p) => {
                 if (passiveCooldowns[p] <= 0) {
-                    if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) return;
+                    console.log(`  Checking passive: ${passive.name} (triggerSubtypes: [${passive.triggerSubtypes.join(', ')}], weapon: ${passive.weapon})`);
+                    
+                    if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) {
+                        console.log(`    ❌ Subtype mismatch: ${ability.subtype} not in [${passive.triggerSubtypes.join(', ')}]`);
+                        return;
+                    }
                     
                     // Check for requiresBlade flag (Two Cuts passive)
                     if (passive.originalAbility && passive.originalAbility.requiresBlade && !hasBladeWeapon) return;
+                    
+                    // Check trigger interval - only count hits matching passive's weapon
+                    const passiveWeapon = passive.weapon;
+                    const isMatchingWeapon = !passiveWeapon || passiveWeapon === 'All' || passiveWeapon === ability.weapon;
+                    
+                    console.log(`    Weapon check: passive=${passiveWeapon}, active=${ability.weapon}, match=${isMatchingWeapon}`);
+                    
+                    if (!isMatchingWeapon) {
+                        console.log(`    ❌ Weapon mismatch`);
+                        return; // Skip non-matching weapons, don't reset counter
+                    }
+                    
+                    // Enhanced counter-based trigger system
+                    let shouldTrigger = false;
+                    
+                    if (passive.counterThreshold > 0) {
+                        // Counter-based passive
+                        let conditionMet = false;
+                        
+                        // Check if the trigger condition is met
+                        if (passive.counterTriggerCondition === "penetrate" && isPenetrated) {
+                            conditionMet = true;
+                        } else if (passive.counterTriggerCondition === "hit") {
+                            conditionMet = true; // Any hit counts
+                        } else if (passive.counterTriggerCondition === "leech" && ability.name.toLowerCase().includes("leech")) {
+                            conditionMet = true;
+                        } else if (passive.counterTriggerCondition === "finish_activating") {
+                            conditionMet = true; // Any ability activation counts
+                        }
+                        
+                        if (conditionMet && passiveCounterCooldowns[p] <= 0) {
+                            passiveCounters[p]++;
+                            console.log(`Counter build: ${passive.name} - ${passiveCounters[p]}/${passive.counterThreshold}`);
+                            
+                            if (passiveCounters[p] >= passive.counterThreshold) {
+                                shouldTrigger = true;
+                                passiveCounters[p] = 0; // Reset counter after triggering
+                                
+                                // Set counter cooldown if applicable
+                                if (passive.hasCounterCooldown) {
+                                    passiveCounterCooldowns[p] = passive.counterCooldownTime;
+                                }
+                            }
+                        }
+                    } else {
+                        // Traditional interval-based passive
+                        const interval = passive.triggerInterval || 1;
+                        passiveHitCounters[p]++;
+                        if (passiveHitCounters[p] < interval) return;
+                        // Reset counter after triggering
+                        passiveHitCounters[p] = 0;
+                        shouldTrigger = true;
+                    }
+                    
+                    if (!shouldTrigger) return;
 
                     // Passives inherit the same signet multiplier as the triggering hit
                     let pSignetMult = 1.0;
@@ -946,9 +1214,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
                     totalDamage += pActualDmg;
-                    statsBreakdown[passive.name].casts++;
-                    statsBreakdown[passive.name].damage += pActualDmg;
+                    const passiveKey = `passive_${p}_${passive.name}`;
+                    statsBreakdown[passiveKey].casts++;
+                    statsBreakdown[passiveKey].damage += pActualDmg;
                     passiveCooldowns[p] = 1.0; // 1s ICD
+                    
+                    console.log(`    🎯 ${passive.name} TRIGGERS! Damage: ${pActualDmg.toFixed(2)}`);
+                } else {
+                    console.log(`    ⏸️ ${passive.name} on cooldown (${passiveCooldowns[p]}s)`);
                 }
             });
         }
@@ -994,16 +1267,62 @@ document.addEventListener('DOMContentLoaded', () => {
                         canCast = false;
                         if (action.name === "Molten Steel") console.log(`${action.name}: insufficient secondary resources ${secResources}/${reqResources}`);
                     }
+                    
+                    // Check min resources requirement
+                    const minRes = action.minResources || 0;
+                    if (minRes > 0) {
+                        const currentRes = isPrim ? primResources : (isSec ? secResources : 0);
+                        if (currentRes < minRes) {
+                            canCast = false;
+                            if (action.name === "Molten Steel") console.log(`${action.name}: min resources not met ${currentRes}/${minRes}`);
+                        }
+                    }
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
                     // Builders can always cast - they generate resources
                     canCast = true;
                 }
 
                 if (canCast) {
+                    // Check debuff requirements before casting
+                    let canCastWithDebuffs = true;
+                    if (action.requiredDebuffs.length > 0) {
+                        for (const requiredDebuff of action.requiredDebuffs) {
+                            if (!enemyDebuffs[requiredDebuff]) {
+                                canCastWithDebuffs = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!canCastWithDebuffs) {
+                        // Skip this ability if debuff requirements aren't met
+                        activeCooldowns[i] = 0.1; // Small delay to prevent infinite loop
+                        continue;
+                    }
+
                     if (action.name === "Molten Steel") {
                         console.log(`Casting ${action.name} at time ${time.toFixed(2)}s`);
                     }
-                    performAttack(action, action.weapon);
+                    
+                    // Store current debuff state for damage calculation
+                    const currentDebuffState = {
+                        afflicted: enemyDebuffs.afflicted,
+                        weakened: enemyDebuffs.weakened,
+                        hindered: enemyDebuffs.hindered,
+                        impaired: enemyDebuffs.impaired
+                    };
+                    
+                    performAttack(action, action.weapon, currentDebuffState);
+
+                    // Apply debuffs from this ability
+                    if (action.appliedDebuffs.length > 0) {
+                        for (const debuff of action.appliedDebuffs) {
+                            enemyDebuffs[debuff] = true;
+                            const duration = action.appliedDebuffDurations[debuff] || 5;
+                            enemyDebuffs[debuff + "Duration"] = duration;
+                            console.log(`${action.name} applies ${debuff} for ${duration}s`);
+                        }
+                    }
 
                     const timeTaken = action.castTime;
                     time += timeTaken;
@@ -1038,6 +1357,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // CD reduction
                     for (let j = 0; j < activeCooldowns.length; j++) activeCooldowns[j] -= timeTaken;
                     for (let j = 0; j < passiveCooldowns.length; j++) passiveCooldowns[j] -= timeTaken;
+                    for (let j = 0; j < passiveCounterCooldowns.length; j++) passiveCounterCooldowns[j] -= timeTaken;
+                    
+                    // Update debuff durations
+                    enemyDebuffs.afflictedDuration = Math.max(0, enemyDebuffs.afflictedDuration - timeTaken);
+                    enemyDebuffs.weakenedDuration = Math.max(0, enemyDebuffs.weakenedDuration - timeTaken);
+                    enemyDebuffs.hinderedDuration = Math.max(0, enemyDebuffs.hinderedDuration - timeTaken);
+                    enemyDebuffs.impairedDuration = Math.max(0, enemyDebuffs.impairedDuration - timeTaken);
+                    
+                    // Update debuff active states based on durations
+                    enemyDebuffs.afflicted = enemyDebuffs.afflictedDuration > 0;
+                    enemyDebuffs.weakened = enemyDebuffs.weakenedDuration > 0;
+                    enemyDebuffs.hindered = enemyDebuffs.hinderedDuration > 0;
+                    enemyDebuffs.impaired = enemyDebuffs.impairedDuration > 0;
 
                     // Effect Ticks
                     activeEffects = activeEffects.filter(eff => {
@@ -1050,7 +1382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 scalingToUse: eff.scalingToUse,
                                 weapon: eff.weapon,
                                 isManifestation: eff.isManifestation
-                            }, eff.weapon);
+                            }, eff.weapon, enemyDebuffs);
                             eff.nextTick += eff.tickInterval;
                         }
                         return eff.duration > 0;
@@ -1071,6 +1403,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 time += minWait;
                 for (let j = 0; j < activeCooldowns.length; j++) activeCooldowns[j] -= minWait;
                 for (let j = 0; j < passiveCooldowns.length; j++) passiveCooldowns[j] -= minWait;
+                for (let j = 0; j < passiveCounterCooldowns.length; j++) passiveCounterCooldowns[j] -= minWait;
+                
+                // Update debuff durations
+                enemyDebuffs.afflictedDuration = Math.max(0, enemyDebuffs.afflictedDuration - minWait);
+                enemyDebuffs.weakenedDuration = Math.max(0, enemyDebuffs.weakenedDuration - minWait);
+                enemyDebuffs.hinderedDuration = Math.max(0, enemyDebuffs.hinderedDuration - minWait);
+                enemyDebuffs.impairedDuration = Math.max(0, enemyDebuffs.impairedDuration - minWait);
+                
+                // Update debuff active states based on durations
+                enemyDebuffs.afflicted = enemyDebuffs.afflictedDuration > 0;
+                enemyDebuffs.weakened = enemyDebuffs.weakenedDuration > 0;
+                enemyDebuffs.hindered = enemyDebuffs.hinderedDuration > 0;
+                enemyDebuffs.impaired = enemyDebuffs.impairedDuration > 0;
             }
         }
 
@@ -1084,7 +1429,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedStats = Object.keys(statsBreakdown)
             .filter(name => statsBreakdown[name].casts > 0)
             .map(name => ({
-                name,
+                key: name,
+                name: statsBreakdown[name].displayName || name,
                 ...statsBreakdown[name]
             }))
             .sort((a, b) => b.damage - a.damage);

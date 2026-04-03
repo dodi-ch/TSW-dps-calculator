@@ -122,13 +122,20 @@
                 </div>
                 <div class="abilities-grid">
                     <div class="ability-slot-group">
-                        <h3>Active Abilities (1-6 + Elite)</h3>
+                        <h3>Active Abilities</h3>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            <strong>Priority:</strong> Lower = casts first. Set <strong>1</strong> for builders, <strong>2-6</strong> for consumers. Elite defaults to <strong>7</strong>.<br>
+                            <strong>Min Res:</strong> Minimum resources needed before ability can fire. Use to delay buffs until after multiple builder casts.
+                        </div>
                         <div id="active-abilities-container">
                             <!-- 7 selectors will be added via JS -->
                         </div>
                     </div>
                     <div class="ability-slot-group aux-group">
                         <h3>Auxiliary Action</h3>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Set <strong>Priority 7</strong> to use after other abilities
+                        </div>
                         <div id="aux-ability-container">
                             <!-- 1 selector will be added via JS -->
                         </div>
@@ -138,10 +145,16 @@
                 <div class="abilities-grid" style="margin-top: 1rem;">
                     <div class="ability-slot-group">
                         <h3>Elite Passive</h3>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Auto-triggers on every hit from active abilities
+                        </div>
                         <div id="elite-passive-container"></div>
                     </div>
                     <div class="ability-slot-group">
-                        <h3>Normal Passives (1-6)</h3>
+                        <h3>Normal Passives</h3>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Auto-triggers on every hit from active abilities
+                        </div>
                         <div id="normal-passives-container"></div>
                     </div>
                     <div class="ability-slot-group aux-group">
@@ -155,6 +168,9 @@
                         title="Resources consumed by consumer abilities. Default is 5. Less uses less but deals less damage.">Resources
                         Built/Consumed Requirement</label>
                     <input type="number" id="resources-used" value="5" min="1" max="5">
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 4px;">
+                    <strong>How ability rotation works:</strong> Use the <strong>Priority</strong> number on each ability to control when it fires. Set <strong>1</strong> for builders (they generate resources). Set <strong>2-6</strong> for consumers. The simulator casts abilities in priority order (lowest first), then repeats. An ability only fires when its cooldown is ready.
                 </div>
                 <div class="form-group" style="margin-top: 1rem;">
                     <label for="simulation-time" title="Duration to simulate the rotation for (in minutes).">Simulation

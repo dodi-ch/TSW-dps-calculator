@@ -3172,7 +3172,7 @@ const tswData = [
     "note": "",
     "cast_time": 0.0,
     "cooldown": 0.0,
-    "description": "Whenever you hit an enemy with a Blade ability, you apply the Two Cuts effect. Hitting the enemy with a Blade ability consumes this effect to deal 105 damage. Requires an equipped blade.",
+    "description": "Whenever you hit an enemy with a Blade ability, you apply the Two Cuts effect. Hitting the enemy with a Blade ability consumes this effect to deal 105 damage. Requires an equipped blade. (Triggers every 2nd Blade hit)",
     "type": "Passive",
     "weapon": "Blade",
     "icon": "Two Cuts.png",
