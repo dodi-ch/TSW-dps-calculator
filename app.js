@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const weaponSelect = document.getElementById('weapon-type');
     const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
     const auxWeaponSelect = document.getElementById('auxiliary-weapon-type');
-    const resourcesInput = document.getElementById('resources-used');
     const simTimeInput = document.getElementById('simulation-time');
     const dustSignetCheckbox = document.getElementById('signet-dust');
 
@@ -602,18 +601,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // "based on the number of resources consumed". We derive simple flags
         // from the description so the simulation can treat them correctly.
         let resourceRequirement = 0;
+        let resourceConsumption = 0;
         let damageScalesWithResources = false;
 
-        // Detect explicit "Consumes X <Weapon> Resources"
+        // Detect explicit "Consumes X <Weapon> Resources" (fixed consumption)
         const fixedConsumeMatch = desc.match(/Consumes?\s+(\d+)\s+\w+\s+Resources?/i);
         if (fixedConsumeMatch) {
             resourceRequirement = parseInt(fixedConsumeMatch[1], 10) || 0;
+            resourceConsumption = resourceRequirement; // Fixed amount consumed
         }
 
-        // Detect "Consumes all <Weapon> Resources"
+        // Detect "Consumes all <Weapon> Resources" (variable consumption)
         if (/Consumes all\s+\w+\s+Resources?/i.test(desc)) {
             // Treat "all" as "whatever the user configured" (resourcesUsed)
-            resourceRequirement = resourcesUsed || 5;
+            resourceRequirement = 1; // Need at least 1 resource to cast
+            resourceConsumption = resourcesUsed || 5; // Consume all available resources
         }
 
         // Detect that damage/heal output actually scales with resources
@@ -626,8 +628,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // that damage scales with resources, clamp the effective resources
         // used to that requirement so damage doesn't change with the slider.
         let effectiveResources = resourcesUsed;
-        if (resourceRequirement > 0 && !damageScalesWithResources) {
-            effectiveResources = resourceRequirement;
+        if (resourceConsumption > 0 && !damageScalesWithResources) {
+            effectiveResources = resourceConsumption;
         }
 
         // --- Scaling selection ---
@@ -825,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bonusDamageWithDebuffs,
             appliedDebuffs,
             appliedDebuffDurations,
+            resourceConsumption,
             originalAbility: ability
         };
     }
@@ -835,7 +838,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const critChanceGlobal = parseFloat(critChanceInput.value) || 0;
         const critPowerGlobal = parseFloat(critPowerInput.value) || 0;
         const penChanceGlobal = parseFloat(penChanceInput.value) || 0;
-        const targetResources = parseInt(resourcesInput.value) || 5;
         const simTimeMins = parseFloat(simTimeInput.value) || 3;
         const targetSeconds = simTimeMins * 60;
 
@@ -898,9 +900,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(Boolean);
         }
 
-        const actives = collectActivesWithOrder(activeSelects, targetResources);
-        const eliteActives = collectActivesWithOrder(eliteActiveSelects, targetResources);
-        const auxActives = collectActivesWithOrder(auxActiveSelects, targetResources);
+        const actives = collectActivesWithOrder(activeSelects, 0);
+        const eliteActives = collectActivesWithOrder(eliteActiveSelects, 0);
+        const auxActives = collectActivesWithOrder(auxActiveSelects, 0);
         
         console.log("Actives breakdown:", {
             normal: actives.map(a => a.name),
@@ -929,12 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("allActives length:", allActives.length);
         allActives.forEach((a, i) => {
             console.log(`  [${i}] ${a.name} - weapon=${a.weapon}, isConsumer=${a.isConsumer}, cooldown=${a.cooldown}`);
-        });
-        
-        console.log("Selected passives:", allPassives.map(p => p.name));
-        console.log("allPassives length:", allPassives.length);
-        allPassives.forEach((p, i) => {
-            console.log(`  [${i}] ${p.name} - weapon=${p.weapon}, type=${p.type}, triggerSubtypes=[${p.triggerSubtypes.join(', ')}]`);
         });
 
         if (allActives.length === 0) {
@@ -1135,15 +1131,9 @@ document.addEventListener('DOMContentLoaded', () => {
             statsBreakdown[abilityKey].damage += finalDamage;
 
             // Proc Passives (Evaluate on every hit)
-            console.log(`Passive check for ${ability.name} (subtype: ${ability.subtype}, weapon: ${ability.weapon})`);
             allPassives.forEach((passive, p) => {
                 if (passiveCooldowns[p] <= 0) {
-                    console.log(`  Checking passive: ${passive.name} (triggerSubtypes: [${passive.triggerSubtypes.join(', ')}], weapon: ${passive.weapon})`);
-                    
-                    if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) {
-                        console.log(`    ❌ Subtype mismatch: ${ability.subtype} not in [${passive.triggerSubtypes.join(', ')}]`);
-                        return;
-                    }
+                    if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) return;
                     
                     // Check for requiresBlade flag (Two Cuts passive)
                     if (passive.originalAbility && passive.originalAbility.requiresBlade && !hasBladeWeapon) return;
@@ -1152,12 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const passiveWeapon = passive.weapon;
                     const isMatchingWeapon = !passiveWeapon || passiveWeapon === 'All' || passiveWeapon === ability.weapon;
                     
-                    console.log(`    Weapon check: passive=${passiveWeapon}, active=${ability.weapon}, match=${isMatchingWeapon}`);
-                    
-                    if (!isMatchingWeapon) {
-                        console.log(`    ❌ Weapon mismatch`);
-                        return; // Skip non-matching weapons, don't reset counter
-                    }
+                    if (!isMatchingWeapon) return; // Skip non-matching weapons, don't reset counter
                     
                     // Enhanced counter-based trigger system
                     let shouldTrigger = false;
@@ -1218,10 +1203,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     statsBreakdown[passiveKey].casts++;
                     statsBreakdown[passiveKey].damage += pActualDmg;
                     passiveCooldowns[p] = 1.0; // 1s ICD
-                    
-                    console.log(`    🎯 ${passive.name} TRIGGERS! Damage: ${pActualDmg.toFixed(2)}`);
-                } else {
-                    console.log(`    ⏸️ ${passive.name} on cooldown (${passiveCooldowns[p]}s)`);
                 }
             });
         }
@@ -1243,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isSec = action.weapon === secWeapon;
                 const isValidWeapon = isPrim || isSec || primWeapon === "All";
 
-                const reqResources = action.resourceRequirement || targetResources;
+                const reqResources = action.resourceRequirement || action.resourceConsumption || 5;
 
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
                 if (!isValidWeapon) {
@@ -1330,13 +1311,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Resources
                     if (action.isConsumer) {
-                        if (isPrim) primResources -= reqResources;
-                        if (isSec) secResources -= reqResources;
+                        const consumeAmount = action.resourceConsumption || reqResources;
+                        if (isPrim) {
+                            console.log(`🔫 ${action.name} consumes ${consumeAmount} pistol resources (${primResources} -> ${primResources - consumeAmount})`);
+                            primResources -= consumeAmount;
+                        }
+                        if (isSec) {
+                            console.log(`⚔️ ${action.name} consumes ${consumeAmount} blade resources (${secResources} -> ${secResources - consumeAmount})`);
+                            secResources -= consumeAmount;
+                        }
                     } else if (action.tree !== "Aux") {
-                        primResources = Math.min(5, primResources + 1);
-                        if (secWeapon !== "None") secResources = Math.min(5, secResources + 1);
-                        if (action.name === "Ignite") {
-                            console.log(`After ${action.name}: primResources=${primResources}, secResources=${secResources}`);
+                        // Builders only add resources to their specific weapon
+                        if (isPrim) {
+                            console.log(`🔫 ${action.name} builds 1 pistol resource (${primResources} -> ${Math.min(5, primResources + 1)})`);
+                            primResources = Math.min(5, primResources + 1);
+                        }
+                        if (isSec) {
+                            console.log(`⚔️ ${action.name} builds 1 blade resource (${secResources} -> ${Math.min(5, secResources + 1)})`);
+                            secResources = Math.min(5, secResources + 1);
                         }
                     }
 
@@ -1828,7 +1820,6 @@ document.addEventListener('DOMContentLoaded', () => {
     weaponSelect.addEventListener('change', updateAbilityDropdowns);
     secondaryWeaponSelect.addEventListener('change', updateAbilityDropdowns);
     auxWeaponSelect.addEventListener('change', updateAbilityDropdowns);
-    resourcesInput.addEventListener('input', calculate);
     simTimeInput.addEventListener('input', calculate);
 
     const copyBreakdownBtn = document.getElementById('copy-breakdown-btn');
