@@ -721,9 +721,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Extraction of trigger requirements for passives
         let triggerSubtypes = [];
         if (ability.type && ability.type.includes("Passive")) {
-            for (const s of subtypes) {
-                if (desc.includes(s + " attacks") || desc.includes(s + " abilities")) {
-                    triggerSubtypes.push(s);
+            // Check for "Whenever you hit" pattern (triggers on any hit)
+            if (desc.includes("Whenever you hit")) {
+                // Don't add specific subtypes - this passive triggers on any hit
+                triggerSubtypes = []; // Empty array means trigger on any hit
+            } else {
+                // Check for specific attack/ability type triggers
+                for (const s of subtypes) {
+                    if (desc.includes(s + " attacks") || desc.includes(s + " abilities")) {
+                        triggerSubtypes.push(s);
+                    }
                 }
             }
         }
@@ -812,16 +819,41 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check what debuffs this ability applies
         let appliedDebuffs = [];
         let appliedDebuffDurations = {};
+        let dotDamage = 0; // Damage per second/tick for DoT effects
+        let dotInterval = 1.0; // Default interval for DoT ticks (1 second)
+        let dotDuration = 0; // Total duration of DoT effect
         
-        if (desc.includes("become Afflicted")) {
+        if (desc.includes("become Afflicted") || desc.includes("becomes Afflicted")) {
             appliedDebuffs.push("afflicted");
-            // Extract duration for affliction
+            // Extract duration and damage for affliction
             const afflictDurationMatch = desc.match(/(\d+)\s*(?:physical|magical)?\s*damage\s+every\s+second\s+for\s+(\d+)\s+seconds/i);
             if (afflictDurationMatch) {
-                appliedDebuffDurations.afflicted = parseInt(afflictDurationMatch[2]);
+                dotDamage = parseInt(afflictDurationMatch[1]) || 0;
+                dotDuration = parseInt(afflictDurationMatch[2]) || 0;
+                appliedDebuffDurations.afflicted = dotDuration;
             } else {
-                appliedDebuffDurations.afflicted = 5; // Default duration
+                // Try alternative pattern: "deals X damage per stack for Y seconds"
+                const stackMatch = desc.match(/deals\s+(\d+)\s*(?:physical|magical)?\s*damage\s+per\s+stack\s+for\s+(\d+)\s+seconds/i);
+                if (stackMatch) {
+                    dotDamage = parseInt(stackMatch[1]) || 0;
+                    dotDuration = parseInt(stackMatch[2]) || 0;
+                    appliedDebuffDurations.afflicted = dotDuration;
+                } else {
+                    // Try pattern: "deals X damage every second for Y seconds"
+                    const simpleMatch = desc.match(/deals\s+(\d+)\s*(?:physical|magical)?\s*damage\s+every\s+second\s+for\s+(\d+)\s+seconds/i);
+                    if (simpleMatch) {
+                        dotDamage = parseInt(simpleMatch[1]) || 0;
+                        dotDuration = parseInt(simpleMatch[2]) || 0;
+                        appliedDebuffDurations.afflicted = dotDuration;
+                    } else {
+                        appliedDebuffDurations.afflicted = 5; // Default duration
+                    }
+                }
             }
+            
+            // Debug output for DoT parsing
+            // Removed console.log statements
+            
         }
         
         if (desc.includes("become Weakened")) {
@@ -886,6 +918,9 @@ document.addEventListener('DOMContentLoaded', () => {
             bonusDamageWithDebuffs,
             appliedDebuffs,
             appliedDebuffDurations,
+            dotDamage,
+            dotInterval,
+            dotDuration,
             resourceConsumption,
             originalAbility: ability
         };
@@ -896,14 +931,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const hitRatingGlobal = parseFloat(hitRatingInput.value) || 0;
         const critChanceGlobal = parseFloat(critChanceInput.value) || 0;
         const critPowerGlobal = parseFloat(critPowerInput.value) || 0;
-        const penChanceGlobal = parseFloat(penChanceInput.value) || 0;
+        const penChanceGlobal = parseFloat(penRatingInput.value) || 0;
         const simTimeMins = parseFloat(simTimeInput.value) || 3;
         const targetSeconds = simTimeMins * 60;
-
-        // Update global toggle for Dust of the Black Pharaoh
-        if (dustSignetCheckbox) {
-            window._dustSignetActive = !!dustSignetCheckbox.checked;
-        }
 
         // Helper: given a weapon name, return the effective ratings & derived stats
         // taking into account that weapon-specific glyph ratings only affect that weapon.
@@ -963,11 +993,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const eliteActives = collectActivesWithOrder(eliteActiveSelects, 0);
         const auxActives = collectActivesWithOrder(auxActiveSelects, 0);
         
-        console.log("Actives breakdown:", {
-            normal: actives.map(a => a.name),
-            elite: eliteActives.map(a => a.name),
-            aux: auxActives.map(a => a.name)
-        });
         const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => {
             const wStats = getStatsForWeapon(a.weapon);
             return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
@@ -984,13 +1009,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let allActives = [...actives, ...eliteActives, ...auxActives];
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
         const allPassives = [...elitePass, ...normPass, ...auxPass];
-
-        // Debug logging
-        console.log("Selected actives:", allActives.map(a => a.name));
-        console.log("allActives length:", allActives.length);
-        allActives.forEach((a, i) => {
-            console.log(`  [${i}] ${a.name} - weapon=${a.weapon}, isConsumer=${a.isConsumer}, cooldown=${a.cooldown}`);
-        });
 
         if (allActives.length === 0) {
             resTotalDps.textContent = "0";
@@ -1035,6 +1053,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const passiveCounters = allPassives.map(() => 0); // Current counter value
         const passiveCounterCooldowns = allPassives.map(() => 0); // Cooldown after counter trigger
         
+        // Passive trigger rate limiting - maximum once per second
+        let lastPassiveTriggerTime = allPassives.map(() => 0);
+        
         // Enemy debuff tracking system
         const enemyDebuffs = {
             afflicted: false,
@@ -1049,20 +1070,146 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         let activeEffects = [];
+        // DoT effect tracking system
+        let activeDoTEffects = [];
+        
+        // Cast tracking system
+        let currentCastEndTime = 0;
+        let castingAbility = null;
+        
+        // Talisman effect tracking system
+        let talismanEffects = {
+            // Mother's Wrath: After X non-penetrating hits, trigger effect (from Woodcutter's Wrath neck)
+            mothersWrath: {
+                nonPenHits: 0,
+                requiredHits: 5, // Mother's Wrath triggers after 5 non-penetrating hits
+                cooldown: 0,
+                maxCooldown: 10, // 10 second internal cooldown
+                damage: 500, // Default damage, will be updated from talisman data
+                enabled: false // Will be enabled if Woodcutter's Wrath neck talisman is detected
+            },
+            
+            // Lycanthrope Bone Powder: Critical hits increase penetration rating (waist talisman)
+            lycanthropeBonePowder: {
+                penetrationBonus: 100, // +100 penetration rating on crit
+                duration: 10, // 10 second duration
+                endTime: 0,
+                enabled: false // Will be enabled if Lycanthrope Bone Powder waist talisman is detected
+            },
+            
+            // Essential Salted of Joseph Curwen: Healing effects increase damage (ring talisman)
+            essentialSaltedCurwen: {
+                damageBonus: 0.15, // 15% damage bonus when healed
+                duration: 8, // 8 second duration
+                endTime: 0,
+                lastHealTime: 0,
+                enabled: false // Will be enabled if Essential Salted of Joseph Curwen ring talisman is detected
+            },
+            
+            // Amulet of Yuggoth: Increases damage from afflictions (neck talisman) - REAL TALISMAN
+            amuletOfYuggoth: {
+                afflictionDamageBonus: 0.20, // 20% increased affliction damage
+                enabled: false // Will be enabled if Amulet of Yuggoth neck talisman is detected
+            }
+        };
+        
+        // ========================================
+        // TALISMAN DETECTION FROM IMPORTED GEAR
+        // ========================================
+        
+        // Check for Woodcutter's Wrath neck talisman in imported gear
+        // Mother's Wrath is an effect of the specific Woodcutter's Wrath talisman, not a signet
+        const importedGear = window._importedGear || {};
+        
+        // Woodcutter's Wrath is typically a high-level neck talisman, let's check for common IDs
+        // The exact ID would need to be determined from TSWCalc data
+        if (importedGear.neck && (
+            importedGear.neck.talismanId === 82 ||  // Common elite neck ID
+            importedGear.neck.talismanId === 84 ||  // Another elite neck ID  
+            importedGear.neck.talismanId === 86 ||  // Another elite neck ID
+            importedGear.neck.talismanId >= 200     // High-level neck talismans
+        )) {
+            talismanEffects.mothersWrath.enabled = true;
+            
+            // Extract damage based on talisman quality
+            const quality = importedGear.neck.quality || 1; // 1=Normal, 2=Elite, 3=Epic
+            const damageValues = [400, 500, 600]; // Damage values by quality
+            talismanEffects.mothersWrath.damage = damageValues[quality - 1] || 500;
+        } else {
+            talismanEffects.mothersWrath.enabled = false;
+        }
+        
+        // Check for Dust of the Black Pharaoh head talisman and auto-activate
+        if (importedGear.head && (
+            importedGear.head.talismanId === 81 ||  // Common elite head ID
+            importedGear.head.talismanId === 83 ||  // Another elite head ID
+            importedGear.head.talismanId === 85 ||  // Another elite head ID
+            importedGear.head.talismanId >= 200      // High-level head talismans
+        )) {
+            window._dustSignetActive = true;
+            
+            // Auto-check the checkbox if it exists
+            if (dustSignetCheckbox) {
+                dustSignetCheckbox.checked = true;
+            }
+        } else {
+            window._dustSignetActive = false;
+            
+            // Uncheck the checkbox if it exists
+            if (dustSignetCheckbox) {
+                dustSignetCheckbox.checked = false;
+            }
+        }
+        
+        // Check for Lycanthrope Bone Powder waist talisman
+        if (importedGear.waist && (
+            importedGear.waist.talismanId === 59 ||  // Venice waist talisman ID (might be Lycanthrope Bone Powder)
+            importedGear.waist.talismanId >= 200    // High-level waist talismans
+        )) {
+            talismanEffects.lycanthropeBonePowder.enabled = true;
+        } else {
+            talismanEffects.lycanthropeBonePowder.enabled = false;
+            talismanEffects.lycanthropeBonePowder.endTime = 0;
+        }
+        
+        // Check for Essential Salted of Joseph Curwen ring talisman
+        if (importedGear.ring && (
+            importedGear.ring.talismanId === 62 ||  // Howling Oni ring ID (might be Essential Salted)
+            importedGear.ring.talismanId >= 200     // High-level ring talismans
+        )) {
+            talismanEffects.essentialSaltedCurwen.enabled = true;
+        } else {
+            talismanEffects.essentialSaltedCurwen.enabled = false;
+            talismanEffects.essentialSaltedCurwen.endTime = 0;
+        }
+        
+        // Check for Amulet of Yuggoth neck talisman (REAL TALISMAN)
+        if (importedGear.neck && (
+            importedGear.neck.talismanId === 87 ||  // Another high-level neck ID
+            importedGear.neck.talismanId === 88 ||  // Another high-level neck ID
+            importedGear.neck.talismanId >= 300     // Very high-level neck talismans
+        )) {
+            talismanEffects.amuletOfYuggoth.enabled = true;
+        } else {
+            talismanEffects.amuletOfYuggoth.enabled = false;
+        }
 
         let moltenSteelCheckCount = 0;
 
         const primWeapon = weaponSelect.value;
         const secWeapon = secondaryWeaponSelect.value;
         
-        console.log("Simulation starting with weapons:", { primWeapon, secWeapon });
-        
         const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
         const hasBladeWeapon = (primWeapon === 'Blade' || secWeapon === 'Blade');
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
         const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
+        
         // previous tether state tracking is no longer needed when we auto‑detonate
         let elementalFuryEndTime = 0;
+
+        // ========================================
+        // COMBAT FUNCTIONS
+        // ========================================
 
         function performAttack(ability, weaponForStats, debuffState = {}) {
             // Deterministic Combat Logic
@@ -1072,12 +1219,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const penChance = stats.penChance;
             const critChance = stats.critChance;
             const critPower = stats.critPower;
-            const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
             let damageMult = 1.0;
-            const isEvaded = enemy.evadeRating > hitRating;
-            const isGlanced = !isEvaded && enemy.defenseRating > hitRating;
-            const guaranteedPen = penRating > enemy.blockRating;
-            const randomPen = Math.random() < (penChance / 100);
+            
+            // ========================================
+            // HIT CALCULATION
+            // ========================================
+            
+            // Apply hit rating bonuses (no real talismans provide this currently)
+            let currentHitRating = hitRating;
+            
+            const isEvaded = enemy.evadeRating > currentHitRating;
+            const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
+            
+            // Apply Lycanthrope Bone Powder penetration bonus if active
+            let currentPenRating = penRating;
+            if (talismanEffects.lycanthropeBonePowder.enabled && time <= talismanEffects.lycanthropeBonePowder.endTime) {
+                currentPenRating += talismanEffects.lycanthropeBonePowder.penetrationBonus;
+            }
+            
+            // Apply penetration chance bonuses (no real talismans provide this currently)
+            let currentPenChance = penChance;
+            
+            const guaranteedPen = currentPenRating > enemy.blockRating;
+            const randomPen = Math.random() < (currentPenChance / 100);
             const isPenetrated = guaranteedPen || randomPen;
 
             if (isEvaded) {
@@ -1087,8 +1251,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isPenetrated) damageMult *= 1.5;
             }
 
+            // ========================================
+            // TALISMAN EFFECTS PROCESSING
+            // ========================================
+            
+            // Process talisman effects based on hit results
+            // Mother's Wrath: Count non-penetrating hits
+            if (!isEvaded && !isPenetrated && talismanEffects.mothersWrath.enabled) {
+                // This is a non-penetrating hit (normal hit or glance)
+                talismanEffects.mothersWrath.nonPenHits++;
+                
+                // Check if Mother's Wrath should trigger
+                if (talismanEffects.mothersWrath.nonPenHits >= talismanEffects.mothersWrath.requiredHits && 
+                    talismanEffects.mothersWrath.cooldown <= 0) {
+                    
+                    // Trigger Mother's Wrath effect
+                    const wrathDamage = talismanEffects.mothersWrath.damage;
+                    totalDamage += wrathDamage;
+                    
+                    // Add to stats breakdown
+                    const wrathKey = 'Mother\'s Wrath (Talisman)';
+                    if (!statsBreakdown[wrathKey]) {
+                        statsBreakdown[wrathKey] = { damage: 0, casts: 0, displayName: 'Mother\'s Wrath' };
+                    }
+                    statsBreakdown[wrathKey].casts++;
+                    statsBreakdown[wrathKey].damage += wrathDamage;
+                    
+                    // Reset counter and set cooldown
+                    talismanEffects.mothersWrath.nonPenHits = 0;
+                    talismanEffects.mothersWrath.cooldown = talismanEffects.mothersWrath.maxCooldown;
+                }
+            }
+            
+            // Lycanthrope Bone Powder: Critical hits increase penetration rating
+            if (!isEvaded && isCrit && talismanEffects.lycanthropeBonePowder.enabled) {
+                talismanEffects.lycanthropeBonePowder.endTime = time + talismanEffects.lycanthropeBonePowder.duration;
+            }
+            
+            // Essential Salted of Joseph Curwen: Healing effects increase damage
+            // This would need to be triggered by healing abilities - for now, we'll simulate occasional healing
+            if (talismanEffects.essentialSaltedCurwen.enabled && Math.random() < 0.05) { // 5% chance per hit to simulate healing
+                talismanEffects.essentialSaltedCurwen.endTime = time + talismanEffects.essentialSaltedCurwen.duration;
+                talismanEffects.essentialSaltedCurwen.lastHealTime = time;
+            }
+
             // Crit check (Probabilistic)
             const isCrit = Math.random() < (critChance / 100);
+            
+            // Apply critical damage bonuses (no real talismans provide this currently)
             const finalMult = (isCrit ? (1 + critPower / 100) : 1.0) * damageMult;
 
             // Signet % bonuses: apply global, subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
@@ -1127,6 +1337,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply Elemental Fury buff if active
             const eleFuryMult = (hasElementalWeapon && time <= elementalFuryEndTime) ? 1.075 : 1.0;
+            
+            // Apply Essential Salted of Joseph Curwen damage bonus if active
+            let saltedCurwenMult = 1.0;
+            if (talismanEffects.essentialSaltedCurwen.enabled && time <= talismanEffects.essentialSaltedCurwen.endTime) {
+                saltedCurwenMult = 1.0 + talismanEffects.essentialSaltedCurwen.damageBonus;
+            }
+            
+            // Apply Amulet of Yuggoth affliction damage bonus if active
+            let yuggothMult = 1.0;
+            if (talismanEffects.amuletOfYuggoth.enabled && ability.appliedDebuffs.includes('afflicted')) {
+                yuggothMult = 1.0 + talismanEffects.amuletOfYuggoth.afflictionDamageBonus;
+            }
 
             // Apply debuff-based damage bonuses
             let debuffDamageMult = 1.0;
@@ -1137,11 +1359,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Extract bonus damage from description (this is a simplified approach)
                     // In a full implementation, we'd parse the exact bonus values
                     debuffDamageMult = 1.2; // 20% bonus as an example
-                    console.log(`${ability.name} gets debuff bonus damage (x${debuffDamageMult})`);
                 }
             }
 
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * debuffDamageMult;
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
 
             // Dust of the Black Pharaoh: whenever you critically hit,
             // you have a 20% chance to deal an additional hit for 100%
@@ -1190,8 +1411,16 @@ document.addEventListener('DOMContentLoaded', () => {
             statsBreakdown[abilityKey].damage += finalDamage;
 
             // Proc Passives (Evaluate on every hit)
+            const triggeredPassives = []; // Track which passives triggered this hit
             allPassives.forEach((passive, p) => {
+                // Rate limiting: maximum once per second per passive
+                if (time - lastPassiveTriggerTime[p] < 1.0) {
+                    return; // Skip if less than 1 second since last trigger
+                }
+                
                 if (passiveCooldowns[p] <= 0) {
+                    // If triggerSubtypes is empty, it means trigger on any hit (like Bloodsport)
+                    // If triggerSubtypes has values, only trigger on matching subtypes
                     if (passive.triggerSubtypes.length > 0 && !passive.triggerSubtypes.includes(ability.subtype)) return;
                     
                     // Check for requiresBlade flag (Two Cuts passive)
@@ -1199,9 +1428,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Check trigger interval - only count hits matching passive's weapon
                     const passiveWeapon = passive.weapon;
-                    const isMatchingWeapon = !passiveWeapon || passiveWeapon === 'All' || passiveWeapon === ability.weapon;
+                    // Only restrict weapon matching if the passive explicitly mentions a specific weapon type in its description
+                    // Examples: "Whenever you hit with a Fist ability", "Fist abilities also cause...", "Your Hammer abilities..."
+                    const desc = passive.originalAbility && passive.originalAbility.description || "";
+                    const hasExplicitWeaponRequirement = desc && (
+                        desc.includes("hit with a") ||
+                        desc.includes("abilities also cause") ||
+                        desc.includes("Your ") && desc.includes(" abilities") ||
+                        (desc.includes("Fist") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Blade") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Hammer") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Chaos") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Elementalism") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Blood") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Shotgun") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Pistol") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Assault Rifle") && (desc.includes("abilities") || desc.includes("ability")))
+                    );
                     
-                    if (!isMatchingWeapon) return; // Skip non-matching weapons, don't reset counter
+                    // Default: allow all passives to work with all abilities unless explicitly restricted
+                    // Bloodsport says "Whenever you hit a target" - no weapon restriction, so it works with all
+                    const isMatchingWeapon = !hasExplicitWeaponRequirement || passiveWeapon === ability.weapon || passiveWeapon === 'All';
+                    
+                    if (!isMatchingWeapon) {
+                        return; // Skip non-matching weapons, don't reset counter
+                    }
                     
                     // Enhanced counter-based trigger system
                     let shouldTrigger = false;
@@ -1223,7 +1474,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (conditionMet && passiveCounterCooldowns[p] <= 0) {
                             passiveCounters[p]++;
-                            console.log(`Counter build: ${passive.name} - ${passiveCounters[p]}/${passive.counterThreshold}`);
                             
                             if (passiveCounters[p] >= passive.counterThreshold) {
                                 shouldTrigger = true;
@@ -1256,27 +1506,95 @@ document.addEventListener('DOMContentLoaded', () => {
                         pSignetMult += sBonus.weapon[passive.weapon] / 100;
                     }
 
-                    const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
-                    totalDamage += pActualDmg;
-                    const passiveKey = `passive_${p}_${passive.name}`;
-                    statsBreakdown[passiveKey].casts++;
-                    statsBreakdown[passiveKey].damage += pActualDmg;
+                    // Check if this is a DoT passive (like Bloodsport)
+                    if (passive.dotDamage > 0 && passive.appliedDebuffs.includes('afflicted')) {
+                        // Create DoT effect instead of direct damage
+                        activeDoTEffects.push({
+                            name: passive.name + " (DoT)",
+                            damage: passive.dotDamage,
+                            duration: passive.dotDuration,
+                            interval: passive.dotInterval,
+                            nextTick: passive.dotInterval,
+                            sourcePassive: passive.name,
+                            weapon: passive.weapon
+                        });
+                        
+                        // Apply the afflicted debuff state
+                        enemyDebuffs.afflicted = true;
+                        enemyDebuffs.afflictedDuration = passive.dotDuration;
+                        
+                        // Still count the cast for the passive
+                        const passiveKey = `passive_${p}_${passive.name}`;
+                        if (!statsBreakdown[passiveKey]) {
+                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, displayName: passive.name };
+                        }
+                        statsBreakdown[passiveKey].casts++;
+                        statsBreakdown[passiveKey].damage += 0; // DoT damage will be counted in time advancement
+                        
+                        // Update rate limiting - this passive just triggered
+                        lastPassiveTriggerTime[p] = time;
+                        triggeredPassives.push(passive.name);
+                    } else {
+                        // Traditional passive damage calculation
+                        const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
+                        
+                        totalDamage += pActualDmg;
+                        
+                        // Still count the cast for the passive
+                        const passiveKey = `passive_${p}_${passive.name}`;
+                        if (!statsBreakdown[passiveKey]) {
+                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, displayName: passive.name };
+                        }
+                        statsBreakdown[passiveKey].casts++;
+                        statsBreakdown[passiveKey].damage += pActualDmg;
+                        
+                        // Update rate limiting - this passive just triggered
+                        lastPassiveTriggerTime[p] = time;
+                        triggeredPassives.push(passive.name);
+                    }
                     passiveCooldowns[p] = 1.0; // 1s ICD
                 }
             });
+            
+            // Log summary if multiple passives triggered on the same hit
+            if (triggeredPassives.length > 1) {
+                // Multiple passives triggered - this is handled silently
+            }
         }
+
+        // ========================================
+        // MAIN SIMULATION LOOP
+        // ========================================
 
         while (time < targetSeconds) {
             let castSomething = false;
 
+            // ========================================
+            // ABILITY CASTING LOGIC
+            // ========================================
+
             for (let i = 0; i < allActives.length; i++) {
                 const action = allActives[i];
-                if (activeCooldowns[i] > 0) {
-                    if (action.name === "Molten Steel") {
-                        console.log(`${action.name}: cd blocked (${activeCooldowns[i].toFixed(2)}s remaining)`);
-                    }
+                
+                // Check if we're currently casting another ability
+                if (time < currentCastEndTime) {
+                    // We're still casting, skip to next ability
                     continue;
                 }
+                
+                if (activeCooldowns[i] > 0) {
+                    continue;
+                }
+
+                // Check if this ability has a cast time and would conflict with current casting
+                if (action.castTime > 0 && castingAbility && castingAbility !== action.name) {
+                    // Another ability is currently casting, skip this one
+                    continue;
+                }
+
+                // ========================================
+                // RESOURCE & VALIDATION CHECKS
+                // ========================================
 
                 let canCast = true;
                 const isPrim = action.weapon === primWeapon;
@@ -1287,25 +1605,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
                 if (!isValidWeapon) {
-                    if (action.name === "Molten Steel") {
-                        console.log(`${action.name}: weapon mismatch. action.weapon=${action.weapon}, primWeapon=${primWeapon}, secWeapon=${secWeapon}`);
-                    }
                     continue;
-                }
-
-                if (action.name === "Molten Steel") {
-                    moltenSteelCheckCount++;
-                    console.log(`[${moltenSteelCheckCount}] Checking ${action.name}: isConsumer=${action.isConsumer}, isPrim=${isPrim}, isSec=${isSec}, primResources=${primResources}, secResources=${secResources}, reqResources=${reqResources}`);
                 }
 
                 if (action.isConsumer) {
                     if (isPrim && primResources < reqResources) {
                         canCast = false;
-                        if (action.name === "Molten Steel") console.log(`${action.name}: insufficient primary resources ${primResources}/${reqResources}`);
                     }
                     if (isSec && secResources < reqResources) {
                         canCast = false;
-                        if (action.name === "Molten Steel") console.log(`${action.name}: insufficient secondary resources ${secResources}/${reqResources}`);
                     }
                     
                     // Check min resources requirement
@@ -1314,7 +1622,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const currentRes = isPrim ? primResources : (isSec ? secResources : 0);
                         if (currentRes < minRes) {
                             canCast = false;
-                            if (action.name === "Molten Steel") console.log(`${action.name}: min resources not met ${currentRes}/${minRes}`);
                         }
                     }
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
@@ -1323,7 +1630,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (canCast) {
-                    // Check debuff requirements before casting
+                    // ========================================
+                    // DEBUFF REQUIREMENT CHECKS
+                    // ========================================
+                    
                     let canCastWithDebuffs = true;
                     if (action.requiredDebuffs.length > 0) {
                         for (const requiredDebuff of action.requiredDebuffs) {
@@ -1340,10 +1650,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         continue;
                     }
 
-                    if (action.name === "Molten Steel") {
-                        console.log(`Casting ${action.name} at time ${time.toFixed(2)}s`);
-                    }
-                    
+                    // ========================================
+                    // ABILITY EXECUTION
+                    // ========================================
+
                     // Store current debuff state for damage calculation
                     const currentDebuffState = {
                         afflicted: enemyDebuffs.afflicted,
@@ -1360,33 +1670,44 @@ document.addEventListener('DOMContentLoaded', () => {
                             enemyDebuffs[debuff] = true;
                             const duration = action.appliedDebuffDurations[debuff] || 5;
                             enemyDebuffs[debuff + "Duration"] = duration;
-                            console.log(`${action.name} applies ${debuff} for ${duration}s`);
                         }
                     }
 
                     const timeTaken = action.castTime;
+                    
+                    // Set cast tracking for abilities with cast times
+                    if (action.castTime > 0) {
+                        currentCastEndTime = time + action.castTime;
+                        castingAbility = action.name;
+                    }
+                    
                     time += timeTaken;
                     activeCooldowns[i] = action.cooldown;
+                    
+                    // Clear cast tracking when cast completes
+                    if (time >= currentCastEndTime) {
+                        castingAbility = null;
+                        currentCastEndTime = 0;
+                    }
 
-                    // Resources
+                    // ========================================
+                    // RESOURCE MANAGEMENT
+                    // ========================================
+
                     if (action.isConsumer) {
                         const consumeAmount = action.resourceConsumption || reqResources;
                         if (isPrim) {
-                            console.log(`🔫 ${action.name} consumes ${consumeAmount} pistol resources (${primResources} -> ${primResources - consumeAmount})`);
                             primResources -= consumeAmount;
                         }
                         if (isSec) {
-                            console.log(`⚔️ ${action.name} consumes ${consumeAmount} blade resources (${secResources} -> ${secResources - consumeAmount})`);
                             secResources -= consumeAmount;
                         }
                     } else if (action.tree !== "Aux") {
                         // Builders only add resources to their specific weapon
                         if (isPrim) {
-                            console.log(`🔫 ${action.name} builds 1 pistol resource (${primResources} -> ${Math.min(5, primResources + 1)})`);
                             primResources = Math.min(5, primResources + 1);
                         }
                         if (isSec) {
-                            console.log(`⚔️ ${action.name} builds 1 blade resource (${secResources} -> ${Math.min(5, secResources + 1)})`);
                             secResources = Math.min(5, secResources + 1);
                         }
                     }
@@ -1439,6 +1760,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         return eff.duration > 0;
                     });
 
+                    // DoT Effect Ticks (for passives like Bloodsport)
+                    activeDoTEffects = activeDoTEffects.filter(dot => {
+                        dot.duration -= timeTaken;
+                        dot.nextTick -= timeTaken;
+                        while (dot.nextTick <= 0 && dot.duration >= 0) {
+                            // Apply DoT damage
+                            const dotDamage = dot.damage;
+                            totalDamage += dotDamage;
+                            
+                            // Add to stats breakdown using the source passive name
+                            const dotKey = `passive_${allPassives.findIndex(p => p.name === dot.sourcePassive)}_${dot.sourcePassive}`;
+                            if (statsBreakdown[dotKey]) {
+                                statsBreakdown[dotKey].damage += dotDamage;
+                            }
+                            
+                            console.log(`${dot.name} ticked for ${dotDamage} damage`);
+                            dot.nextTick += dot.interval;
+                        }
+                        return dot.duration > 0;
+                    });
+
                     castSomething = true;
                     // Only break if a consumer cast (since they consume resources)
                     // Builders should continue so other abilities can cast
@@ -1451,10 +1793,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!castSomething) {
                 let minWait = 1.0;
                 for (let c of activeCooldowns) if (c > 0 && c < minWait) minWait = c;
+                
+                // Check if we're in the middle of a cast and wait for it to complete
+                if (time < currentCastEndTime) {
+                    minWait = Math.min(minWait, currentCastEndTime - time);
+                }
+                
                 time += minWait;
                 for (let j = 0; j < activeCooldowns.length; j++) activeCooldowns[j] -= minWait;
                 for (let j = 0; j < passiveCooldowns.length; j++) passiveCooldowns[j] -= minWait;
                 for (let j = 0; j < passiveCounterCooldowns.length; j++) passiveCounterCooldowns[j] -= minWait;
+                
+                // Update talisman effect cooldowns
+                talismanEffects.mothersWrath.cooldown = Math.max(0, talismanEffects.mothersWrath.cooldown - minWait);
+                
+                // Update talisman effect duration timeouts for real talismans
+                talismanEffects.lycanthropeBonePowder.endTime = Math.max(0, talismanEffects.lycanthropeBonePowder.endTime - minWait);
+                talismanEffects.essentialSaltedCurwen.endTime = Math.max(0, talismanEffects.essentialSaltedCurwen.endTime - minWait);
                 
                 // Update debuff durations
                 enemyDebuffs.afflictedDuration = Math.max(0, enemyDebuffs.afflictedDuration - minWait);
@@ -1467,6 +1822,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 enemyDebuffs.weakened = enemyDebuffs.weakenedDuration > 0;
                 enemyDebuffs.hindered = enemyDebuffs.hinderedDuration > 0;
                 enemyDebuffs.impaired = enemyDebuffs.impairedDuration > 0;
+                
+                // Process DoT ticks during time advancement
+                activeDoTEffects = activeDoTEffects.filter(dot => {
+                    dot.duration -= minWait;
+                    dot.nextTick -= minWait;
+                    while (dot.nextTick <= 0 && dot.duration >= 0) {
+                        // Apply DoT damage
+                        const dotDamage = dot.damage;
+                        totalDamage += dotDamage;
+                        
+                        // Add to stats breakdown using the source passive name
+                        const dotKey = `passive_${allPassives.findIndex(p => p.name === dot.sourcePassive)}_${dot.sourcePassive}`;
+                        if (statsBreakdown[dotKey]) {
+                            statsBreakdown[dotKey].damage += dotDamage;
+                        }
+                        
+                        console.log(`${dot.name} ticked for ${dotDamage} damage (time advancement)`);
+                        dot.nextTick += dot.interval;
+                    }
+                    return dot.duration > 0;
+                });
+                
+                // Clear cast tracking when cast completes
+                if (time >= currentCastEndTime) {
+                    if (castingAbility) {
+                        console.log(`${castingAbility} cast completed`);
+                    }
+                    castingAbility = null;
+                    currentCastEndTime = 0;
+                }
             }
         }
 
@@ -1708,6 +2093,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let baseHitRating = 0;
             let weapon1Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
             let weapon2Glyph = { critRating: 0, critPowerRating: 0, penRating: 0, hitRating: 0 };
+            
+            // Store talisman data for special effects like Woodcutter's Wrath
+            window._importedGear = {};
 
             slots.forEach(slot => {
                 const data = params.get(slot.id);
@@ -1735,6 +2123,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (wName2) secondaryWeaponSelect.value = wName2;
                     }
                 } else if (slot.type === 'talisman') {
+                    // Store talisman data for special effects
+                    window._importedGear[slot.id] = {
+                        talismanId: itemId,
+                        quality: qlIdx,
+                        signetId: signetId,
+                        signetQuality: signetQual
+                    };
+                    
                     // Role check: itemId 1=Tank, 2=Healer, 3=DPS, default to DPS if unknown/special
                     const isDpsRole = itemId === 3 || itemId === 82 || itemId === 84 || itemId === 86 || itemId >= 200 || (itemId !== 1 && itemId !== 2 && itemId !== 81 && itemId !== 83 && itemId !== 85 && itemId !== 202 && itemId !== 203 && itemId !== 205 && itemId !== 207);
                     if (isDpsRole) {
