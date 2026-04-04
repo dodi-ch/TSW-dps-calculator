@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
     const auxWeaponSelect = document.getElementById('auxiliary-weapon-type');
     const simTimeInput = document.getElementById('simulation-time');
-    const dustSignetCheckbox = document.getElementById('signet-dust');
 
     // list of auxiliary weapons we treat specially (should match data.js content)
     // there are five aux weapons in the game: chainsaw, flamethrower, quantum, rocket launcher and whip
@@ -538,8 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const ENEMIES = {
-        'training-puppet': { name: 'Training Puppet', blockRating: 0, evadeRating: 0, defenseRating: 0 },
-        'eidolon': { name: 'Eidolon', blockRating: 300, evadeRating: 300, defenseRating: 300 }
+        'training-puppet': { name: 'Training Puppet', blockRating: 0, evadeRating: 0, defenseRating: 0 }
     };
 
     // Helper function to identify builder abilities
@@ -1147,18 +1145,8 @@ document.addEventListener('DOMContentLoaded', () => {
             importedGear.head.talismanId >= 200      // High-level head talismans
         )) {
             window._dustSignetActive = true;
-            
-            // Auto-check the checkbox if it exists
-            if (dustSignetCheckbox) {
-                dustSignetCheckbox.checked = true;
-            }
         } else {
             window._dustSignetActive = false;
-            
-            // Uncheck the checkbox if it exists
-            if (dustSignetCheckbox) {
-                dustSignetCheckbox.checked = false;
-            }
         }
         
         // Check for Lycanthrope Bone Powder waist talisman
