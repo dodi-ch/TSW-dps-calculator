@@ -1860,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const critPowerGlobal = parseFloat(critPowerInput.value) || 0;
 
-        const penChanceGlobal = parseFloat(penRatingInput.value) || 0;
+        const penChanceGlobal = parseFloat(penChanceInput.value) || 0;
 
         const simTimeMins = parseFloat(simTimeInput.value) || 3;
 
@@ -2074,7 +2074,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const key = index < allActives.length ? `active_${index}_${a.name}` : `passive_${index - allActives.length}_${a.name}`;
 
-            statsBreakdown[key] = { damage: 0, casts: 0, displayName: a.name };
+            statsBreakdown[key] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: a.name };
 
         });
 
@@ -2082,18 +2082,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
 
-        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0 };
+        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
 
         const ELE_OVERLOAD_NAME = 'Elemental Overload (Proc)';
 
-        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0 };
+        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
 
         // Pre-create Power Line breakdown entries
         const POWER_LINE_TETHER_NAME = 'Power Line (Tether)';
-        statsBreakdown[POWER_LINE_TETHER_NAME] = { damage: 0, casts: 0, displayName: "Power Line (Tether)" };
+        statsBreakdown[POWER_LINE_TETHER_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Power Line (Tether)" };
         
         const VOLTAIC_DETONATION_NAME = 'Voltaic Detonation';
-        statsBreakdown[VOLTAIC_DETONATION_NAME] = { damage: 0, casts: 0, displayName: "Voltaic Detonation" };
+        statsBreakdown[VOLTAIC_DETONATION_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Voltaic Detonation" };
 
 
 
@@ -2467,11 +2467,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             
 
-            const guaranteedPen = currentPenRating > enemy.blockRating;
-
+            // Only use manual penetration chance since rating-to-% scaling isn't implemented yet
             const randomPen = Math.random() < (currentPenChance / 100);
-
-            const isPenetrated = guaranteedPen || randomPen;
+            const isPenetrated = randomPen;
 
 
 
@@ -2531,7 +2529,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (!statsBreakdown[wrathKey]) {
 
-                        statsBreakdown[wrathKey] = { damage: 0, casts: 0, displayName: 'Mother\'s Wrath' };
+                        statsBreakdown[wrathKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Mother\'s Wrath' };
 
                     }
 
@@ -2736,13 +2734,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (!statsBreakdown[DUST_NAME]) {
 
-                        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0 };
+                        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
 
                     }
 
                     statsBreakdown[DUST_NAME].casts++;
 
                     statsBreakdown[DUST_NAME].damage += actualDmg;
+                    // Dust procs inherit the crit and penetration status of the triggering hit
+                    if (isCrit) statsBreakdown[DUST_NAME].crits++;
+                    if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
 
                 }
 
@@ -2766,7 +2767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (!statsBreakdown[ELE_OVERLOAD_NAME]) {
 
-                        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0 };
+                        statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
 
                     }
 
@@ -2783,6 +2784,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     statsBreakdown[ELE_OVERLOAD_NAME].casts++;
 
                     statsBreakdown[ELE_OVERLOAD_NAME].damage += eleActualDmg;
+                    // Elemental Overload procs inherit the crit and penetration status of the triggering hit
+                    if (isCrit) statsBreakdown[ELE_OVERLOAD_NAME].crits++;
+                    if (isPenetrated) statsBreakdown[ELE_OVERLOAD_NAME].penetrations++;
 
                 }
 
@@ -2805,18 +2809,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Record tether damage
                 statsBreakdown[POWER_LINE_TETHER_NAME].damage += tetherFinalDamage;
                 statsBreakdown[POWER_LINE_TETHER_NAME].casts++;
+                if (isCrit) statsBreakdown[POWER_LINE_TETHER_NAME].crits++;
+                if (isPenetrated) statsBreakdown[POWER_LINE_TETHER_NAME].penetrations++;
                 
                 // Record detonation damage
                 statsBreakdown[VOLTAIC_DETONATION_NAME].damage += detonationFinalDamage;
                 statsBreakdown[VOLTAIC_DETONATION_NAME].casts++;
+                // Detonation always crits if the original hit was a crit (game mechanic)
+                if (isCrit) statsBreakdown[VOLTAIC_DETONATION_NAME].crits++;
+                // Detonation always penetrates if the original hit penetrated (game mechanic)  
+                if (isPenetrated) statsBreakdown[VOLTAIC_DETONATION_NAME].penetrations++;
+                
+                // Dust of the Black Pharaoh proc check for Voltaic Detonation
+                // Check if detonation critically hits (has crit damage multiplier applied)
+                const isDetonationCrit = detonationFinalDamage > (detonationBase * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
+                if (dustActive && isDetonationCrit) {
+                    if (Math.random() < 0.20) {
+                        const dustDetonationDmg = detonationFinalDamage;
+                        totalDamage += dustDetonationDmg;
+                        
+                        if (!statsBreakdown[DUST_NAME]) {
+                            statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
+                        }
+                        statsBreakdown[DUST_NAME].casts++;
+                        statsBreakdown[DUST_NAME].damage += dustDetonationDmg;
+                        // Dust procs inherit the crit and penetration status of the triggering hit
+                        statsBreakdown[DUST_NAME].crits++;
+                        if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
+                    }
+                }
             } else {
                 // Standard damage recording for other abilities
                 const abilityIndex = allActives.findIndex(a => a === ability);
                 const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${ability.name}` : ability.name;
                 
-                if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, displayName: ability.name };
+                if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: ability.name };
                 statsBreakdown[abilityKey].casts++;
                 statsBreakdown[abilityKey].damage += finalDamage;
+                if (isCrit) statsBreakdown[abilityKey].crits++;
+                if (isPenetrated) statsBreakdown[abilityKey].penetrations++;
             }
 
 
@@ -3053,7 +3084,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         if (!statsBreakdown[passiveKey]) {
 
-                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, displayName: passive.name };
+                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
 
                         }
 
@@ -3087,7 +3118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         if (!statsBreakdown[passiveKey]) {
 
-                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, displayName: passive.name };
+                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
 
                         }
 
@@ -3801,7 +3832,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nameSpan.style.minWidth = '0';
 
-            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span>`;
+            const critChance = stat.casts > 0 ? ((stat.crits / stat.casts) * 100).toFixed(1) : 0;
+            const penChance = stat.casts > 0 ? ((stat.penetrations / stat.casts) * 100).toFixed(1) : 0;
+            
+            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span><br><span style="color:var(--text-secondary);font-size:0.7rem;">Crit: ${critChance}% (${stat.crits}) | Pen: ${penChance}% (${stat.penetrations})</span>`;
 
 
 
@@ -4737,7 +4771,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nameSpan.style.minWidth = '0';
 
-            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span>`;
+            const critChance = stat.crits && stat.casts > 0 ? ((stat.crits / stat.casts) * 100).toFixed(1) : 0;
+            const penChance = stat.penetrations && stat.casts > 0 ? ((stat.penetrations / stat.casts) * 100).toFixed(1) : 0;
+            
+            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span><br><span style="color:var(--text-secondary);font-size:0.7rem;">Crit: ${critChance}% (${stat.crits || 0}) | Pen: ${penChance}% (${stat.penetrations || 0})</span>`;
 
 
 

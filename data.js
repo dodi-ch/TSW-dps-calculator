@@ -4875,7 +4875,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Ignite",
-    "scaling": 0.6118516976,
+    "scaling": 0.61185,
     "scaling_1": 0.0,
     "scaling_5": 0.0,
     "note": "",
