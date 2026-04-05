@@ -490,13 +490,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         eliteActiveWrapper.className = 'slot-wrapper';
 
+        const eliteActiveLabel = document.createElement('h3');
+
+        eliteActiveLabel.style.margin = '0 0 0.5rem 0';
+
+        eliteActiveLabel.style.fontSize = '1.1rem';
+
+        eliteActiveLabel.style.fontWeight = '600';
+
+        eliteActiveLabel.style.color = 'var(--text-primary)';
+
+        eliteActiveLabel.textContent = 'Elite Active';
+
+        eliteActiveWrapper.appendChild(eliteActiveLabel);
+
+        const priorityLabel = document.createElement('span');
+
+        priorityLabel.className = 'slot-label';
+
+        priorityLabel.textContent = 'Priority';
+
+        eliteActiveWrapper.appendChild(priorityLabel);
+
         const eliteActiveIconBox = document.createElement('div');
 
         eliteActiveIconBox.className = 'slot-icon-box';
 
         eliteActiveIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-        eliteActiveWrapper.innerHTML = '<span class="slot-label">Priority</span>';
 
         eliteActiveWrapper.appendChild(eliteActiveIconBox);
 
