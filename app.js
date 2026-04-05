@@ -2373,8 +2373,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        let moltenSteelCheckCount = 0;
-
+        
 
 
         const primWeapon = weaponSelect.value;
@@ -2387,9 +2386,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasBladeWeapon = (primWeapon === 'Blade' || secWeapon === 'Blade');
 
+        const hasHammerWeapon = (primWeapon === 'Hammer' || secWeapon === 'Hammer');
+
         const enemy = ENEMIES[targetEnemySelect.value] || ENEMIES['training-puppet'];
 
         const POWER_LINE_NAME = "Power Line-Voltaic Detonation";
+
+        
+
+        // Momentum tracking for Hammer abilities
+
+        let momentumStacks = 0;
+
+        const MAX_MOMENTUM_STACKS = 5;
 
         
 
@@ -2581,7 +2590,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply critical damage bonuses (no real talismans provide this currently)
 
-            const finalMult = (isCrit ? (1 + critPower / 100) : 1.0) * damageMult;
+            let critBonusMult = 1.0;
+            
+            // Molten Steel: 15% additional critical damage when Metal Worker is not equipped
+            if (ability.name === "Molten Steel" && isCrit) {
+                const metalWorkerPassive = allPassives.find(p => p.name === "Metal Worker");
+                if (!metalWorkerPassive) {
+                    critBonusMult = 1.15; // 15% additional critical damage
+                }
+            }
+
+            const finalMult = (isCrit ? (1 + critPower / 100) : 1.0) * damageMult * critBonusMult;
 
 
 
@@ -2607,6 +2626,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 signetMult += sBonus.weapon[ability.weapon] / 100;
 
+            }
+
+
+
+            // Momentum bonus for Hammer abilities
+            let momentumMult = 1.0;
+            let shouldResetMomentum = false;
+            
+            if (ability.weapon === 'Hammer' && hasHammerWeapon) {
+                // Special handling for Full Momentum - immediately sets stacks to 5
+                if (ability.name === "Full Momentum") {
+                    momentumStacks = MAX_MOMENTUM_STACKS; // Set to 5 immediately
+                    // Full Momentum itself doesn't trigger the damage bonus, just sets the stacks
+                } else {
+                    // Increment momentum stacks for other Hammer abilities
+                    momentumStacks++;
+                    
+                    // Check if we reached 5 stacks
+                    if (momentumStacks >= MAX_MOMENTUM_STACKS) {
+                        momentumMult = 1.12; // 12% damage bonus
+                        shouldResetMomentum = true;
+                        
+                        // Add Momentum proc to stats breakdown
+                        const MOMENTUM_NAME = "Momentum (Proc)";
+                        if (!statsBreakdown[MOMENTUM_NAME]) {
+                            statsBreakdown[MOMENTUM_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Momentum" };
+                        }
+                        statsBreakdown[MOMENTUM_NAME].casts++;
+                    }
+                }
             }
 
 
@@ -2708,7 +2757,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult;
 
 
 
@@ -2850,6 +2899,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isPenetrated) statsBreakdown[abilityKey].penetrations++;
             }
 
+            // Handle Momentum damage tracking and stack reset
+            if (shouldResetMomentum) {
+                // Calculate the momentum bonus damage (12% of the base damage)
+                const momentumBonusDamage = finalDamage * 0.12; // 12% bonus
+                
+                // Add momentum damage to total and stats breakdown
+                totalDamage += momentumBonusDamage;
+                
+                const MOMENTUM_NAME = "Momentum (Proc)";
+                statsBreakdown[MOMENTUM_NAME].damage += momentumBonusDamage;
+                // Momentum proc inherits the crit and penetration status of the triggering hit
+                if (isCrit) statsBreakdown[MOMENTUM_NAME].crits++;
+                if (isPenetrated) statsBreakdown[MOMENTUM_NAME].penetrations++;
+                
+                // Reset momentum stacks
+                momentumStacks = 0;
+                shouldResetMomentum = false;
+            }
+
+
+            // Metal Worker Passive: Add additional hit for Molten Steel
+            if (ability.name === "Molten Steel") {
+                // Check if Metal Worker passive is equipped
+                const metalWorkerPassive = allPassives.find(p => p.name === "Metal Worker");
+                if (metalWorkerPassive) {
+                    // Calculate additional damage based on resources consumed
+                    // The description says "4 - 119 damage based on the resources consumed"
+                    // We'll scale this based on the resources actually consumed
+                    const resourcesConsumed = ability.resourceConsumption || 5;
+                    const additionalDamage = 4 + (119 - 4) * (resourcesConsumed / 5); // Scale based on resources
+                    
+                    // Apply the same damage multipliers as the main hit
+                    const metalWorkerDamage = additionalDamage * finalMult;
+                    
+                    totalDamage += metalWorkerDamage;
+                    
+                    // Add to stats breakdown as separate entry
+                    const METAL_WORKER_NAME = "Metal Worker (Additional Hit)";
+                    if (!statsBreakdown[METAL_WORKER_NAME]) {
+                        statsBreakdown[METAL_WORKER_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Metal Worker" };
+                    }
+                    statsBreakdown[METAL_WORKER_NAME].casts++;
+                    statsBreakdown[METAL_WORKER_NAME].damage += metalWorkerDamage;
+                    // Metal Worker additional hit inherits the crit and penetration status of the main hit
+                    if (isCrit) statsBreakdown[METAL_WORKER_NAME].crits++;
+                    if (isPenetrated) statsBreakdown[METAL_WORKER_NAME].penetrations++;
+                }
+            }
 
 
             // Proc Passives (Evaluate on every hit)
@@ -3742,8 +3839,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        console.log(`Simulation complete. Molten Steel was checked ${moltenSteelCheckCount} times.`);
-
+        
         
 
         const finalDps = totalDamage / targetSeconds;
