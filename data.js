@@ -5049,7 +5049,7 @@ const tswData = [
     "note": "",
     "cast_time": 0.5,
     "cooldown": 20.0,
-    "description": "Power Line: Attaches a leash to the target that lasts for 10 seconds. Every second it will deal 14 magical damage and grant 1 stack of the \"Power Line\" effect. The \"Power Line\" effect will increase the damage dealt by \"Voltaic Detonation\" by up to 200% at the maximum stacks. This ability is not affect by the global recharge time. Applies Vulnerable to Ranged. Becomes \"Voltaic Detonation\" after activation. Voltaic Detonation: A single target attack that deals 226 magical damage. Upon activation, the \"Power Line\" effect will terminate. This ability can only be used on targets affects by \"Power Line.\"",
+    "description": "Power Line: Attaches a leash to the target that lasts for 10 seconds. Every second it will deal 0.18365*combat power magical damage and grant 1 stack of the \"Power Line\" effect. The \"Power Line\" effect will increase the damage dealt by \"Voltaic Detonation\" by up to 200% at the maximum stacks. This ability is not affect by the global recharge time. Applies Vulnerable to Ranged. Becomes \"Voltaic Detonation\" after activation. Voltaic Detonation: A single target attack that deals 2.99004*combat power magical damage. Upon activation, the \"Power Line\" effect will terminate. This ability can only be used on targets affects by \"Power Line.\"",
     "type": "Elite Active",
     "weapon": "Elementalism",
     "icon": null

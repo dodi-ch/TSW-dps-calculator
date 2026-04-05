@@ -2088,6 +2088,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         statsBreakdown[ELE_OVERLOAD_NAME] = { damage: 0, casts: 0 };
 
+        // Pre-create Power Line breakdown entries
+        const POWER_LINE_TETHER_NAME = 'Power Line (Tether)';
+        statsBreakdown[POWER_LINE_TETHER_NAME] = { damage: 0, casts: 0, displayName: "Power Line (Tether)" };
+        
+        const VOLTAIC_DETONATION_NAME = 'Voltaic Detonation';
+        statsBreakdown[VOLTAIC_DETONATION_NAME] = { damage: 0, casts: 0, displayName: "Voltaic Detonation" };
+
 
 
         const activeCooldowns = allActives.map(() => 0);
@@ -2400,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        function performAttack(ability, weaponForStats, debuffState = {}) {
+        function performAttack(ability, weaponForStats, debuffState = {}, cp = 0) {
 
             // Deterministic Combat Logic
 
@@ -2616,15 +2623,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let rawBaseDmg;
 
+            // Special handling for Power Line-Voltaic Detonation: separate tether and detonation damage
             if (ability.name === POWER_LINE_NAME) {
 
-                const cpFactor = (cp > 0 ? cp / 1000 : 1);
+                // Power Line: 0.18365*cp per second for 10 seconds
+                const tetherDamage = 0.18365 * cp * 10;
+                
+                // Voltaic Detonation: 2.99004*cp with maximum 200% bonus (3x total damage)
+                const detonationBase = 2.99004 * cp * 3.0;
 
-                const tetherDamage = 14 * 10;            // ten ticks worth
-
-                const detonationBase = 226 * 3;          // 3x base at 10 stacks
-
-                rawBaseDmg = tetherDamage + detonationBase * cpFactor;
+                rawBaseDmg = tetherDamage + detonationBase;
 
             } else {
 
@@ -2784,17 +2792,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             totalDamage += finalDamage;
 
-            // Find the correct key for this ability based on its index in allActives
-
-            const abilityIndex = allActives.findIndex(a => a === ability);
-
-            const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${ability.name}` : ability.name;
-
-            if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, displayName: ability.name };
-
-            statsBreakdown[abilityKey].casts++;
-
-            statsBreakdown[abilityKey].damage += finalDamage;
+            // Special handling for Power Line - separate tether and detonation damage recording
+            if (ability.name === POWER_LINE_NAME) {
+                // Use the same calculations as above for consistency
+                const tetherDamage = 0.18365 * cp * 10;
+                const detonationBase = 2.99004 * cp * 3.0; // Maximum 200% bonus
+                
+                // Apply damage multipliers to both components
+                const tetherFinalDamage = tetherDamage * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
+                const detonationFinalDamage = detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
+                
+                // Record tether damage
+                statsBreakdown[POWER_LINE_TETHER_NAME].damage += tetherFinalDamage;
+                statsBreakdown[POWER_LINE_TETHER_NAME].casts++;
+                
+                // Record detonation damage
+                statsBreakdown[VOLTAIC_DETONATION_NAME].damage += detonationFinalDamage;
+                statsBreakdown[VOLTAIC_DETONATION_NAME].casts++;
+            } else {
+                // Standard damage recording for other abilities
+                const abilityIndex = allActives.findIndex(a => a === ability);
+                const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${ability.name}` : ability.name;
+                
+                if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, displayName: ability.name };
+                statsBreakdown[abilityKey].casts++;
+                statsBreakdown[abilityKey].damage += finalDamage;
+            }
 
 
 
@@ -3302,7 +3325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     
 
-                    performAttack(action, action.weapon, currentDebuffState);
+                    performAttack(action, action.weapon, currentDebuffState, cp);
 
 
 
@@ -3486,7 +3509,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 isManifestation: eff.isManifestation
 
-                            }, eff.weapon, enemyDebuffs);
+                            }, eff.weapon, enemyDebuffs, cp);
 
                             eff.nextTick += eff.tickInterval;
 
