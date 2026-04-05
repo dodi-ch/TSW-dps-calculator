@@ -1454,6 +1454,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+        // Check for ability-specific dependencies (e.g., Sawed Off requires Pump Action)
+        let requiresSpecificAbility = "";
+        if (desc.includes("will also cause") && desc.includes("Pump Action")) {
+            requiresSpecificAbility = "Pump Action";
+        }
+
+        // Extraction of damage bonus percentage for passive abilities
+        let damageBonusPercent = 0;
+        if (ability.type && ability.type.includes("Passive")) {
+            const bonusMatch = desc.match(/increases.*damage.*by\s+(\d+)%|damage.*by\s+(\d+)%/i);
+            if (bonusMatch) {
+                damageBonusPercent = parseInt(bonusMatch[1] || bonusMatch[2]) || 0;
+            }
+        }
+
+        // Extraction of penetration chance bonus for passive abilities
+        let penetrationBonusPercent = 0;
+        if (ability.type && ability.type.includes("Passive")) {
+            const penMatch = desc.match(/increases.*penetration.*chance.*by\s+(\d+(?:\.\d+)?)%|penetration.*chance.*by\s+(\d+(?:\.\d+)?)%/i);
+            if (penMatch) {
+                penetrationBonusPercent = parseFloat(penMatch[1] || penMatch[2]) || 0;
+            }
+        }
+
         // Extraction of trigger requirements for passives
 
         let triggerSubtypes = [];
@@ -1862,6 +1886,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resourceConsumption,
 
+            requiresSpecificAbility,
+
+            damageBonusPercent,
+
+            penetrationBonusPercent,
+
             originalAbility: ability
 
         };
@@ -2160,6 +2190,66 @@ document.addEventListener('DOMContentLoaded', () => {
             impairedDuration: 0
 
         };
+
+        
+
+        // Player beneficial effects tracking system - to prevent cleansing own effects
+
+        const playerBeneficialEffects = {
+
+            buffs: [],
+
+            beneficialEffects: []
+
+        };
+
+        
+
+        // Function to check if ability would affect player instead of enemy
+
+        function wouldAffectPlayer(ability) {
+
+            // Check for abilities that could potentially affect player
+
+            const desc = ability.description || ability.originalAbility?.description || "";
+
+            
+
+            // Area-of-effect abilities that could catch player
+
+            if (desc.includes("radius") || desc.includes("area") || desc.includes("around")) {
+
+                // These are designed to affect enemies in an area
+
+                return false; // Assume they only affect enemies, not player
+
+            }
+
+            
+
+            // Mine/trap abilities that could be triggered by player
+
+            if (desc.includes("mine") || desc.includes("trap")) {
+
+                return false; // Assume they only trigger on enemies
+
+            }
+
+            
+
+            // Purge/cleanse abilities - ensure they only target enemies
+
+            if (desc.includes("purge") || desc.includes("cleanse") || desc.includes("remove")) {
+
+                return false; // Only affect enemy beneficial effects
+
+            }
+
+            
+
+            return false; // Default: abilities don't affect player
+
+        }
 
         
 
@@ -2492,7 +2582,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply penetration chance bonuses (no real talismans provide this currently)
 
-            let currentPenChance = penChance;
+            let currentPenChance = penChance + passivePenetrationBonus;
 
             
 
@@ -2777,7 +2867,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult;
+            // Apply passive damage bonuses (e.g., Dead on Target's 10% for Shotgun abilities)
+            let passiveDamageMult = 1.0;
+            allPassives.forEach(passive => {
+                if (passive.damageBonusPercent > 0) {
+                    // Check if this passive applies to the current ability's weapon
+                    const desc = passive.originalAbility && passive.originalAbility.description || "";
+                    const hasExplicitWeaponRequirement = desc && (
+                        (desc.includes("Shotgun") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Pistol") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Blade") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Hammer") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Fist") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Assault Rifle") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Chaos") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Elementalism") && (desc.includes("abilities") || desc.includes("ability"))) ||
+                        (desc.includes("Blood") && (desc.includes("abilities") || desc.includes("ability")))
+                    );
+                    
+                    // Apply bonus if weapon matches the requirement
+                    const isMatchingWeapon = !hasExplicitWeaponRequirement || passive.weapon === ability.weapon;
+                    if (isMatchingWeapon) {
+                        passiveDamageMult *= (1.0 + passive.damageBonusPercent / 100);
+                    }
+                }
+            });
+
+            // Apply passive penetration chance bonuses (e.g., Strike Force's 7.5% for Strike attacks)
+            let passivePenetrationBonus = 0;
+            allPassives.forEach(passive => {
+                if (passive.penetrationBonusPercent > 0) {
+                    // Check if this passive applies to the current ability's attack type
+                    const desc = passive.originalAbility && passive.originalAbility.description || "";
+                    const subtypes = ["Strike", "Blast", "Focus", "Frenzy", "Burst", "Chain"];
+                    let requiredSubtype = null;
+                    
+                    for (const subtype of subtypes) {
+                        if (desc.includes(subtype + " attacks") || desc.includes(subtype + " abilities")) {
+                            requiredSubtype = subtype;
+                            break;
+                        }
+                    }
+                    
+                    // Apply bonus if attack type matches the requirement
+                    if (!requiredSubtype || ability.subtype === requiredSubtype) {
+                        passivePenetrationBonus += passive.penetrationBonusPercent;
+                    }
+                }
+            });
+
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult;
 
 
 
@@ -3000,6 +3139,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (passive.originalAbility && passive.originalAbility.requiresBlade && !hasBladeWeapon) return;
 
                     
+                    // Check for ability-specific dependencies (e.g., Sawed Off requires Pump Action)
+                    if (passive.requiresSpecificAbility) {
+                        const requiredAbility = allActives.find(a => a.name === passive.requiresSpecificAbility);
+                        if (!requiredAbility) {
+                            return; // Required ability is not equipped
+                        }
+                    }
+
+                    
 
                     // Check trigger interval - only count hits matching passive's weapon
 
@@ -3039,7 +3187,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     );
 
+                    // Check for attack-type specific requirements (e.g., "Blast attacks have a 50% chance")
+                    const subtypes = ["Strike", "Blast", "Focus", "Frenzy", "Burst", "Chain"];
+                    let requiredSubtype = null;
                     
+                    for (const subtype of subtypes) {
+                        if (desc.includes(subtype + " attacks") || desc.includes(subtype + " abilities")) {
+                            requiredSubtype = subtype;
+                            break;
+                        }
+                    }
 
                     // Default: allow all passives to work with all abilities unless explicitly restricted
 
@@ -3047,9 +3204,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const isMatchingWeapon = !hasExplicitWeaponRequirement || passiveWeapon === ability.weapon || passiveWeapon === 'All';
 
-                    
+                    // Check attack type restriction
+                    const isMatchingSubtype = !requiredSubtype || ability.subtype === requiredSubtype;
 
-                    if (!isMatchingWeapon) {
+                    if (!isMatchingWeapon || !isMatchingSubtype) {
 
                         return; // Skip non-matching weapons, don't reset counter
 
@@ -3473,6 +3631,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     
 
+                    // Self-protection check: ensure abilities don't affect player
+
+                    if (wouldAffectPlayer(action)) {
+
+                        console.log(`Blocked self-affecting ability: ${action.name}`);
+
+                        continue; // Skip abilities that would affect player
+
+                    }
+
+                    
+
                     performAttack(action, action.weapon, currentDebuffState, cp);
 
 
@@ -3493,6 +3663,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     }
 
+                    // Trigger Gunsmoke when weakened is applied
+                    if (action.appliedDebuffs.includes('weakened')) {
+                        allPassives.forEach(passive => {
+                            if (passive.name === 'Gunsmoke') {
+                                // Calculate Gunsmoke damage
+                                const pSignetMult = 1.0;
+                                if (passive.subtype && sBonus.subtype[passive.subtype]) {
+                                    pSignetMult += sBonus.subtype[passive.subtype] / 100;
+                                }
+                                if (passive.weapon && sBonus.weapon[passive.weapon]) {
+                                    pSignetMult += sBonus.weapon[passive.weapon] / 100;
+                                }
+                                
+                                const gunsmokeDamage = (passive.scalingToUse || 0) * cp * pSignetMult;
+                                totalDamage += gunsmokeDamage;
+                                
+                                // Track Gunsmoke damage in stats
+                                const passiveKey = `passive_${passive.name}`;
+                                if (!statsBreakdown[passiveKey]) {
+                                    statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
+                                }
+                                statsBreakdown[passiveKey].casts++;
+                                statsBreakdown[passiveKey].damage += gunsmokeDamage;
+                            }
+                        });
+                    }
 
 
                     const timeTaken = action.castTime;
