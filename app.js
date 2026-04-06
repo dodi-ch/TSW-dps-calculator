@@ -2566,7 +2566,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
 
-            const isCrit = Math.random() < (critChance / 100);
+            const isCrit = ability.name === "Full Momentum" ? false : Math.random() < (critChance / 100);
 
             
 
