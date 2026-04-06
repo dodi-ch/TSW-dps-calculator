@@ -2544,6 +2544,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let damageMult = 1.0;
 
+            let passivePenetrationBonus = 0;
+
             
 
             // ========================================
@@ -2894,7 +2896,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Apply passive penetration chance bonuses (e.g., Strike Force's 7.5% for Strike attacks)
-            let passivePenetrationBonus = 0;
+            passivePenetrationBonus = 0;
             allPassives.forEach(passive => {
                 if (passive.penetrationBonusPercent > 0) {
                     // Check if this passive applies to the current ability's attack type
