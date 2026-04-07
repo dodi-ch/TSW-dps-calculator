@@ -1247,7 +1247,7 @@ const tswData = [
   },
   {
     "tree": "Last One Standing",
-    "name": "Closer (ability)",
+    "name": "Closer",
     "scaling": 0,
     "scaling_1": 0,
     "scaling_5": 0,
@@ -1257,7 +1257,7 @@ const tswData = [
     "description": "Increases the damage and healing done by resource consuming abilities by 10%.",
     "type": "Passive",
     "weapon": "Pistol",
-    "icon": null
+    "icon": "Closer.png"
   },
   {
     "tree": "Last One Standing",
@@ -1453,7 +1453,7 @@ const tswData = [
     "description": "PBAoE: Affects you and up to 5 friends in a 15 metre radius around you. A PBAoE that heals for 55 and cleanses 2 detrimental effects.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": null
+    "icon": "win win.png"
   },
   {
     "tree": "Trajectionist",
@@ -1675,7 +1675,7 @@ const tswData = [
     "cast_time": 0,
     "cooldown": 0,
     "description": "Every second, deals 10 physical damage to up to 6 enemies in a 5 metre radius around the targeted point.",
-    "type": "Passive",
+    "type": "Effect",
     "weapon": "Assault Rifle",
     "icon": "Slow The Advance.png"
   },
@@ -3047,7 +3047,7 @@ const tswData = [
     "cast_time": 0,
     "cooldown": 0,
     "description": "When Sling Blade hits an Afflicted target, applies a DOT that deals 6 physical damage every second for 5 seconds.",
-    "type": "Passive",
+    "type": "Effect",
     "weapon": "Blade",
     "icon": "Sling Blade.png"
   },
@@ -3175,8 +3175,9 @@ const tswData = [
     "description": "Whenever you hit an enemy with a Blade ability, you apply the Two Cuts effect. Hitting the enemy with a Blade ability consumes this effect to deal 105 damage. Requires an equipped blade. (Triggers every 2nd Blade hit)",
     "type": "Passive",
     "weapon": "Blade",
-    "icon": "Two Cuts.png",
-    "requiresBlade": true
+    "icon": null,
+    "requiresBlade": true,
+    "counterThreshold": 2
   },
   {
     "tree": "Brawn",
@@ -3972,7 +3973,7 @@ const tswData = [
     "cast_time": 0,
     "cooldown": 0,
     "description": "Each stack of Raging Volcano effect causes your abilities to deal an additional 30 damage.",
-    "type": "Passive",
+    "type": "Effect",
     "weapon": "Hammer",
     "icon": "Raging Volcano.png"
   },
@@ -4352,7 +4353,7 @@ const tswData = [
     "description": "You charge to the target dealing 98 physical damage and you gain the Minor Evade Chance effect, which increases Evade Chance by 10% for 8 seconds. The target also becomes Impaired and unable to activate abilities for 5 seconds.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": null
+    "icon": "Bushwhack.png"
   },
   {
     "tree": "The Outback",
@@ -4506,7 +4507,7 @@ const tswData = [
     "description": "Builds 1 Fist resource. Heals the defensive target for 40 and gives a heal over time effect that heals for 3 every second for 4 seconds. This effect can stack up to 3 times.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": null
+    "icon": "Cauterise.png"
   },
   {
     "tree": "Warming Up",
@@ -4618,7 +4619,7 @@ const tswData = [
     "description": "Places a healing area at the targeted point that last 5 seconds. Every second it heals up to 6 friends in a 5 meter radius for 17.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": null
+    "icon": "Vigour.png"
   },
   {
     "tree": "Heat of Battle",
@@ -5052,7 +5053,7 @@ const tswData = [
     "description": "Power Line: Attaches a leash to the target that lasts for 10 seconds. Every second it will deal 0.18365*combat power magical damage and grant 1 stack of the \"Power Line\" effect. The \"Power Line\" effect will increase the damage dealt by \"Voltaic Detonation\" by up to 200% at the maximum stacks. This ability is not affect by the global recharge time. Applies Vulnerable to Ranged. Becomes \"Voltaic Detonation\" after activation. Voltaic Detonation: A single target attack that deals 2.99004*combat power magical damage. Upon activation, the \"Power Line\" effect will terminate. This ability can only be used on targets affects by \"Power Line.\"",
     "type": "Elite Active",
     "weapon": "Elementalism",
-    "icon": null
+    "icon": "Power Line.png"
   },
   {
     "tree": "",
@@ -5556,7 +5557,7 @@ const tswData = [
     "description": "Builds 1 resource for each equipped weapon. A single target attack that deals 49 magical damage.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Hand of Change.png"
   },
   {
     "tree": "",
@@ -5668,7 +5669,7 @@ const tswData = [
     "description": "PBAoE: Affects up to 6 enemis in a 5 metre area around you. Builds 1 resource for each equipped weapon. A PBAoE Frenzy ability that deals 24 magical damage. Generates a high amount of hate.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Escalation.png"
   },
   {
     "tree": "",
@@ -5696,7 +5697,7 @@ const tswData = [
     "description": "You gain the Major Evade Chance effect, which increases your Evade Chance by 35% for 6 seconds. This ability does not trigger and is not affected by global recharge time.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Illusion.png"
   },
   {
     "tree": "",
@@ -5752,7 +5753,7 @@ const tswData = [
     "description": "1.53503",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Deconstruct.png"
   },
   {
     "tree": "",
@@ -5780,7 +5781,7 @@ const tswData = [
     "description": "Consumes all Chaos Resources. A single target Burst that hits 4 times, dealing 21 - 34 magical damage per hit, based on the number of resources consumed. Each hit causes the next hit to deal more damage, this bonus stops if a hit glances",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Four Horsemen.png"
   },
   {
     "tree": "",
@@ -5794,7 +5795,7 @@ const tswData = [
     "description": "Whenever 2 hits in a row of a Burst attack do no glance, your next attack will perform an additonal hit dealing 8 magical damage.",
     "type": "Passive",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Ripple Effect.png"
   },
   {
     "tree": "",
@@ -5976,7 +5977,7 @@ const tswData = [
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Chaos Resources. A PBAoE attack that deals 45 - 90 magical damage.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Maelstrom.png"
   },
   {
     "tree": "",
@@ -6004,7 +6005,7 @@ const tswData = [
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around your target. Consumes all Chaos Resources. A TAoE attack that deals 42 - 86 magical damage, based on the number of resources consumed. If any target in the affected area is Impaired, it creates a damaging ground area at their feet which deals 9 magical damage every second for 5 seconds.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Cry Havoc.png"
   },
   {
     "tree": "",
@@ -6029,7 +6030,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 25,
-    "description": "A single target attack that deals 279 magical damage and causes the target to become Hindered and rooted to the ground for 4 seconds. For the next 10 seconds, up to 6 enemies between 1 and 7 metres of the target will be dealt 14 magical damage each seconds and have a 30% chance to become Impaired as they are knocked into the air. Applies Vulnerable to Ranged. Susceptible to Anima Deviation.",
+    "description": "A single target attack that deals 279 magical damage and causes target to become Hindered and rooted to the ground for 4 seconds. For the next 10 seconds, up to 6 enemies between 1 and 7 metres of the target will be dealt 14 magical damage each second and have a 30% chance to become Impaired as they are knocked into the air. Applies Vulnerable to Ranged. Susceptible to Anima Deviation.",
     "type": "Elite Active",
     "weapon": "Chaos",
     "icon": null
@@ -6186,7 +6187,7 @@ const tswData = [
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. A PBAoE attack that deals 52 magical damage. Affected targets also become Weakened by 5 stacks the Exposed effect, which increases all damage received by 2% per stack for 10 seconds.This effect can stack up to 10 times. For each target affected, you gain a single stack of the Evade Rating effect, which increases your Evade Rating 40 per stack for 8 seconds. This effect can stack up to 5 times.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Uneven Ground.png"
   },
   {
     "tree": "",
@@ -6270,7 +6271,7 @@ const tswData = [
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Chaos Resources. A PBAoE Frenzy attack that deals 41 - 81 magical damage, based on the number of resources consumed. Also applies a detrimental effect to affected targets that causes them to heal the next targets that causes them to heal the next target they hit for a percentage of their target's maximum health.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": null
+    "icon": "Karma.png"
   },
   {
     "tree": "",
@@ -6368,7 +6369,7 @@ const tswData = [
     "description": "Consumes 2 Blood Resources. Can be powered by your own health. A single target attack that deals 89 magical damage and also causes the target to become Afflicted with a damage over time effect that deals 8 magical damage every 0.5 seconds for 5 seconds. If the target has the Blood Spike damage over time effect already, this ability instead deals 189 magical damage.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Blood Spike.png"
   },
   {
     "tree": "",
@@ -6452,7 +6453,7 @@ const tswData = [
     "description": "Builds 1 Blood Resource. Heals 27 and places an absorb barrier on your defensive target. This barrier absorbs 100% of incoming damage and dissipates after absorbing 26 damage.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Blood Shield.png"
   },
   {
     "tree": "",
@@ -6676,7 +6677,7 @@ const tswData = [
     "description": "A single target attack that causes the target to become Afflicted by a damage over time effect that deals 20 magical damage every second for 6 seconds. If the target is healed while this damage over time effect is active, it will perfrom a hit on the healer that deals 61 magical damage.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Contaminate.png"
   },
   {
     "tree": "",
@@ -6732,7 +6733,7 @@ const tswData = [
     "description": "Chain: Jumps up to 5 metres 5 times, hitting up to 6 enemies. Builds 1 resource for each equipped weapon. A Chain attack that deals 24 magical damage.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Open Vein.png"
   },
   {
     "tree": "",
@@ -6788,7 +6789,7 @@ const tswData = [
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around the target. Consumes 3 Blood Resources. Can be powered by your own health. A TAoE attack that deals 71 magical damage. If any target is Impaired, you gain the Major Penetration Chance effect, which increases your Penetration Chance by 45% for 6 seconds.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Guts and Gory.png"
   },
   {
     "tree": "",
@@ -6970,7 +6971,7 @@ const tswData = [
     "description": "Places an area around the targeted point that will last for 10 seconds. Enemies inside the area become Afflicted with a damage over time effect that deals 14 magical damage and heals you for 7 every second for 4 seconds.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Liquidation.png"
   },
   {
     "tree": "",
@@ -6998,7 +6999,7 @@ const tswData = [
     "description": "Builds 3 Blood Resources. You remove your own barrier and gain a beneficial effect that will cause your next barrier to absorb 35% more damage. This ability can only be activated when you have a barrier. This ability does not trigger and is not affected by global recharge time.",
     "type": "Active",
     "weapon": "Blood",
-    "icon": null
+    "icon": "Infusion.png"
   },
   {
     "tree": "",
