@@ -5,3 +5,4 @@ shoutout to ttg and whoever else made those documents. abilities in yellow were 
 calculations assume ql0.9 and ql11 gear. it can be made more accurate for lower gear if someone gives me the data.
 penetration% has to be entered manually for now, i dont know the penetration rating to % scaling yet.
 defensive stats dont work yet, i need more data.
+currently, consumers only display damage correctly when used at 1 or 5 resources, i lack scaling for inbetween numbers
