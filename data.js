@@ -100,7 +100,7 @@ const tswData = [
   {
     "tree": "Control",
     "name": "Hit & Run",
-    "scaling": 0,
+    "scaling": 0.46051,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -590,13 +590,13 @@ const tswData = [
   {
     "tree": "Hunkering Down",
     "name": "Crap Shoot",
-    "scaling": 0,
+    "scaling": 0.27630,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you hit a Weakened target there is a random chance to get one of three effects. Only one of the following effects can occur whenever you hit a target: ○ Seven Out: 16% chance to purge 1 beneficial effect. ○ Snake Eyes: 3% chance to hit the target for 21 physical damage. ○ Midnight: 3% chance to gain the Minor Penetration effect, which increases your Penetration Chance by 15% for 8 seconds.",
+    "description": "Whenever you hit a Weakened target there is a random chance to get one of three effects. Only one of the following effects can occur whenever you hit a target:  Seven Out: 16% chance to purge 1 beneficial effect.  Snake Eyes: 3% chance to hit the target for  scaling 0.27630 physical damage.  Midnight: 3% chance to gain the Minor Penetration effect, which increases your Penetration Chance by 15% for 8 seconds.",
     "type": "Passive",
     "weapon": "Shotgun",
     "icon": "Crap Shoot.png"
@@ -1192,7 +1192,7 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Running Circles",
-    "scaling": 0,
+    "scaling": 0.08235,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -1934,7 +1934,7 @@ const tswData = [
   {
     "tree": "Heavy Fire",
     "name": "Explosives Expert",
-    "scaling": 0,
+    "scaling": 0.30339,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
