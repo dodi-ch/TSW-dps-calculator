@@ -1176,7 +1176,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+    // Helper function to identify builder abilities
 
+    function isBuilderAbility(ability) {
+
+        if (!ability || !ability.description) return false;
+
+        
+
+        const desc = ability.description.toLowerCase();
+
+        
+
+        // Check for explicit "Builds X resource" patterns
+
+        if (desc.includes('builds 1 resource') || 
+
+            desc.includes('builds 2 resource') || 
+
+            desc.includes('builds 3 resource') ||
+
+            desc.includes('builds 1 assault rifle resource') ||
+
+            desc.includes('builds 2 assault rifle resource') ||
+
+            desc.includes('builds 3 assault rifle resource') ||
+
+            desc.includes('builds 1 blade resource') ||
+
+            desc.includes('builds 2 blade resource') ||
+
+            desc.includes('builds 1 fist resource') ||
+
+            desc.includes('builds 1 hammer resource') ||
+
+            desc.includes('builds 1 shotgun resource') ||
+
+            desc.includes('builds 1 pistol resource') ||
+
+            desc.includes('builds 1 elementalism resource') ||
+
+            desc.includes('builds 1 blood resource') ||
+
+            desc.includes('builds 1 chaos resource')) {
+
+            return true;
+
+        }
+
+        
+
+        // Check for generic "Builds 1 resource for each equipped weapon"
+
+        if (desc.includes('builds 1 resource for each equipped weapon')) {
+
+            return true;
+
+        }
+
+        
+
+        // Check for abilities that build additional resources under certain conditions
+
+        if (desc.includes('builds 2 additional') || desc.includes('builds 3 additional')) {
+
+            return true;
+
+        }
+
+        
+
+        return false;
+
+    }
 
     function updateAbilityDropdowns() {
 
@@ -1469,6 +1541,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Check if this passive specifically increases drone/turret damage
+        let affectsDronesOrTurrets = false;
+        if (ability.type && ability.type.includes("Passive")) {
+            if (desc.includes("turret") && desc.includes("damage")) {
+                affectsDronesOrTurrets = true;
+            } else if (desc.includes("drone") && desc.includes("damage")) {
+                affectsDronesOrTurrets = true;
+            }
+        }
+
         // Extraction of penetration chance bonus for passive abilities
         let penetrationBonusPercent = 0;
         if (ability.type && ability.type.includes("Passive")) {
@@ -1628,12 +1710,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-        if (desc.includes("if the target is Weakened")) {
-
+        // Only require weakened debuff for abilities that actually need it to cast
+        // Skip abilities that mention weakened for bonus damage only (not as a requirement)
+        const isBonusDamageOnly = desc.includes("damage to targets that are Weakened") || 
+                                 desc.includes("deals more damage if") ||
+                                 desc.includes("bonus damage if");
+        
+        if (desc.includes("if the target is Weakened") && !isBonusDamageOnly) {
             requiredDebuffs.push("weakened");
-
             bonusDamageWithDebuffs = true;
-
+        } else if (desc.includes("if the target is Weakened") && isBonusDamageOnly) {
         }
 
         if (desc.includes("if the target is Hindered")) {
@@ -1652,27 +1738,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-        
-
         // Check for bonus damage against debuffed targets (e.g., "or X damage to targets that are Weakened")
+        // Skip abilities that mention weakened for bonus damage only (not as a requirement)
+        if (!isBonusDamageOnly) {
+            const bonusDamageMatch = desc.match(/or\s+(\d+)\s*[-]?\s*\d*\s*(?:physical|magical)?\s*damage\s+to\s+targets\s+that\s+are\s+(\w+)/i);
 
-        const bonusDamageMatch = desc.match(/or\s+(\d+)\s*[-–]?\s*\d*\s*(?:physical|magical)?\s*damage\s+to\s+targets\s+that\s+are\s+(\w+)/i);
+            if (bonusDamageMatch) {
 
-        if (bonusDamageMatch) {
+                const debuffType = bonusDamageMatch[2].toLowerCase();
 
-            const debuffType = bonusDamageMatch[2].toLowerCase();
+                if (["afflicted", "weakened", "hindered", "impaired"].includes(debuffType)) {
 
-            if (["afflicted", "weakened", "hindered", "impaired"].includes(debuffType)) {
+                    requiredDebuffs.push(debuffType);
 
-                requiredDebuffs.push(debuffType);
+                    bonusDamageWithDebuffs = true;
 
-                bonusDamageWithDebuffs = true;
+                }
 
             }
 
         }
-
-        
 
         // Check what debuffs this ability applies
 
@@ -1685,8 +1770,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let dotInterval = 1.0; // Default interval for DoT ticks (1 second)
 
         let dotDuration = 0; // Total duration of DoT effect
-
-        
 
         if (desc.includes("become Afflicted") || desc.includes("becomes Afflicted")) {
 
@@ -1742,17 +1825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             }
 
-            
-
-            // Debug output for DoT parsing
-
-            // Removed console.log statements
-
-            
-
         }
-
-        
 
         if (desc.includes("become Weakened")) {
 
@@ -1761,8 +1834,6 @@ document.addEventListener('DOMContentLoaded', () => {
             appliedDebuffDurations.weakened = 10; // Default for weakened
 
         }
-
-        
 
         if (desc.includes("become Hindered")) {
 
@@ -1784,8 +1855,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-        
-
         if (desc.includes("become Impaired")) {
 
             appliedDebuffs.push("impaired");
@@ -1793,8 +1862,6 @@ document.addEventListener('DOMContentLoaded', () => {
             appliedDebuffDurations.impaired = 3; // Default for impaired
 
         }
-
-
 
         // Regex for "for X seconds" or "lasting X seconds"
 
@@ -1806,8 +1873,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-
-
         // Regex for "every X seconds" or "per X seconds"
 
         const secondsIntervalMatch = desc.match(/(?:every|per)\s+(\d+(?:\.\d+)?)\s+seconds/i);
@@ -1816,13 +1881,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tickInterval = parseFloat(secondsIntervalMatch[1]);
 
-        } else if (desc.includes("every seconds")) {
+        } else if (desc.toLowerCase().includes("every seconds")) {
 
             tickInterval = 1.0;
 
         }
 
+        // Debug: Log parsing results for summoning abilities
 
+        if (ability.name.toLowerCase().includes("drone") || ability.name.toLowerCase().includes("turret")) {
+
+
+        }
 
         return {
 
@@ -1892,13 +1962,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             penetrationBonusPercent,
 
+            affectsDronesOrTurrets,
+
             originalAbility: ability
 
         };
 
     }
-
-
 
     function calculate() {
 
@@ -1994,7 +2064,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        function collectActivesWithOrder(selects, resourcesForActives) {
+        function collectActivesWithOrder(selects, resourcesForActives, cp) {
 
             return selects
 
@@ -2026,11 +2096,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        const actives = collectActivesWithOrder(activeSelects, 0);
+        const actives = collectActivesWithOrder(activeSelects, 0, cp);
 
-        const eliteActives = collectActivesWithOrder(eliteActiveSelects, 0);
+        const eliteActives = collectActivesWithOrder(eliteActiveSelects, 0, cp);
 
-        const auxActives = collectActivesWithOrder(auxActiveSelects, 0);
+        const auxActives = collectActivesWithOrder(auxActiveSelects, 0, cp);
 
         
 
@@ -2063,6 +2133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let allActives = [...actives, ...eliteActives, ...auxActives];
 
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
+
 
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
@@ -2248,6 +2319,38 @@ document.addEventListener('DOMContentLoaded', () => {
             
 
             return false; // Default: abilities don't affect player
+
+        }
+
+        
+
+        // Function to check if ability would affect drones/turrets (which we want to prevent)
+
+        function wouldAffectDronesOrTurrets(ability) {
+
+            const desc = ability.description || ability.originalAbility?.description || "";
+
+            const name = ability.name || "";
+
+            
+
+            // Only block abilities that specifically mention targeting drones/turrets in a hostile way
+
+            // Most abilities target enemies, not friendly drones/turrets
+
+            // This is mainly a safeguard for abilities that might have specific drone/turret targeting
+
+            if (desc.includes("targets drones") || desc.includes("targets turrets") ||
+                desc.includes("destroy drone") || desc.includes("destroy turret") ||
+                name.toLowerCase().includes("anti-drone") || name.toLowerCase().includes("anti-turret")) {
+
+                return true; // This ability specifically targets friendly drones/turrets
+
+            }
+
+            
+
+            return false; // Default: abilities don't target friendly drones/turrets
 
         }
 
@@ -2871,8 +2974,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply passive damage bonuses (e.g., Dead on Target's 10% for Shotgun abilities)
             let passiveDamageMult = 1.0;
+            let passiveContributions = []; // Track individual passive contributions
+            
             allPassives.forEach(passive => {
                 if (passive.damageBonusPercent > 0) {
+                    // Check if this passive is actually equipped (included in allPassives array)
+                    const isPassiveEquipped = allPassives.includes(passive);
+                    if (!isPassiveEquipped) {
+                        return; // Skip passive if not equipped
+                    }
+                    
                     // Check if this passive applies to the current ability's weapon
                     const desc = passive.originalAbility && passive.originalAbility.description || "";
                     const hasExplicitWeaponRequirement = desc && (
@@ -2887,10 +2998,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         (desc.includes("Blood") && (desc.includes("abilities") || desc.includes("ability")))
                     );
                     
-                    // Apply bonus if weapon matches the requirement
+                    // Check if current ability is a drone/turret ability
+                    const isDroneOrTurretAbility = ability.name.toLowerCase().includes("drone") || 
+                                                   ability.name.toLowerCase().includes("turret") ||
+                                                   (ability.originalAbility && ability.originalAbility.description && 
+                                                    (ability.originalAbility.description.toLowerCase().includes("summons a drone") ||
+                                                     ability.originalAbility.description.toLowerCase().includes("places a turret")));
+                    
+                    // Apply bonus if weapon matches the requirement OR if passive specifically affects drones/turrets and current ability is drone/turret
                     const isMatchingWeapon = !hasExplicitWeaponRequirement || passive.weapon === ability.weapon;
-                    if (isMatchingWeapon) {
-                        passiveDamageMult *= (1.0 + passive.damageBonusPercent / 100);
+                    const shouldApplyToDroneTurret = passive.affectsDronesOrTurrets && isDroneOrTurretAbility;
+                    
+                    if (isMatchingWeapon || shouldApplyToDroneTurret) {
+                        const passiveBonus = 1.0 + passive.damageBonusPercent / 100;
+                        passiveDamageMult *= passiveBonus;
+                        
+                        // Track this passive contribution for display
+                        passiveContributions.push({
+                            name: passive.name,
+                            percent: passive.damageBonusPercent,
+                            multiplier: passiveBonus
+                        });
                     }
                 }
             });
@@ -2918,9 +3046,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Calculate damage with passive bonuses included
             const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult;
-
-
 
             // Dust of the Black Pharaoh: whenever you critically hit,
 
@@ -3048,16 +3175,61 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
                     }
                 }
-            } else {
-                // Standard damage recording for other abilities
-                const abilityIndex = allActives.findIndex(a => a === ability);
-                const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${ability.name}` : ability.name;
+            } else if (ability.name !== POWER_LINE_NAME) {
+                // Standard damage recording for other abilities (excluding Power Line which is handled above)
+                // Check if this is a summoning ability (like Shotgun Turret, Area Drone) - don't record initial damage
+                // Effects should NEVER be treated as summoning abilities - only initial casts
+                const isEffect = ability.name.includes("(Effect)");
+                const abilityNameToCheck = ability.originalName || ability.name;
+                const isSummoningAbility = !isEffect && (
+                                             abilityNameToCheck.toLowerCase().includes("turret") || 
+                                             abilityNameToCheck.toLowerCase().includes("drone") ||
+                                             abilityNameToCheck.toLowerCase().includes("area drone") ||
+                                             abilityNameToCheck.toLowerCase().includes("backup drone") ||
+                                             abilityNameToCheck.toLowerCase().includes("sticky drone") ||
+                                             abilityNameToCheck.toLowerCase().includes("health drone") ||
+                                             abilityNameToCheck.toLowerCase().includes("cleansing drone") ||
+                                             // Check if ability description indicates summoning
+                                             (ability.originalAbility && ability.originalAbility.description && 
+                                              (ability.originalAbility.description.toLowerCase().includes("summons a drone") ||
+                                               ability.originalAbility.description.toLowerCase().includes("places a turret") ||
+                                               ability.originalAbility.description.toLowerCase().includes("summons a drone") ||
+                                               ability.originalAbility.description.toLowerCase().includes("area drone")))
+                                             );
                 
-                if (!statsBreakdown[abilityKey]) statsBreakdown[abilityKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: ability.name };
-                statsBreakdown[abilityKey].casts++;
-                statsBreakdown[abilityKey].damage += finalDamage;
-                if (isCrit) statsBreakdown[abilityKey].crits++;
-                if (isPenetrated) statsBreakdown[abilityKey].penetrations++;
+                
+                // Skip damage recording for summoning abilities - their damage is recorded from effect ticks
+                if (isSummoningAbility) {
+                    // Don't record initial cast damage for summoning abilities
+                    // The periodic damage will be recorded when the effect ticks
+                } else {
+                    // Standard damage recording for non-summoning abilities
+                    // For effects, extract original name from "Name (Effect)" format, otherwise use originalName or current name
+                    const damageName = ability.name.includes("(Effect)") 
+                        ? ability.name.replace(" (Effect)", "")
+                        : (ability.originalName || ability.name);
+                    
+                    
+                    let abilityIndex = -1;
+                    for (let i = 0; i < allActives.length; i++) {
+                        if (allActives[i].name === damageName) {
+                            abilityIndex = i;
+                            break;
+                        }
+                    }
+                    const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${damageName}` : damageName;
+                    
+                    if (!statsBreakdown[abilityKey]) {
+                        statsBreakdown[abilityKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: damageName };
+                    }
+                    statsBreakdown[abilityKey].casts++;
+                    statsBreakdown[abilityKey].damage += finalDamage;
+                    if (isCrit) statsBreakdown[abilityKey].crits++;
+                    if (isPenetrated) statsBreakdown[abilityKey].penetrations++;
+                    
+                    if (damageName.toLowerCase().includes("drone") || damageName.toLowerCase().includes("turret")) {
+                    }
+                }
             }
 
             // Handle Momentum damage tracking and stack reset
@@ -3357,17 +3529,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Still count the cast for the passive
 
-                        const passiveKey = `passive_${p}_${passive.name}`;
+                        const passiveBreakdownKey = `passive_${p}_${passive.name}`;
 
-                        if (!statsBreakdown[passiveKey]) {
+                        if (!statsBreakdown[passiveBreakdownKey]) {
 
-                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
+                            statsBreakdown[passiveBreakdownKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
 
                         }
 
-                        statsBreakdown[passiveKey].casts++;
+                        statsBreakdown[passiveBreakdownKey].casts++;
 
-                        statsBreakdown[passiveKey].damage += 0; // DoT damage will be counted in time advancement
+                        statsBreakdown[passiveBreakdownKey].damage += 0; // DoT damage will be counted in time advancement
 
                         
 
@@ -3377,31 +3549,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         triggeredPassives.push(passive.name);
 
-                    } else {
-
                         // Traditional passive damage calculation
+
+                        // Skip passives that are PURE damage bonuses (no scaling damage) - they're handled in damage bonus system
+                        // But allow passives that have both scaling and damage bonus (like Seal the Deal)
+                        if (passive.damageBonusPercent > 0 && (!passive.scalingToUse || passive.scalingToUse === 0) && 
+                            (!passive.scaling || passive.scaling === 0)) {
+                            return; // Don't process as regular passive, already handled as damage bonus
+                        }
 
                         const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
 
-                        
-
                         totalDamage += pActualDmg;
-
-                        
 
                         // Still count the cast for the passive
 
-                        const passiveKey = `passive_${p}_${passive.name}`;
+                        const regularPassiveKey = `passive_${p}_${passive.name}`;
 
-                        if (!statsBreakdown[passiveKey]) {
+                        if (!statsBreakdown[regularPassiveKey]) {
 
-                            statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
+                            statsBreakdown[regularPassiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
 
                         }
 
-                        statsBreakdown[passiveKey].casts++;
+                        statsBreakdown[regularPassiveKey].casts++;
 
-                        statsBreakdown[passiveKey].damage += pActualDmg;
+                        statsBreakdown[regularPassiveKey].damage += pActualDmg;
 
                         
 
@@ -3459,9 +3632,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const action = allActives[i];
 
-                
 
-                // Check if we're currently casting another ability
+                if (activeCooldowns[i] > 0) {
+
+
+                    continue;
+
+                }
 
                 if (time < currentCastEndTime) {
 
@@ -3515,6 +3692,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
 
                 if (!isValidWeapon) {
@@ -3522,7 +3700,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     continue;
 
                 }
-
 
 
                 if (action.isConsumer) {
@@ -3545,6 +3722,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const minRes = action.minResources || 0;
 
+
                     if (minRes > 0) {
 
                         const currentRes = isPrim ? primResources : (isSec ? secResources : 0);
@@ -3554,9 +3732,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             canCast = false;
 
                         }
-
                     }
-
                 } else if (action.cooldown === 0 && action.tree !== "Aux") {
 
                     // Builders can always cast - they generate resources
@@ -3565,6 +3741,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 }
 
+
+                if (!canCast) {
+                    continue;
+                }
 
 
                 if (canCast) {
@@ -3579,6 +3759,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     let canCastWithDebuffs = true;
 
+
                     if (action.requiredDebuffs.length > 0) {
 
                         for (const requiredDebuff of action.requiredDebuffs) {
@@ -3586,6 +3767,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!enemyDebuffs[requiredDebuff]) {
 
                                 canCastWithDebuffs = false;
+
 
                                 break;
 
@@ -3601,11 +3783,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Skip this ability if debuff requirements aren't met
 
+
                         activeCooldowns[i] = 0.1; // Small delay to prevent infinite loop
 
                         continue;
 
                     }
+
 
 
 
@@ -3637,9 +3821,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (wouldAffectPlayer(action)) {
 
-                        console.log(`Blocked self-affecting ability: ${action.name}`);
 
                         continue; // Skip abilities that would affect player
+
+                    }
+
+                    
+
+                    // Drone/Turret protection check: ensure abilities don't target drones/turrets
+
+                    if (wouldAffectDronesOrTurrets(action)) {
+
+
+                        continue; // Skip abilities that would affect drones/turrets
 
                     }
 
@@ -3680,14 +3874,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 
                                 const gunsmokeDamage = (passive.scalingToUse || 0) * cp * pSignetMult;
                                 totalDamage += gunsmokeDamage;
-                                
-                                // Track Gunsmoke damage in stats
-                                const passiveKey = `passive_${passive.name}`;
-                                if (!statsBreakdown[passiveKey]) {
-                                    statsBreakdown[passiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
-                                }
-                                statsBreakdown[passiveKey].casts++;
-                                statsBreakdown[passiveKey].damage += gunsmokeDamage;
                             }
                         });
                     }
@@ -3695,14 +3881,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const timeTaken = action.castTime;
 
-                    
+    
 
-                    // Set cast tracking for abilities with cast times
+    // Set cast tracking for abilities with cast times
 
-                    if (action.castTime > 0) {
+    if (action.castTime > 0) {
 
-                        currentCastEndTime = time + action.castTime;
-
+        currentCastEndTime = time + action.castTime;
                         castingAbility = action.name;
 
                     }
@@ -3773,11 +3958,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Effects
 
-                    if (action.duration > 0 && action.tickInterval > 0) {
+                    // Debug: Check if this is a summoning ability
+                    const isSummoning = action.name.toLowerCase().includes("drone") || 
+                                       action.name.toLowerCase().includes("turret");
+                    
+                    
+                    if (isSummoning) {
+                    }
 
+                    if (action.duration > 0 && action.tickInterval > 0) {
                         activeEffects.push({
 
                             name: action.name + " (Effect)",
+
+                            originalName: action.name, // Keep original name for damage tracking
 
                             duration: action.duration,
 
@@ -3841,7 +4035,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         eff.nextTick -= timeTaken;
 
+                        // Debug: Log effect processing
+                        if (eff.originalName && (eff.originalName.toLowerCase().includes("drone") || eff.originalName.toLowerCase().includes("turret"))) {
+                        }
+
                         while (eff.nextTick <= 0 && eff.duration >= 0) {
+
+                            // Debug: Log effect trigger
+                            if (eff.originalName && (eff.originalName.toLowerCase().includes("drone") || eff.originalName.toLowerCase().includes("turret"))) {
+                            }
 
                             performAttack({
 
@@ -3897,7 +4099,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             
 
-                            console.log(`${dot.name} ticked for ${dotDamage} damage`);
 
                             dot.nextTick += dot.interval;
 
@@ -4023,7 +4224,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         
 
-                        console.log(`${dot.name} ticked for ${dotDamage} damage (time advancement)`);
 
                         dot.nextTick += dot.interval;
 
@@ -4041,7 +4241,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (castingAbility) {
 
-                        console.log(`${castingAbility} cast completed`);
 
                     }
 
@@ -4907,7 +5106,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            console.log('Successfully imported build from tswcalc');
 
         } catch (err) {
 
