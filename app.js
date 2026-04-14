@@ -152,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ability = tswData[select.value];
 
+        if (!ability) return;
+
         const key = ability.name.toLowerCase();
 
         let url = iconCache.get(key);
@@ -1176,80 +1178,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    // Helper function to identify builder abilities
-
-    function isBuilderAbility(ability) {
-
-        if (!ability || !ability.description) return false;
-
-        
-
-        const desc = ability.description.toLowerCase();
-
-        
-
-        // Check for explicit "Builds X resource" patterns
-
-        if (desc.includes('builds 1 resource') || 
-
-            desc.includes('builds 2 resource') || 
-
-            desc.includes('builds 3 resource') ||
-
-            desc.includes('builds 1 assault rifle resource') ||
-
-            desc.includes('builds 2 assault rifle resource') ||
-
-            desc.includes('builds 3 assault rifle resource') ||
-
-            desc.includes('builds 1 blade resource') ||
-
-            desc.includes('builds 2 blade resource') ||
-
-            desc.includes('builds 1 fist resource') ||
-
-            desc.includes('builds 1 hammer resource') ||
-
-            desc.includes('builds 1 shotgun resource') ||
-
-            desc.includes('builds 1 pistol resource') ||
-
-            desc.includes('builds 1 elementalism resource') ||
-
-            desc.includes('builds 1 blood resource') ||
-
-            desc.includes('builds 1 chaos resource')) {
-
-            return true;
-
-        }
-
-        
-
-        // Check for generic "Builds 1 resource for each equipped weapon"
-
-        if (desc.includes('builds 1 resource for each equipped weapon')) {
-
-            return true;
-
-        }
-
-        
-
-        // Check for abilities that build additional resources under certain conditions
-
-        if (desc.includes('builds 2 additional') || desc.includes('builds 3 additional')) {
-
-            return true;
-
-        }
-
-        
-
-        return false;
-
-    }
-
     function updateAbilityDropdowns() {
 
         // Update enemy stats display
@@ -1874,26 +1802,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Regex for "every X seconds" or "per X seconds"
-
+        // Also handle channelled abilities pattern: "Every 0.5 seconds for 2.5 seconds"
         const secondsIntervalMatch = desc.match(/(?:every|per)\s+(\d+(?:\.\d+)?)\s+seconds/i);
+        const channelledMatch = desc.match(/Channelled:\s*Every\s+(\d+(?:\.\d+)?)\s+seconds\s+for\s+(\d+(?:\.\d+)?)\s+seconds/i);
 
-        if (secondsIntervalMatch) {
-
+        if (channelledMatch) {
+            // Channelled ability - extract both interval and duration
+            tickInterval = parseFloat(channelledMatch[1]);
+            duration = parseFloat(channelledMatch[2]);
+        } else if (secondsIntervalMatch) {
             tickInterval = parseFloat(secondsIntervalMatch[1]);
-
         } else if (desc.toLowerCase().includes("every seconds")) {
-
             tickInterval = 1.0;
-
         }
 
-        // Debug: Log parsing results for summoning abilities
-
-        if (ability.name.toLowerCase().includes("drone") || ability.name.toLowerCase().includes("turret")) {
-
-
-        }
-
+        
         return {
 
             name: ability.name,
@@ -1972,17 +1895,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculate() {
 
-        const cp = parseFloat(cpInput.value) || 0;
+        const cp = parseFloat(cpInput?.value || 0) || 0;
 
-        const hitRatingGlobal = parseFloat(hitRatingInput.value) || 0;
+        const hitRatingGlobal = parseFloat(hitRatingInput?.value || 0) || 0;
 
-        const critChanceGlobal = parseFloat(critChanceInput.value) || 0;
+        const critChanceGlobal = parseFloat(critChanceInput?.value || 0) || 0;
 
-        const critPowerGlobal = parseFloat(critPowerInput.value) || 0;
+        const critPowerGlobal = parseFloat(critPowerInput?.value || 0) || 0;
 
-        const penChanceGlobal = parseFloat(penChanceInput.value) || 0;
+        const penChanceGlobal = parseFloat(penChanceInput?.value || 0) || 0;
 
-        const simTimeMins = parseFloat(simTimeInput.value) || 3;
+        const simTimeMins = parseFloat(simTimeInput?.value || 3) || 3;
 
         const targetSeconds = simTimeMins * 60;
 
@@ -2008,7 +1931,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     critPower: critPowerGlobal,
 
-                    penRating: parseFloat(penRatingInput.value) || 0,
+                    penRating: parseFloat(penRatingInput?.value || 0) || 0,
 
                     penChance: penChanceGlobal
 
@@ -2264,16 +2187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-        // Player beneficial effects tracking system - to prevent cleansing own effects
-
-        const playerBeneficialEffects = {
-
-            buffs: [],
-
-            beneficialEffects: []
-
-        };
-
+        
         
 
         // Function to check if ability would affect player instead of enemy
@@ -2619,6 +2533,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let elementalFuryEndTime = 0;
 
+        
 
 
         // ========================================
@@ -2669,7 +2584,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
 
-            const isCrit = ability.name === "Full Momentum" ? false : Math.random() < (critChance / 100);
+            let effectiveCritChance = critChance;
+            
+            // Molten Steel: 30% additional chance to critically hit
+            if (ability.name === "Molten Steel") {
+                effectiveCritChance += 30;
+            }
+            
+            const isCrit = ability.name === "Full Momentum" ? false : Math.random() < (effectiveCritChance / 100);
 
             
 
@@ -2860,7 +2782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Check if we reached 5 stacks
                     if (momentumStacks >= MAX_MOMENTUM_STACKS) {
-                        momentumMult = 1.12; // 12% damage bonus
+                        momentumMult = 1.40; // 40% damage bonus
                         shouldResetMomentum = true;
                         
                         // Add Momentum proc to stats breakdown
@@ -2978,11 +2900,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             allPassives.forEach(passive => {
                 if (passive.damageBonusPercent > 0) {
-                    // Check if this passive is actually equipped (included in allPassives array)
-                    const isPassiveEquipped = allPassives.includes(passive);
-                    if (!isPassiveEquipped) {
-                        return; // Skip passive if not equipped
-                    }
                     
                     // Check if this passive applies to the current ability's weapon
                     const desc = passive.originalAbility && passive.originalAbility.description || "";
@@ -3234,8 +3151,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Handle Momentum damage tracking and stack reset
             if (shouldResetMomentum) {
-                // Calculate the momentum bonus damage (12% of the base damage)
-                const momentumBonusDamage = finalDamage * 0.12; // 12% bonus
+                // Calculate the momentum bonus damage (40% of the base damage)
+                const momentumBonusDamage = finalDamage * 0.40; // 40% bonus
                 
                 // Add momentum damage to total and stats breakdown
                 totalDamage += momentumBonusDamage;
@@ -3648,14 +3565,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 }
 
-                
-
-                if (activeCooldowns[i] > 0) {
-
-                    continue;
-
-                }
-
 
 
                 // Check if this ability has a cast time and would conflict with current casting
@@ -3689,7 +3598,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 const reqResources = action.resourceRequirement || action.resourceConsumption || 5;
-
+                
+                // For abilities that consume all resources, the consumption amount is different from the requirement
+                let consumeAmount = reqResources;
+                if (action.resourceConsumption > 0 && action.resourceRequirement !== action.resourceConsumption) {
+                    // Special case: Make Molten Steel consume exactly the min resources amount
+                    if (action.name === "Molten Steel") {
+                        const minRes = action.minResources || 1;
+                        consumeAmount = minRes; // Consume exactly the min resources amount
+                    } else {
+                        consumeAmount = action.resourceConsumption;
+                    }
+                }
 
 
 
@@ -3702,42 +3622,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
 
+
                 if (action.isConsumer) {
 
-                    if (isPrim && primResources < reqResources) {
-
-                        canCast = false;
-
-                    }
-
-                    if (isSec && secResources < reqResources) {
-
-                        canCast = false;
-
-                    }
-
-                    
-
-                    // Check min resources requirement
-
+                    // Use the higher of inherent requirement and user-set min resources
                     const minRes = action.minResources || 0;
+                    const finalMinRes = Math.max(reqResources, minRes);
 
+                    if (isPrim && primResources < finalMinRes) {
 
-                    if (minRes > 0) {
+                        canCast = false;
 
-                        const currentRes = isPrim ? primResources : (isSec ? secResources : 0);
-
-                        if (currentRes < minRes) {
-
-                            canCast = false;
-
-                        }
                     }
-                } else if (action.cooldown === 0 && action.tree !== "Aux") {
 
-                    // Builders can always cast - they generate resources
+                    if (isSec && secResources < finalMinRes) {
 
-                    canCast = true;
+                        canCast = false;
+
+                    }
 
                 }
 
@@ -3746,6 +3648,70 @@ document.addEventListener('DOMContentLoaded', () => {
                     continue;
                 }
 
+                // Slot 1 Builder Priority Rule: Only cast slot 1 builders when no other ability is available
+                if (action.orderPriority === 1 && !action.isConsumer) {
+                    // Check if any other ability is available to cast
+                    let otherAbilityAvailable = false;
+                    for (let j = 0; j < allActives.length; j++) {
+                        if (j === i) continue; // Skip self
+                        
+                        const otherAction = allActives[j];
+                        if (activeCooldowns[j] > 0) continue; // On cooldown
+                        
+                        // Check basic availability for other abilities
+                        const otherIsPrim = otherAction.weapon === primWeapon;
+                        const otherIsSec = otherAction.weapon === secWeapon;
+                        const otherIsValidWeapon = otherIsPrim || otherIsSec || primWeapon === "All";
+                        
+                        if (!otherIsValidWeapon) continue;
+                        
+                        // Check resource requirements for other abilities
+                        let otherCanCast = true;
+                        const otherReqResources = otherAction.resourceRequirement || otherAction.resourceConsumption || 5;
+                        
+                        // For abilities that consume all resources, check if we have at least the minimum
+                        let otherConsumeAmount = otherReqResources;
+                        if (otherAction.resourceConsumption > 0 && otherAction.resourceRequirement !== otherAction.resourceConsumption) {
+                            if (otherAction.name === "Molten Steel") {
+                                const otherMinRes = otherAction.minResources || 1;
+                                otherConsumeAmount = otherMinRes;
+                            } else {
+                                otherConsumeAmount = otherAction.resourceConsumption;
+                            }
+                        }
+                        
+                        if (otherAction.isConsumer) {
+                            const otherMinRes = otherAction.minResources || 0;
+                            const otherFinalMinRes = Math.max(otherReqResources, otherMinRes);
+                            
+                            if (otherIsPrim && primResources < otherFinalMinRes) {
+                                otherCanCast = false;
+                            }
+                            if (otherIsSec && secResources < otherFinalMinRes) {
+                                otherCanCast = false;
+                            }
+                        }
+                        
+                        // For builders, check if we have room for more resources
+                        if (!otherAction.isConsumer && otherAction.tree !== "Aux") {
+                            if (otherIsPrim && primResources >= 5) {
+                                otherCanCast = false; // Already at max resources
+                            }
+                            if (otherIsSec && secResources >= 5) {
+                                otherCanCast = false; // Already at max resources
+                            }
+                        }
+                        
+                        if (otherCanCast) {
+                            otherAbilityAvailable = true;
+                            break;
+                        }
+                    }
+                    
+                    if (otherAbilityAvailable) {
+                        continue; // Skip slot 1 builder, other ability is available
+                    }
+                }
 
                 if (canCast) {
 
@@ -3922,8 +3888,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (action.isConsumer) {
 
-                        const consumeAmount = action.resourceConsumption || reqResources;
-
                         if (isPrim) {
 
                             primResources -= consumeAmount;
@@ -3938,18 +3902,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     } else if (action.tree !== "Aux") {
 
-                        // Builders only add resources to their specific weapon
-
-                        if (isPrim) {
-
-                            primResources = Math.min(5, primResources + 1);
-
-                        }
-
-                        if (isSec) {
-
-                            secResources = Math.min(5, secResources + 1);
-
+                        // Special handling for Full Momentum - grants 5 Hammer resources
+                        if (action.name === "Full Momentum") {
+                            if (isPrim) {
+                                primResources = Math.min(5, primResources + 5);
+                            }
+                            if (isSec) {
+                                secResources = Math.min(5, secResources + 5);
+                            }
+                        } else {
+                            // Regular builders only add 1 resource to their specific weapon
+                            if (isPrim) {
+                                primResources = Math.min(5, primResources + 1);
+                            }
+                            if (isSec) {
+                                secResources = Math.min(5, secResources + 1);
+                            }
                         }
 
                     }
@@ -4035,16 +4003,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         eff.nextTick -= timeTaken;
 
-                        // Debug: Log effect processing
-                        if (eff.originalName && (eff.originalName.toLowerCase().includes("drone") || eff.originalName.toLowerCase().includes("turret"))) {
-                        }
-
+                        
                         while (eff.nextTick <= 0 && eff.duration >= 0) {
 
-                            // Debug: Log effect trigger
-                            if (eff.originalName && (eff.originalName.toLowerCase().includes("drone") || eff.originalName.toLowerCase().includes("turret"))) {
-                            }
-
+                            
                             performAttack({
 
                                 name: eff.name,
@@ -4112,15 +4074,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     castSomething = true;
 
-                    // Only break if a consumer cast (since they consume resources)
-
-                    // Builders should continue so other abilities can cast
-
-                    if (action.isConsumer) {
-
-                        break;
-
-                    }
+                    // Don't break - continue checking other abilities in the same iteration
+                    // This allows for more complex rotations and proper resource management
 
                 }
 

@@ -2,7 +2,7 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Pump Action",
-    "scaling": 0.35432,
+    "scaling": 0.3543194466,
     "scaling_1": 0.35432,
     "scaling_5": 0.35432,
     "note": "",
@@ -30,7 +30,7 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Out for a Kill",
-    "scaling": 0,
+    "scaling": 1.196083126,
     "scaling_1": 1.196083126,
     "scaling_5": 2.368324063,
     "note": "",
@@ -58,9 +58,9 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Buckshot",
-    "scaling": 1.65566,
+    "scaling": 1.655801697,
     "scaling_1": 1.65566,
-    "scaling_5": 1.81169,
+    "scaling_5": 1.811156013,
     "note": "",
     "cast_time": 1.5,
     "cooldown": 10,
@@ -86,7 +86,7 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Kneecapper",
-    "scaling": 0.7795718244,
+    "scaling": 4.600216014,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -100,7 +100,7 @@ const tswData = [
   {
     "tree": "Control",
     "name": "Hit & Run",
-    "scaling": 0.46051,
+    "scaling": 0.460506926,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -170,9 +170,9 @@ const tswData = [
   {
     "tree": "Control",
     "name": "Both Barrels",
-    "scaling": 0.65771,
-    "scaling_1": 0.65771,
-    "scaling_5": 1.30242,
+    "scaling": 0.6577122449,
+    "scaling_1": 0.6577122449,
+    "scaling_5": 1.302421941,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -198,7 +198,7 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Fire and Forget",
-    "scaling": 0.35432,
+    "scaling": 0.3543194466,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -226,9 +226,9 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Riot Act",
-    "scaling": 0.59812,
-    "scaling_1": 0.59812,
-    "scaling_5": 1.18432,
+    "scaling": 0.598117231,
+    "scaling_1": 0.598117231,
+    "scaling_5": 1.184315459,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -254,9 +254,9 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Stopping Power",
-    "scaling": 0.65771,
-    "scaling_1": 0.65771,
-    "scaling_5": 1.30242,
+    "scaling": 0.6577122449,
+    "scaling_1": 0.6577122449,
+    "scaling_5": 1.302421941,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -268,7 +268,7 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Blast Corps",
-    "scaling": 0.1842,
+    "scaling": 0.1842027704,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -450,9 +450,9 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Heavy Recoil",
-    "scaling": 1.01203,
-    "scaling_1": 1.01203,
-    "scaling_5": 2.18443,
+    "scaling": 1.012031692,
+    "scaling_1": 1.012031692,
+    "scaling_5": 2.184428148,
     "note": "Dash damage: 0.18529",
     "cast_time": 1,
     "cooldown": 5,
@@ -478,7 +478,7 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Point Blank",
-    "scaling": 0.7486285126,
+    "scaling": 4.600216014,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -492,7 +492,7 @@ const tswData = [
   {
     "tree": "Securing the Perimeter",
     "name": "Scattershot",
-    "scaling": 0.32181,
+    "scaling": 0.3218130754,
     "scaling_1": 0.32181,
     "scaling_5": 0.32181,
     "note": "",
@@ -526,7 +526,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 10,
-    "description": "Consumes all Shotgun Resources. A Blast attack that places a turret at your feet. The turret will fire every seconds for 5 seconds, affecting up to 6 enemies in a 7 metre long 120 degree cone in front of you, dealing 14 - 28 physical damage, based on the number of resources consumed. This ability has a 7 metre range.",
+    "description": "Consumes all Shotgun Resources. A Blast attack that places a turret at your feet. The turret will fire every 1 seconds for 5 seconds, affecting up to 6 enemies in a 7 metre long 120 degree cone in front of you, dealing 14 - 28 physical damage, based on the number of resources consumed. This ability has a 7 metre range.",
     "type": "Active",
     "weapon": "Shotgun",
     "icon": "Shotgun Turret.png"
@@ -548,9 +548,9 @@ const tswData = [
   {
     "tree": "Securing the Perimeter",
     "name": "Tear Gas",
-    "scaling": 0.65771,
-    "scaling_1": 0.65771,
-    "scaling_5": 1.30242,
+    "scaling": 0.6577122449,
+    "scaling_1": 0.6577122449,
+    "scaling_5": 1.302421941,
     "note": "Non-Hindered: scaling_1: 0.59812, scaling_5: 1.18432",
     "cast_time": 1,
     "cooldown": 4,
@@ -590,7 +590,7 @@ const tswData = [
   {
     "tree": "Hunkering Down",
     "name": "Crap Shoot",
-    "scaling": 0.27630,
+    "scaling": 0.2763041556,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -604,7 +604,7 @@ const tswData = [
   {
     "tree": "Hunkering Down",
     "name": "Smart Bomb",
-    "scaling": 0.79749,
+    "scaling": 0.7974896413,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -744,7 +744,7 @@ const tswData = [
   {
     "tree": "Tactical Surprise",
     "name": "Sure Shot",
-    "scaling": 0,
+    "scaling": 1.196083126,
     "scaling_1": 1.196083126,
     "scaling_5": 2.368324063,
     "note": "",
@@ -778,7 +778,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 30,
-    "description": "Places a turret at the targeted point. The turret will fire at a random enemy within 7 metres every 2.5 seconds for 20 seconds. Affected enemies are deals 75 physical damage and other enemies within 3 metres are dealt 25 physical damage.",
+    "description": "Places a turret at the targeted point. The turret will fire at a random enemy within 7 metres every 2.5 seconds for 20 seconds. Affected enemies are dealt 75 physical damage and other enemies within 3 metres are dealt 25 physical damage.",
     "type": "Elite Active",
     "weapon": "Shotgun",
     "icon": "Bombardment.png"
@@ -814,7 +814,7 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Shootout",
-    "scaling": 0,
+    "scaling": 0.5424097896,
     "scaling_1": 0.5424097896,
     "scaling_5": 0.8146081089,
     "note": "",
@@ -842,9 +842,9 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Drone Kit",
-    "scaling": 0.14953,
-    "scaling_1": 0.14953,
-    "scaling_5": 0.29581,
+    "scaling": 0.1495293077,
+    "scaling_1": 0.1495293077,
+    "scaling_5": 0.2958079784,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -870,7 +870,7 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Dirty Tricks",
-    "scaling": 0.7106980013,
+    "scaling": 4.600216014,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -904,7 +904,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 15,
-    "description": "Persistent GTAoE: Places an area effect that affects up to 6 enemies in a 5 metre radius around the targeted point every seconds for 10 seconds. Builds 2 resource for each equipped weapon on each target in the area when placed. A persistent GTAoE attack that creates an area on the ground dealing 7 physical damage, or 8 physical damage to targets that are Hindered.",
+    "description": "Persistent GTAoE: Places an area effect that affects up to 6 enemies in a 5 metre radius around the targeted point every 1 seconds for 10 seconds. Builds 2 resource for each equipped weapon on each target in the area when placed. A persistent GTAoE attack that creates an area on the ground dealing 7 physical damage, or 8 physical damage to targets that are Hindered.",
     "type": "Active",
     "weapon": "Pistol",
     "icon": "Above The Law.png"
@@ -954,9 +954,9 @@ const tswData = [
   {
     "tree": "Dangerous",
     "name": "Wanted",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.598117231,
+    "scaling_1": 0.598117231,
+    "scaling_5": 1.184315459,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -1010,7 +1010,7 @@ const tswData = [
   {
     "tree": "Bullet Hell",
     "name": "Start & Finish",
-    "scaling": 0.30277641,
+    "scaling": 0.9222271637,
     "scaling_1": 0.9222271637,
     "scaling_5": 2.009244111,
     "note": "",
@@ -1072,7 +1072,7 @@ const tswData = [
     "note": "",
     "cast_time": 3,
     "cooldown": 20,
-    "description": "Channelled: Every 0.3 seconds for 3 seconds. ○First 3 hits: 21 physical damage. ○Next 3 hits: 35 physical damage. ○Next 3 hits: 62 physical damage in a 5 metre area around the target. ○Final hit: 175 physical damage. Applies Vulnerable to Magic.",
+    "description": "Channelled: Every 0.3 seconds for 3 seconds. \u25cbFirst 3 hits: 21 physical damage. \u25cbNext 3 hits: 35 physical damage. \u25cbNext 3 hits: 62 physical damage in a 5 metre area around the target. \u25cbFinal hit: 175 physical damage. Applies Vulnerable to Magic.",
     "type": "Elite Active",
     "weapon": "Pistol",
     "icon": "Gun Crazy.png"
@@ -1094,7 +1094,7 @@ const tswData = [
   {
     "tree": "Crossfire",
     "name": "Shake and Bake",
-    "scaling": 0,
+    "scaling": 0.7974896413,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -1178,7 +1178,7 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Killer Flow",
-    "scaling": 0,
+    "scaling": 0.3218130754,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -1192,7 +1192,7 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Running Circles",
-    "scaling": 0.08235,
+    "scaling": 0.08234947383,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -1206,9 +1206,9 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Semi-Auto",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.2210433245,
+    "scaling_1": 0.2210433245,
+    "scaling_5": 0.3499852638,
     "note": "",
     "cast_time": 2,
     "cooldown": 4,
@@ -1234,9 +1234,9 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Set 'Em Up",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.6154539623,
+    "scaling_1": 0.6154539623,
+    "scaling_5": 1.220072468,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -1304,7 +1304,7 @@ const tswData = [
   {
     "tree": "Troubleshooting",
     "name": "Bond, Strong Bond",
-    "scaling": 0,
+    "scaling": 0.2392429994,
     "scaling_1": 0.2392429994,
     "scaling_5": 0.3812004638,
     "note": "",
@@ -1338,7 +1338,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
-    "description": "Consumes all Pistol Resources. Summons a drone that will follow you around for 5 seconds. Every seconds it will attack up to 6 enemies around the target, dealing 16 - 31 physical damage, or 18 - 35 physical damage to targets that are Weakened. If the target dies before the drone is finished attacking it will deal 39 - 77 physical damage to targets within the same area. Damage scales based on the number of resources consumed.",
+    "description": "Consumes all Pistol Resources. Summons a drone that will follow you around for 5 seconds. Every 1 seconds it will attack up to 6 enemies around the target, dealing 16 - 31 physical damage, or 18 - 35 physical damage to targets that are Weakened. If the target dies before the drone is finished attacking it will deal 39 - 77 physical damage to targets within the same area. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
     "icon": "Area Drone.png"
@@ -1408,7 +1408,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you critically hit you also gain a heal over time effect, healing for 10 every seconds for 5 seconds. Whenever you critically heal, you cleanse 1 detrimental effect from your defensive target. This can only happen once per target every 2 seconds.",
+    "description": "Whenever you critically hit you also gain a heal over time effect, healing for 10 every 1 seconds for 5 seconds. Whenever you critically heal, you cleanse 1 detrimental effect from your defensive target. This can only happen once per target every 2 seconds.",
     "type": "Passive",
     "weapon": "Pistol",
     "icon": "Advantage Me.png"
@@ -1752,7 +1752,7 @@ const tswData = [
   {
     "tree": "Support",
     "name": "Fire in the Hole",
-    "scaling": 0,
+    "scaling": 0.6095236583,
     "scaling_1": 0.6095236583,
     "scaling_5": 1.208127512,
     "note": "",
@@ -1780,7 +1780,7 @@ const tswData = [
   {
     "tree": "Take Point",
     "name": "Three Round Burst",
-    "scaling": 0,
+    "scaling": 0.3990692355,
     "scaling_1": 0.3990692355,
     "scaling_5": 0.7892040852,
     "note": "",
@@ -1836,7 +1836,7 @@ const tswData = [
   {
     "tree": "Take Point",
     "name": "Where it Hurts",
-    "scaling": 0,
+    "scaling": 1.194229578,
     "scaling_1": 1.194229578,
     "scaling_5": 2.40136438,
     "note": "",
@@ -1934,7 +1934,7 @@ const tswData = [
   {
     "tree": "Heavy Fire",
     "name": "Explosives Expert",
-    "scaling": 0.30339,
+    "scaling": 0.3033927983,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -2004,9 +2004,9 @@ const tswData = [
   {
     "tree": "Bombardment",
     "name": "Frag Grenade",
-    "scaling": 0.11919,
-    "scaling_1": 0.11919,
-    "scaling_5": 0.2373,
+    "scaling": 0.598117231,
+    "scaling_1": 0.598117231,
+    "scaling_5": 1.184315459,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
@@ -2130,7 +2130,7 @@ const tswData = [
   {
     "tree": "Squad Duty",
     "name": "Transfuse Anima",
-    "scaling": 0,
+    "scaling": 1.042345018,
     "scaling_1": 1.042345018,
     "scaling_5": 2.24947982,
     "note": "",
@@ -2206,7 +2206,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Your damaging leech abilities also cause your target to become Afflicted with a damage over time effect that deals 10 physical damage every seconds for 5 seconds.",
+    "description": "Your damaging leech abilities also cause your target to become Afflicted with a damage over time effect that deals 10 physical damage every 1 seconds for 5 seconds.",
     "type": "Passive",
     "weapon": "Assault Rifle",
     "icon": "Anticoagulant.png"
@@ -2396,7 +2396,7 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Balanced Blade",
-    "scaling": 0,
+    "scaling": 0.5976111438,
     "scaling_1": 0.5976111438,
     "scaling_5": 1.184302483,
     "note": "",
@@ -2424,7 +2424,7 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Dancing Blade",
-    "scaling": 0,
+    "scaling": 0.543012119,
     "scaling_1": 0.543012119,
     "scaling_5": 0.8150145333,
     "note": "",
@@ -2472,7 +2472,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you penetrate, you gain a heal over time effect that heals for 10 every seconds for 5 seconds.",
+    "description": "Whenever you penetrate, you gain a heal over time effect that heals for 10 every 1 seconds for 5 seconds.",
     "type": "Passive",
     "weapon": "Blade",
     "icon": "Immortal Spirit.png"
@@ -2500,7 +2500,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "\"Blade Torrent\" also causes the target to become Afflicted with a damage over time effect that deals 7 physical damage every seconds for 8 seconds.",
+    "description": "\"Blade Torrent\" also causes the target to become Afflicted with a damage over time effect that deals 7 physical damage every 1 seconds for 8 seconds.",
     "type": "Passive",
     "weapon": "Blade",
     "icon": "Perfect Storm.png"
@@ -2620,7 +2620,7 @@ const tswData = [
   {
     "tree": "Wind through Grass",
     "name": "Destiny",
-    "scaling": 0,
+    "scaling": 0.7364581182,
     "scaling_1": 0.7364581182,
     "scaling_5": 1.908498274,
     "note": "",
@@ -2914,13 +2914,13 @@ const tswData = [
   {
     "tree": "Runing of the Jagged",
     "name": "Binding Wounds",
-    "scaling": 0,
+    "scaling": 1.196214997,
     "scaling_1": 1.196214997,
     "scaling_5": 2.368604965,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Blade Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Impaired, it becomes Afflicted with a damage over time effect that deals 7 physical damage every seconds for 3 seconds. This ability generates additional hate.",
+    "description": "Consumes all Blade Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Impaired, it becomes Afflicted with a damage over time effect that deals 7 physical damage every 1 seconds for 3 seconds. This ability generates additional hate.",
     "type": "Active",
     "weapon": "Blade",
     "icon": "Binding Wounds.png"
@@ -2962,7 +2962,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you hit an Impaired target, you gain a heal over time effect that heals for 22 every seconds for 6 seconds.",
+    "description": "Whenever you hit an Impaired target, you gain a heal over time effect that heals for 22 every 1 seconds for 6 seconds.",
     "type": "Passive",
     "weapon": "Blade",
     "icon": "Tipped Scales.png"
@@ -3032,7 +3032,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 15,
-    "description": "Throws a blade at the target dealing 94 physical damage and causes the target to become Afflicted with a damage over time effect that deals 6 physical damage every seconds for 5 seconds. Generates a large amount of hate.",
+    "description": "Throws a blade at the target dealing 94 physical damage and causes the target to become Afflicted with a damage over time effect that deals 6 physical damage every 1 seconds for 5 seconds. Generates a large amount of hate.",
     "type": "Active",
     "weapon": "Blade",
     "icon": "Sling Blade.png"
@@ -3124,7 +3124,7 @@ const tswData = [
   {
     "tree": "The Cutting Artist",
     "name": "Steel Palace",
-    "scaling": 0,
+    "scaling": 0.5942212789,
     "scaling_1": 0.5942212789,
     "scaling_5": 1.177658143,
     "note": "",
@@ -3210,13 +3210,13 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Hell to Pay",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.6546140042,
+    "scaling_1": 0.6546140042,
+    "scaling_5": 1.29628671,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A hammer blast that deals 65 – 130 damage in a column in front of you. Consumes all hammer resources.",
+    "description": "A hammer blast that deals 65 \u2013 130 damage in a column in front of you. Consumes all hammer resources.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "Hell To Pay.png"
@@ -3238,7 +3238,7 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Haymaker",
-    "scaling": 0,
+    "scaling": 1.196214997,
     "scaling_1": 1.196214997,
     "scaling_5": 2.368604965,
     "note": "",
@@ -3294,7 +3294,7 @@ const tswData = [
   {
     "tree": "Grit",
     "name": "Grand Slam",
-    "scaling": 0.09232198733,
+    "scaling": 0.5976111438,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -3406,13 +3406,13 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Molten Steel",
-    "scaling": 0,
+    "scaling": 1.148564939,
     "scaling_1": 1.148564939,
     "scaling_5": 2.273304849,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A single target attack that deals 114 – 226 damage based on the number of resources consumed. Deals 15% additional critical damage. Consumes all Hammer Resources.",
+    "description": "A single target attack that deals 114 \u2013 226 damage based on the number of resources consumed. This attack has a 30% additional chance to critically hit. Deals 15% additional critical damage. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "Molten Steel.png"
@@ -3434,7 +3434,7 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Bone Breaker",
-    "scaling": 0,
+    "scaling": 1.262726536,
     "scaling_1": 1.262726536,
     "scaling_5": 2.500635334,
     "note": "",
@@ -3454,7 +3454,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Molten Steel’ no longer gains additional Crit Damage. Instead 'Molten Steel’ now preforms an additional hit that deals 4 – 119 damage based on the resources consumed. Damage scales based on maximum HP.",
+    "description": "Molten Steel\u2019 no longer gains additional Crit Damage. Instead 'Molten Steel\u2019 now preforms an additional hit that deals 4 \u2013 119 damage based on the resources consumed. Damage scales based on maximum HP.",
     "type": "Passive",
     "weapon": "Hammer",
     "icon": "Metal Worker.png"
@@ -3518,7 +3518,7 @@ const tswData = [
   {
     "tree": "Brute Force",
     "name": "Beatdown",
-    "scaling": 0,
+    "scaling": 1.201383856,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -3608,7 +3608,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A column Blast attack that deals 60 – 124 damage based on the number of resources. Enemies killed after being hit by ‘No Mercy’ cause your next ‘No Mercy’ within 30 seconds to critically hit. Consumes all Hammer Resources.",
+    "description": "A column Blast attack that deals 60 \u2013 124 damage based on the number of resources. Enemies killed after being hit by \u2018No Mercy\u2019 cause your next \u2018No Mercy\u2019 within 30 seconds to critically hit. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "No Mercy.png"
@@ -3685,7 +3685,7 @@ const tswData = [
   },
   {
     "tree": "Sledge Factory",
-    "name": "You’re Next",
+    "name": "You\u2019re Next",
     "scaling": 0,
     "scaling_1": 0,
     "scaling_5": 0,
@@ -3734,7 +3734,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Hammer attack that deals 119 – 236 damage, based on resources consumed. If the target is impaired, you gain the Major Ward that reduces all damage received by 25% for 6 seconds. Consumes all Hammer Resources.",
+    "description": "Hammer attack that deals 119 \u2013 236 damage, based on resources consumed. If the target is impaired, you gain the Major Ward that reduces all damage received by 25% for 6 seconds. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "Obsidian Aegis.png"
@@ -3811,7 +3811,7 @@ const tswData = [
   },
   {
     "tree": "Battering Works",
-    "name": "Stone’s Throw",
+    "name": "Stone\u2019s Throw",
     "scaling": 1.51388205,
     "scaling_1": 0,
     "scaling_5": 0,
@@ -3874,7 +3874,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A PBAoE that deals 59 – 117 damage based on resources consumed and increases all affected enemies hate towards you. Grants a hate increasing effect for your next attack.",
+    "description": "A PBAoE that deals 59 \u2013 117 damage based on resources consumed and increases all affected enemies hate towards you. Grants a hate increasing effect for your next attack.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "Razor Shards.png"
@@ -3930,7 +3930,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 15,
-    "description": "A pulsing PBAoE attack that deals 6 – 12 damage to nearby enemies per pulse. If any Weakened enemies are affected you again a stack of beneficial effect, which increases your maximum HP by 2% per stack for 10 seconds. This effect can stack up to 5 times. Consumes all Hammer Resources.",
+    "description": "A pulsing PBAoE attack that deals 6 \u2013 12 damage to nearby enemies per pulse. If any Weakened enemies are affected you again a stack of beneficial effect, which increases your maximum HP by 2% per stack for 10 seconds. This effect can stack up to 5 times. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
     "icon": "Blowout.png"
@@ -3944,7 +3944,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Increases the duration of ‘Blowout’ by 5 seconds. Reduces the recharges times of ‘Blowout’ by 5 seconds.",
+    "description": "Increases the duration of \u2018Blowout\u2019 by 5 seconds. Reduces the recharges times of \u2018Blowout\u2019 by 5 seconds.",
     "type": "Passive",
     "weapon": "Hammer",
     "icon": "Faultline.png"
@@ -4000,7 +4000,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Claws’ also causes the target to become afflicted with a damage over time effect that deals 9 physical damage every second for 10 seconds.",
+    "description": "Claws\u2019 also causes the target to become afflicted with a damage over time effect that deals 9 physical damage every second for 10 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Sharp Claws.png"
@@ -4008,13 +4008,13 @@ const tswData = [
   {
     "tree": "Feral",
     "name": "Hog Wild",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.642542605,
+    "scaling_1": 0.642542605,
+    "scaling_5": 1.223323105,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A cone Blast attack that deals 70 – 133 physical damage based on the number of resources. Gives you the Savage Sweep effect, causing the next Fist consumer you activate to deal 4 -18 physical damage in an area around you.",
+    "description": "A cone Blast attack that deals 70 \u2013 133 physical damage based on the number of resources. Gives you the Savage Sweep effect, causing the next Fist consumer you activate to deal 4 -18 physical damage in an area around you.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Hog Wild.png"
@@ -4084,7 +4084,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you hit, you gain a single stack of a heal over time effect that heals for 1 every seconds per stack for 3 seconds. This effect can stack up to 4 times.",
+    "description": "Whenever you hit, you gain a single stack of a heal over time effect that heals for 1 every 1 seconds per stack for 3 seconds. This effect can stack up to 4 times.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Lick Your Wounds.png"
@@ -4112,7 +4112,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Increases the duration of “Nurture” by 5 seconds.",
+    "description": "Increases the duration of \u201cNurture\u201d by 5 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Nurturing Gift.png"
@@ -4140,7 +4140,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Reduces the recharge time of “Pack Leader” by 30 seconds.",
+    "description": "Reduces the recharge time of \u201cPack Leader\u201d by 30 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Alpha Wolf.png"
@@ -4148,13 +4148,13 @@ const tswData = [
   {
     "tree": "Primal",
     "name": "Wild at Heart",
-    "scaling": 0,
+    "scaling": 1.16841913,
     "scaling_1": 1.16841913,
     "scaling_5": 2.223669372,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. A single target attack that deals 95 – 180 physical damage, based on the number of resources. Gives you Feral Regrowth effect, causing your next Fist consumer to heal you for 6 – 30.",
+    "description": "Consumes all Fist resources. A single target attack that deals 95 \u2013 180 physical damage, based on the number of resources. Gives you Feral Regrowth effect, causing your next Fist consumer to heal you for 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Wild at Heart.png"
@@ -4204,13 +4204,13 @@ const tswData = [
   {
     "tree": "The Wilderness",
     "name": "One-Two",
-    "scaling": 0.3216378913,
+    "scaling": 0.8467812386,
     "scaling_1": 0.8467812386,
     "scaling_5": 1.901038771,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. A Burst attack with two consecutive hits that deals 26 and 69 – 154 physical damage based on the resources consumed. Gives you the Savage Sweep effect, causing the next Fist resource consumer you activate to deal 3 – 14 physical damage in a area around you.",
+    "description": "Consumes all Fist resources. A Burst attack with two consecutive hits that deals 26 and 69 \u2013 154 physical damage based on the resources consumed. Gives you the Savage Sweep effect, causing the next Fist resource consumer you activate to deal 3 \u2013 14 physical damage in a area around you.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Onetwo.png"
@@ -4224,7 +4224,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Increaes damage dealt by “One-Two’s” seconds hit by 25%.",
+    "description": "Increaes damage dealt by \u201cOne-Two\u2019s\u201d seconds hit by 25%.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Follow Through.png"
@@ -4238,7 +4238,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. A single target ability that deals 89 – 169 physical damage, based on resources consumed. If the target is Afflicted, you also gain a beneficail effect that increases all damage dealt by 10% for 4 seconds. Tear ‘Em Up gives you Feral Regrowth effect, causing your next Fist resource consumer to heal you 6 – 30.",
+    "description": "Consumes all Fist resources. A single target ability that deals 89 \u2013 169 physical damage, based on resources consumed. If the target is Afflicted, you also gain a beneficail effect that increases all damage dealt by 10% for 4 seconds. Tear \u2018Em Up gives you Feral Regrowth effect, causing your next Fist resource consumer to heal you 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Tear EM up.png"
@@ -4316,7 +4316,7 @@ const tswData = [
   {
     "tree": "The Outback",
     "name": "Cage Fight",
-    "scaling": 0,
+    "scaling": 0.4832613859,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -4372,7 +4372,7 @@ const tswData = [
   {
     "tree": "The Streets",
     "name": "Head On",
-    "scaling": 0,
+    "scaling": 0.3467346267,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -4392,7 +4392,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Improves “Head On” to dash 6 meters, affect up to 8 enemies and deal 25% more damage. “Head On” builds 1 additional Fist resource if it hits 3 enemies, 2 if it hits, 5 enemies and 3 if it hits 7 enemies.",
+    "description": "Improves \u201cHead On\u201d to dash 6 meters, affect up to 8 enemies and deal 25% more damage. \u201cHead On\u201d builds 1 additional Fist resource if it hits 3 enemies, 2 if it hits, 5 enemies and 3 if it hits 7 enemies.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Hardheaded.png"
@@ -4406,7 +4406,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. Each resource consumed will give you a counter. Your next hits will cause an additional PBAoE attack dealing 20 physical damage. Each additional attack will subtract one counter until you run out of counters. Berserk also gives you the Feral Regrowth effect, causing your next Fist resource consumer to heal you for 5 – 30.",
+    "description": "Consumes all Fist resources. Each resource consumed will give you a counter. Your next hits will cause an additional PBAoE attack dealing 20 physical damage. Each additional attack will subtract one counter until you run out of counters. Berserk also gives you the Feral Regrowth effect, causing your next Fist resource consumer to heal you for 5 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Berserk.png"
@@ -4428,13 +4428,13 @@ const tswData = [
   {
     "tree": "The Streets",
     "name": "Savage",
-    "scaling": 0,
-    "scaling_1": 0,
-    "scaling_5": 0,
+    "scaling": 0.7346439902,
+    "scaling_1": 0.7346439902,
+    "scaling_5": 1.31542449,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumers all Fist resources. A cone attack that deals 60 – 107 physical damage, based on resources consumed. Gives you Savage Sweep effect, causing the next Fist resource consumed to deal 3 -14 physical damage in an area around you. If any targets are Impaired it also gives you the Feral Regrowth effect, causing your next Fist resource consumer to heal you for 6 – 30.",
+    "description": "Consumers all Fist resources. A cone attack that deals 60 \u2013 107 physical damage, based on resources consumed. Gives you Savage Sweep effect, causing the next Fist resource consumed to deal 3 -14 physical damage in an area around you. If any targets are Impaired it also gives you the Feral Regrowth effect, causing your next Fist resource consumer to heal you for 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Savage.png"
@@ -4476,7 +4476,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. A Burst heal that deals the defensive target 3 times for 19 – 37 per application and gives a heal over time effects that heals for 9 – 19 every second for 4 seconds. Heal effects scale based on the number of resources consumed. Gives you the Savage Sweep effect, causing the next Fist resource consumer you activate to deal 3 – 14 physical damage in an area around you.",
+    "description": "Consumes all Fist resources. A Burst heal that deals the defensive target 3 times for 19 \u2013 37 per application and gives a heal over time effects that heals for 9 \u2013 19 every second for 4 seconds. Heal effects scale based on the number of resources consumed. Gives you the Savage Sweep effect, causing the next Fist resource consumer you activate to deal 3 \u2013 14 physical damage in an area around you.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Surgical Steel.png"
@@ -4532,7 +4532,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumers all Fist resources. Your defensive target gains a direct heal over time effect that heals for 17 – 32 every second for 6 seconds, based on resources consumed. Gives you the Feral Regrowth effect, causing your next Fist consumer to heal 6 – 30.",
+    "description": "Consumers all Fist resources. Your defensive target gains a direct heal over time effect that heals for 17 \u2013 32 every second for 6 seconds, based on resources consumed. Gives you the Feral Regrowth effect, causing your next Fist consumer to heal 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Creature Comfort.png"
@@ -4574,7 +4574,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "Whenever you hit and Impaired target, you apply a detrimental effect which causes anyone attacking the target to gain a heal over time effect for 6 every seconds for 4 seconds.",
+    "description": "Whenever you hit and Impaired target, you apply a detrimental effect which causes anyone attacking the target to gain a heal over time effect for 6 every 1 seconds for 4 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Renewal.png"
@@ -4638,7 +4638,7 @@ const tswData = [
   {
     "tree": "Heat of Battle",
     "name": "Muzzle",
-    "scaling": 0,
+    "scaling": 1.207069919,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -4686,7 +4686,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "“Shelter” also deals 4 physical damage to up to 6 targets in a 5 meter radius around you. Increases the duration of the heal over time by “Shelter” by 3 seconds.",
+    "description": "\u201cShelter\u201d also deals 4 physical damage to up to 6 targets in a 5 meter radius around you. Increases the duration of the heal over time by \u201cShelter\u201d by 3 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Trespass.png"
@@ -4700,7 +4700,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Fist resources. A cone Blast heal that heals for 19 – 38. You are healed for 14 – 29. Affected targets also gain a heal over time for 7 - 14 every second for 6 seconds. You gain a heal over time effect that heals you for 3 – 7 every second for 6 seconds. Heal effects scale based on resources consumed.",
+    "description": "Consumes all Fist resources. A cone Blast heal that heals for 19 \u2013 38. You are healed for 14 \u2013 29. Affected targets also gain a heal over time for 7 - 14 every second for 6 seconds. You gain a heal over time effect that heals you for 3 \u2013 7 every second for 6 seconds. Heal effects scale based on resources consumed.",
     "type": "Active",
     "weapon": "Fist",
     "icon": "Blast Of Light.png"
@@ -4722,9 +4722,9 @@ const tswData = [
   {
     "tree": "Play with Fire",
     "name": "Inner Spark",
-    "scaling": 0,
+    "scaling": 0.1050727176,
     "scaling_1": 0.1050727176,
-    "scaling_5": 0.2101454351,
+    "scaling_5": 0.2040835476,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
@@ -4742,7 +4742,7 @@ const tswData = [
     "note": "",
     "cast_time": 0,
     "cooldown": 0,
-    "description": "“Inner Spark” instead heals for 8 – 16 whenever your defensive target is attacked. Increases the duration of “Inner Spark” by 5 seconds.",
+    "description": "\u201cInner Spark\u201d instead heals for 8 \u2013 16 whenever your defensive target is attacked. Increases the duration of \u201cInner Spark\u201d by 5 seconds.",
     "type": "Passive",
     "weapon": "Fist",
     "icon": "Kindle.png"
@@ -4820,7 +4820,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Electrical Storm",
-    "scaling": 1.26341,
+    "scaling": 1.263414296,
     "scaling_1": 1.26341,
     "scaling_5": 1.26341,
     "note": "",
@@ -4862,7 +4862,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Mind over Matter",
-    "scaling": 0,
+    "scaling": 0.1150408543,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -4876,7 +4876,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Ignite",
-    "scaling": 0.61185,
+    "scaling": 0.6118516976,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5072,7 +5072,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Coldwave",
-    "scaling": 0.72489,
+    "scaling": 0.7248920788,
     "scaling_1": 0.72489,
     "scaling_5": 0.72489,
     "note": "",
@@ -5128,13 +5128,13 @@ const tswData = [
   {
     "tree": "",
     "name": "Flashpoint",
-    "scaling": 0.82783,
+    "scaling": 0.8278289211,
     "scaling_1": 0.82783,
     "scaling_5": 0.82783,
     "note": "",
     "cast_time": 2,
     "cooldown": 10,
-    "description": "A single target attack that deals 63 magical damage. The target also becomes Afflicted with a damage over time effect that deals 15 magical damage every seconds for 5 seconds. If the target is already Afflicted, it will cause 6 enemies in a 5 metre radius around them to become afflicted with a damage over time effect that deals 29 magical damage each second for 5 seconds.",
+    "description": "A single target attack that deals 63 magical damage. The target also becomes Afflicted with a damage over time effect that deals 15 magical damage every 1 seconds for 5 seconds. If the target is already Afflicted, it will cause 6 enemies in a 5 metre radius around them to become afflicted with a damage over time effect that deals 29 magical damage each second for 5 seconds.",
     "type": "Active",
     "weapon": "Elementalism",
     "icon": "Flashpoint.png"
@@ -5156,7 +5156,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Arc Flash",
-    "scaling": 0,
+    "scaling": 0.3218130754,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5184,7 +5184,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Inferno",
-    "scaling": 0,
+    "scaling": 1.512629809,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5212,7 +5212,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Conditional Force",
-    "scaling": 0,
+    "scaling": 0.8386643782,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5310,7 +5310,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Magnetic Wipe",
-    "scaling": 0,
+    "scaling": 1.901622718,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5366,7 +5366,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Electromagnetic Manifestation",
-    "scaling": 0.08018,
+    "scaling": 0.08018238241,
     "scaling_1": 0.08018,
     "scaling_5": 0.08018,
     "note": "",
@@ -5450,7 +5450,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Wildfire",
-    "scaling": 0,
+    "scaling": 0.3218130754,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5506,7 +5506,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Burnout",
-    "scaling": 0,
+    "scaling": 1.80518715,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -5576,7 +5576,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Call for Eris",
-    "scaling": 0.9202417446,
+    "scaling": 0.289871186,
     "scaling_1": 0.289871186,
     "scaling_5": 0.3127035055,
     "note": "",
@@ -5604,7 +5604,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Schism",
-    "scaling": 0,
+    "scaling": 1.111834686,
     "scaling_1": 1.111834686,
     "scaling_5": 2.202822472,
     "note": "",
@@ -5638,7 +5638,7 @@ const tswData = [
     "note": "",
     "cast_time": 1,
     "cooldown": 25,
-    "description": "PBAoE: Affects up to 6 enemies in up to a 7 metre area around you. A PBAoE attack that damages and pulls affected targets towards you. Affected targets also become Impaired and and knocked to the ground. The range, amount of damage dealt, and impairment duration of this ability are based on the number of targets hit and the range at which they are hit: ○ Prompt Critical Event: When only one enemy is within 3 metres this ability deals 348 damage and impairs for 1 second. ○ Double-Six Quantum Pieces: When one enemy is within 3 metres and a second is within 5 metres this ability deals 314 damage and impairs for 3 seconds. ○ Cascading Boneyard: When at least one enemy is within 3 metres, a second is within 5 metres, and a third is within 7 metres this ability deals 296 damage and impairs for 4 seconds.",
+    "description": "PBAoE: Affects up to 6 enemies in up to a 7 metre area around you. A PBAoE attack that damages and pulls affected targets towards you. Affected targets also become Impaired and and knocked to the ground. The range, amount of damage dealt, and impairment duration of this ability are based on the number of targets hit and the range at which they are hit: \u25cb Prompt Critical Event: When only one enemy is within 3 metres this ability deals 348 damage and impairs for 1 second. \u25cb Double-Six Quantum Pieces: When one enemy is within 3 metres and a second is within 5 metres this ability deals 314 damage and impairs for 3 seconds. \u25cb Cascading Boneyard: When at least one enemy is within 3 metres, a second is within 5 metres, and a third is within 7 metres this ability deals 296 damage and impairs for 4 seconds.",
     "type": "Elite Active",
     "weapon": "Chaos",
     "icon": "Domino Effect.png"
@@ -5660,7 +5660,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Escalation",
-    "scaling": 0.32181,
+    "scaling": 0.3218130754,
     "scaling_1": 0.32181,
     "scaling_5": 0.32181,
     "note": "",
@@ -5772,7 +5772,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Four Horsemen",
-    "scaling": 0,
+    "scaling": 0.2779586715,
     "scaling_1": 0.2779586715,
     "scaling_5": 0.4487047126,
     "note": "",
@@ -5800,7 +5800,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Pulling the Strings",
-    "scaling": 0,
+    "scaling": 1.149557649,
     "scaling_1": 1.149557649,
     "scaling_5": 2.321947617,
     "note": "",
@@ -5884,7 +5884,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Helter Skelter",
-    "scaling": 0.88526,
+    "scaling": 0.8852568437,
     "scaling_1": 0.88526,
     "scaling_5": 0.88526,
     "note": "",
@@ -5968,9 +5968,9 @@ const tswData = [
   {
     "tree": "",
     "name": "Maelstrom",
-    "scaling": 0,
-    "scaling_1": 0.59812,
-    "scaling_5": 1.18432,
+    "scaling": 0.598117231,
+    "scaling_1": 0.598117231,
+    "scaling_5": 1.184315459,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
@@ -5996,9 +5996,9 @@ const tswData = [
   {
     "tree": "",
     "name": "Cry Havoc",
-    "scaling": 0,
-    "scaling_1": 0.55152,
-    "scaling_5": 1.13772,
+    "scaling": 0.5515247655,
+    "scaling_1": 0.5515247655,
+    "scaling_5": 1.137722994,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
@@ -6024,7 +6024,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Eye of Pandemonium",
-    "scaling": 0.7655974255,
+    "scaling": 3.679974269,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -6094,13 +6094,13 @@ const tswData = [
   {
     "tree": "",
     "name": "Suffering and Solace",
-    "scaling": 0,
+    "scaling": 1.196214997,
     "scaling_1": 1.196214997,
     "scaling_5": 2.368604965,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Chaos Resources. A single target attack that deals 91 - 179 magical damage, based on the number of resources consumes. If the target is Impaired, you also gain a beneficial effect causing the next 3 hits against you to reflect 3% per resource of the damage dealt back to the attacker.",
+    "description": "Consumes all Chaos Resources. A single target attack that deals 91 - 179 magical damage, based on the number of resources consumed. If the target is Impaired, you also gain a beneficial effect causing the next 3 hits against you to reflect 3% per resource of the damage dealt back to the attacker.",
     "type": "Active",
     "weapon": "Chaos",
     "icon": "Suffering And Solace.png"
@@ -6262,7 +6262,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Karma",
-    "scaling": 0,
+    "scaling": 0.5456914104,
     "scaling_1": 0.5456914104,
     "scaling_5": 1.080598406,
     "note": "",
@@ -6290,9 +6290,9 @@ const tswData = [
   {
     "tree": "",
     "name": "Reality Fracture",
-    "scaling": 0,
-    "scaling_1": 0.14303,
-    "scaling_5": 0.28389,
+    "scaling": 0.1430280335,
+    "scaling_1": 0.1430280335,
+    "scaling_5": 0.2838889756,
     "note": "",
     "cast_time": 1,
     "cooldown": 10,
@@ -6640,7 +6640,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Anaesthesia",
-    "scaling": 1.20707,
+    "scaling": 1.207069919,
     "scaling_1": 1.20707,
     "scaling_5": 1.20707,
     "note": "",
@@ -6780,7 +6780,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Guts and Gory",
-    "scaling": 0.95119,
+    "scaling": 0.9511854229,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -6906,7 +6906,7 @@ const tswData = [
   {
     "tree": "",
     "name": "My Bloody Valentine",
-    "scaling": 2.98950,
+    "scaling": 2.989502609,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -6962,7 +6962,7 @@ const tswData = [
   {
     "tree": "",
     "name": "Liquidation",
-    "scaling": 0.17987,
+    "scaling": 0.1798685876,
     "scaling_1": 0.17987,
     "scaling_5": 0.17987,
     "note": "",
@@ -7410,7 +7410,7 @@ const tswData = [
   {
     "tree": "Whip",
     "name": "Crack",
-    "scaling": 0,
+    "scaling": 2.083615055,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -7536,7 +7536,7 @@ const tswData = [
   {
     "tree": "Chainsaw",
     "name": "Hurlyburly",
-    "scaling": 0,
+    "scaling": 0.6085192698,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -7578,7 +7578,7 @@ const tswData = [
   {
     "tree": "Chainsaw",
     "name": "The Carvers Art",
-    "scaling": 0,
+    "scaling": 0.1608189457,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -7634,7 +7634,7 @@ const tswData = [
   {
     "tree": "Flamethrower",
     "name": "Dragons Breath",
-    "scaling": 0,
+    "scaling": 0.5454135677,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
@@ -7830,7 +7830,7 @@ const tswData = [
   {
     "tree": "Rocket Launcher",
     "name": "Death From Above",
-    "scaling": 0,
+    "scaling": 1.378183457,
     "scaling_1": 0,
     "scaling_5": 0,
     "note": "",
