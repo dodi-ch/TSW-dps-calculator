@@ -2507,6 +2507,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const secWeapon = secondaryWeaponSelect.value;
 
+        const auxWeapon = auxWeaponSelect.value;
         
 
         const hasElementalWeapon = (primWeapon === 'Elementalism' || secWeapon === 'Elementalism');
@@ -3593,7 +3594,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isSec = action.weapon === secWeapon;
 
-                const isValidWeapon = isPrim || isSec || primWeapon === "All";
+                const isAux = action.weapon === auxWeapon;
+
+                const isValidWeapon = isPrim || isSec || isAux || primWeapon === "All";
 
 
 
@@ -3661,7 +3664,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Check basic availability for other abilities
                         const otherIsPrim = otherAction.weapon === primWeapon;
                         const otherIsSec = otherAction.weapon === secWeapon;
-                        const otherIsValidWeapon = otherIsPrim || otherIsSec || primWeapon === "All";
+                        const otherIsAux = otherAction.weapon === auxWeapon;
+                        const otherIsValidWeapon = otherIsPrim || otherIsSec || otherIsAux || primWeapon === "All";
                         
                         if (!otherIsValidWeapon) continue;
                         
@@ -3690,6 +3694,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (otherIsSec && secResources < otherFinalMinRes) {
                                 otherCanCast = false;
                             }
+                            // Auxiliary weapons don't use resources, so they're always available
                         }
                         
                         // For builders, check if we have room for more resources
@@ -3899,6 +3904,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             secResources -= consumeAmount;
 
                         }
+
+                        // Auxiliary weapons don't consume resources
 
                     } else if (action.tree !== "Aux") {
 
