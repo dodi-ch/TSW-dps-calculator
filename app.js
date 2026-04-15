@@ -2,104 +2,128 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Augment Data Structure
     const AUGMENTS = {
-        // Damage Augments
-        piercing_light: {
-            name: "Piercing Light",
+        // Damage Augment Resonators
+        accurate_augment: {
+            name: "Accurate Augment Resonator",
             type: "damage",
-            effect: { penChance: 0.05 },
-            description: "+5% Penetration Chance"
+            effect: { attackRating: 150 },
+            description: "+150 Attack Rating (affects all abilities)"
         },
-        fierce_strike: {
-            name: "Fierce Strike", 
+        brutal_augment: {
+            name: "Brutal Augment Resonator",
             type: "damage",
-            effect: { critPower: 0.10 },
-            description: "+10% Crit Power"
+            effect: { critChance: 7.5 },
+            description: "+7.5% Critical Hit Chance"
         },
-        accurate_attack: {
-            name: "Accurate Attack",
-            type: "damage", 
-            effect: { hitChance: 0.05 },
-            description: "+5% Hit Chance"
-        },
-        ruthless_execution: {
-            name: "Ruthless Execution",
+        piercing_augment: {
+            name: "Piercing Augment Resonator",
             type: "damage",
-            effect: { damageOnAfflicted: 0.10 },
-            description: "+10% Damage on Afflicted targets"
+            effect: { penChance: 7.5 },
+            description: "+7.5% Penetration Chance"
         },
-        elemental_force: {
-            name: "Elemental Force",
+        precise_augment: {
+            name: "Precise Augment Resonator",
             type: "damage",
-            effect: { damageOnAfflicted: 0.15 },
-            description: "+15% Damage on Afflicted targets"
+            effect: { hitRating: 250 },
+            description: "+250 Hit Rating"
         },
-        subsonic_rounds: {
-            name: "Subsonic Rounds",
+        ferocious_augment: {
+            name: "Ferocious Augment Resonator",
             type: "damage",
-            effect: { damageOnHindered: 0.20 },
-            description: "+20% Damage on Hindered targets"
+            effect: { critPower: 15 },
+            description: "+15% Critical Power"
         },
-        expose_weakness: {
-            name: "Expose Weakness",
+        inescapable_augment: {
+            name: "Inescapable Augment Resonator",
             type: "damage",
-            effect: { damageOnWeakened: 0.10 },
-            description: "+10% Damage on Weakened targets"
+            effect: { evadeReduction: 7.5 },
+            description: "-7.5% Target Evade Chance"
+        },
+        fierce_augment: {
+            name: "Fierce Augment Resonator",
+            type: "damage",
+            effect: { penChance: 5, critChance: 5 },
+            description: "+5% Penetration Chance & +5% Critical Hit Chance"
+        },
+        focused_augment: {
+            name: "Focused Augment Resonator",
+            type: "damage",
+            effect: { critChance: 5, critPower: 10 },
+            description: "+5% Critical Hit Chance & +10% Critical Power"
+        },
+        overwhelming_augment: {
+            name: "Overwhelming Augment Resonator",
+            type: "damage",
+            effect: { penChance: 5, evadeReduction: 5 },
+            description: "+5% Penetration Chance & -5% Target Evade Chance"
+        },
+        grievous_augment: {
+            name: "Grievous Augment Resonator",
+            type: "damage",
+            effect: { damageMultiplier: 1.15 },
+            description: "+15% Damage Dealt"
         },
         
-        // Support Augments (including healing ones for Signet of Equilibrium)
-        acceleration: {
-            name: "Acceleration",
+        // Support Augment Resonators
+        curing_augment: {
+            name: "Curing Augment Resonator",
             type: "support",
-            effect: { cooldownReduction: 0.15 },
-            description: "-15% Cooldown Time"
+            effect: { teamHeal: 75, cooldown: 10 },
+            description: "Heal team for 75 (10s cooldown)"
         },
-        multicast: {
-            name: "Multicast",
+        inspiring_augment: {
+            name: "Inspiring Augment Resonator",
             type: "support",
-            effect: { additionalTargets: 1 },
-            description: "+1 Target"
+            effect: { teamDamageBuff: 5, duration: 5, cooldown: 30 },
+            description: "Team +5% Damage for 5s (30s cooldown)"
         },
-        chain_reaction: {
-            name: "Chain Reaction", 
+        safeguarding_augment: {
+            name: "Safeguarding Augment Resonator",
             type: "support",
-            effect: { additionalTargets: 1 },
-            description: "+1 Target"
+            effect: { teamDamageReduction: 5, duration: 5, cooldown: 30 },
+            description: "Team -5% Damage Taken for 5s (30s cooldown)"
         },
-        calculated_defense: {
-            name: "Calculated Defense",
+        restorative_augment: {
+            name: "Restorative Augment Resonator",
             type: "support",
-            effect: { blockRating: 0.05 },
-            description: "+5% Block Rating"
+            effect: { teamHealingBuff: 10, duration: 5, cooldown: 30 },
+            description: "Team +10% Healing for 5s (30s cooldown)"
         },
-        tactical_retreat: {
-            name: "Tactical Retreat",
+        accelerating_augment: {
+            name: "Accelerating Augment Resonator",
             type: "support",
-            effect: { hateGeneration: 0.15 },
-            description: "+15% Hate Generation"
+            effect: { cooldownReduction: 5, cooldown: 5 },
+            description: "-5% Recharge Timers (5s cooldown)"
         },
-        evasive_maneuvers: {
-            name: "Evasive Maneuvers",
+        rampant_augment: {
+            name: "Rampant Augment Resonator",
             type: "support",
-            effect: { evadeChance: 0.50 },
-            description: "+50% Evade Chance"
+            effect: { additionalTargets: 5 },
+            description: "+5 Targets (no effect on single-target abilities)"
         },
-        throat: {
-            name: "Throat",
+        quickening_augment: {
+            name: "Quickening Augment Resonator",
             type: "support",
-            effect: { evadeChance: 0.50 },
-            description: "+50% Evade Chance"
+            effect: { teamHeal: 100, teamDamageBuff: 3, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & +3% Damage for 5s (30s cooldown)"
         },
-        transfuse: {
-            name: "Transfuse",
+        invulnerable_augment: {
+            name: "Invulnerable Augment Resonator",
             type: "support",
-            effect: { evadeChance: 0.50 },
-            description: "+50% Evade Chance"
+            effect: { teamHeal: 100, teamDamageReduction: 3, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & -3% Damage Taken for 5s (30s cooldown)"
         },
-        inspire: {
-            name: "Inspire",
+        salubrious_augment: {
+            name: "Salubrious Augment Resonator",
             type: "support",
-            effect: { evadeChance: 0.50 },
-            description: "+50% Evade Chance"
+            effect: { teamHeal: 100, teamHealingBuff: 7, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & +7% Healing for 5s (30s cooldown)"
+        },
+        mercurial_augment: {
+            name: "Mercurial Augment Resonator",
+            type: "support",
+            effect: { teamCooldownReduction: 10, cooldown: 10 },
+            description: "Team -10% Recharge Timers (10s cooldown)"
         }
     };
 
@@ -583,6 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 updateSlotIcon(select, wrapper);
 
+                createAugmentUI();
+
                 calculate();
 
             });
@@ -701,6 +727,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateSlotIcon(eliteActiveSelect, eliteActiveWrapper);
 
+            createAugmentUI();
+
             calculate();
 
         });
@@ -788,6 +816,8 @@ document.addEventListener('DOMContentLoaded', () => {
         auxSelect.addEventListener('change', () => {
 
             updateSlotIcon(auxSelect, auxWrapper);
+
+            createAugmentUI();
 
             calculate();
 
@@ -1420,7 +1450,238 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+    // Helper function to check if an ability deals damage
+    function isDamageAbility(ability) {
+        if (!ability) return false;
+        
+        // Check if ability has damage-related properties
+        const desc = (ability.description || '').toLowerCase();
+        const subtype = (ability.subtype || '').toLowerCase();
+        
+        // Keywords that indicate damage abilities
+        const damageKeywords = [
+            'damage', 'deals', 'attack', 'strike', 'shot', 'blast', 'hit', 
+            'piercing', 'critical', 'penetration', 'leech', 'affliction',
+            'hindrance', 'weaken', 'impair', 'dps'
+        ];
+        
+        // Check description for damage keywords
+        const hasDamageInDesc = damageKeywords.some(keyword => desc.includes(keyword));
+        
+        // Check subtype for damage indicators
+        const hasDamageSubtype = subtype.includes('damage') || subtype.includes('attack') || 
+                                subtype.includes('strike') || subtype.includes('shot');
+        
+        // Check if ability has damage scaling
+        const hasDamageScaling = ability.scaling && ability.scaling > 0;
+        
+        return hasDamageInDesc || hasDamageSubtype || hasDamageScaling;
+    }
 
+    // Helper function to get currently selected augments
+    function getSelectedAugments() {
+        const selectedAugments = new Set();
+        augmentSelects.forEach(augmentSelect => {
+            if (augmentSelect && augmentSelect.value) {
+                selectedAugments.add(augmentSelect.value);
+            }
+        });
+        return selectedAugments;
+    }
+
+    // Create augment selection UI for each ability
+    function createAugmentUI() {
+        // Clear existing augment selections
+        augmentsContainer.innerHTML = '';
+        augmentSelects.length = 0;
+
+        // Get all selected abilities
+        const allAbilitySelects = [...activeSelects, ...eliteActiveSelects, ...auxActiveSelects];
+        
+        allAbilitySelects.forEach((abilitySelect, index) => {
+            const abilityIndex = tswData[abilitySelect.value];
+            if (!abilityIndex) return; // Skip empty slots
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slot-wrapper augment-wrapper';
+            
+            // Create ability name label
+            const label = document.createElement('div');
+            label.className = 'augment-ability-name';
+            label.textContent = abilityIndex.name;
+            wrapper.appendChild(label);
+
+            // Create augment dropdown
+            const augmentSelect = document.createElement('select');
+            augmentSelect.className = 'augment-select';
+            
+            // Add empty option
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'No Augment';
+            augmentSelect.appendChild(emptyOption);
+
+            // Get currently selected augments (excluding current one)
+            const selectedAugments = getSelectedAugments();
+            
+            // Check if current ability can use damage augments
+            const canUseDamageAugments = isDamageAbility(abilityIndex);
+
+            // Add augment options grouped by type
+            const damageAugments = Object.entries(AUGMENTS).filter(([key, aug]) => aug.type === 'damage');
+            const supportAugments = Object.entries(AUGMENTS).filter(([key, aug]) => aug.type === 'support');
+
+            // Add damage augments (only if ability can use them)
+            if (damageAugments.length > 0 && canUseDamageAugments) {
+                const damageGroup = document.createElement('optgroup');
+                damageGroup.label = 'Damage Augments';
+                damageAugments.forEach(([key, augment]) => {
+                    // Skip if already selected
+                    if (selectedAugments.has(key)) return;
+                    
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${augment.name} - ${augment.description}`;
+                    damageGroup.appendChild(option);
+                });
+                if (damageGroup.children.length > 0) {
+                    augmentSelect.appendChild(damageGroup);
+                }
+            }
+
+            // Add support augments
+            if (supportAugments.length > 0) {
+                const supportGroup = document.createElement('optgroup');
+                supportGroup.label = 'Support Augments';
+                supportAugments.forEach(([key, augment]) => {
+                    // Skip if already selected
+                    if (selectedAugments.has(key)) return;
+                    
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${augment.name} - ${augment.description}`;
+                    supportGroup.appendChild(option);
+                });
+                if (supportGroup.children.length > 0) {
+                    augmentSelect.appendChild(supportGroup);
+                }
+            }
+
+            // Store the select element
+            augmentSelects[index] = augmentSelect;
+
+            // Add change event listener that enforces uniqueness
+            augmentSelect.addEventListener('change', () => {
+                // Check if this augment is already selected elsewhere
+                const selectedValue = augmentSelect.value;
+                if (selectedValue) {
+                    const isDuplicate = augmentSelects.some((otherSelect, otherIndex) => 
+                        otherIndex !== index && otherSelect && otherSelect.value === selectedValue
+                    );
+                    
+                    if (isDuplicate) {
+                        // Reset to empty and show warning
+                        augmentSelect.value = '';
+                        alert('This augment is already selected for another ability. Each augment can only be used once.');
+                        return;
+                    }
+                }
+                
+                // Update available options without recreating entire UI
+                updateAugmentOptions();
+                calculate();
+            });
+
+            wrapper.appendChild(augmentSelect);
+            augmentsContainer.appendChild(wrapper);
+        });
+
+        // If no abilities selected, show message
+        if (allAbilitySelects.every(select => !select.value)) {
+            augmentsContainer.innerHTML = '<div style="color: var(--text-secondary); font-size: 0.9rem;">Select abilities above to configure augments</div>';
+        }
+    }
+
+    // Update augment options without recreating entire UI
+    function updateAugmentOptions() {
+        augmentSelects.forEach((augmentSelect, index) => {
+            if (!augmentSelect) return;
+            
+            const abilitySelect = [...activeSelects, ...eliteActiveSelects, ...auxActiveSelects][index];
+            if (!abilitySelect || !abilitySelect.value) return;
+            
+            const abilityIndex = tswData[abilitySelect.value];
+            if (!abilityIndex) return;
+            
+            // Store current selection
+            const currentValue = augmentSelect.value;
+            
+            // Get currently selected augments (excluding current one)
+            const selectedAugments = new Set();
+            augmentSelects.forEach((otherSelect, otherIndex) => {
+                if (otherIndex !== index && otherSelect && otherSelect.value) {
+                    selectedAugments.add(otherSelect.value);
+                }
+            });
+            
+            // Check if current ability can use damage augments
+            const canUseDamageAugments = isDamageAbility(abilityIndex);
+            
+            // Clear current options
+            augmentSelect.innerHTML = '';
+            
+            // Add empty option
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'No Augment';
+            augmentSelect.appendChild(emptyOption);
+            
+            // Add augment options grouped by type
+            const damageAugments = Object.entries(AUGMENTS).filter(([key, aug]) => aug.type === 'damage');
+            const supportAugments = Object.entries(AUGMENTS).filter(([key, aug]) => aug.type === 'support');
+
+            // Add damage augments (only if ability can use them)
+            if (damageAugments.length > 0 && canUseDamageAugments) {
+                const damageGroup = document.createElement('optgroup');
+                damageGroup.label = 'Damage Augments';
+                damageAugments.forEach(([key, augment]) => {
+                    // Skip if already selected
+                    if (selectedAugments.has(key)) return;
+                    
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${augment.name} - ${augment.description}`;
+                    damageGroup.appendChild(option);
+                });
+                if (damageGroup.children.length > 0) {
+                    augmentSelect.appendChild(damageGroup);
+                }
+            }
+
+            // Add support augments
+            if (supportAugments.length > 0) {
+                const supportGroup = document.createElement('optgroup');
+                supportGroup.label = 'Support Augments';
+                supportAugments.forEach(([key, augment]) => {
+                    // Skip if already selected
+                    if (selectedAugments.has(key)) return;
+                    
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${augment.name} - ${augment.description}`;
+                    supportGroup.appendChild(option);
+                });
+                if (supportGroup.children.length > 0) {
+                    augmentSelect.appendChild(supportGroup);
+                }
+            }
+            
+            // Restore current selection if it's still valid
+            if (currentValue && !selectedAugments.has(currentValue)) {
+                augmentSelect.value = currentValue;
+            }
+        });
+    }
 
     // Mathematical Helpers
 
@@ -2022,7 +2283,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculate() {
 
-        const cp = parseFloat(cpInput?.value || 0) || 0;
+        // Get base attack rating from input
+        const baseAttackRating = parseFloat(attackRatingInput?.value || 0) || 0;
+        
+        // Add augment attack rating bonus (applies to all abilities)
+        let totalAugmentAttackRating = 0;
+        augmentSelects.forEach(augmentSelect => {
+            if (augmentSelect && augmentSelect.value) {
+                const augment = AUGMENTS[augmentSelect.value];
+                if (augment && augment.effect.attackRating) {
+                    totalAugmentAttackRating += augment.effect.attackRating;
+                }
+            }
+        });
+        
+        const effectiveAttackRating = baseAttackRating + totalAugmentAttackRating;
+        
+        // Calculate CP with effective attack rating
+        let cp;
+        const weaponPower = parseFloat(weaponPowerInput?.value || 528) || 528;
+        
+        if (effectiveAttackRating < 5200) {
+            cp = Math.round((375 - (600 / (Math.pow(Math.E, (effectiveAttackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+        } else {
+            const c = (0.00008 * weaponPower) + 0.0301;
+            cp = Math.round(204.38 + (0.5471 * weaponPower) + (c * effectiveAttackRating));
+        }
+
+        // Update CP input field to show effective CP
+        if (cpInput) {
+            cpInput.value = cp;
+        }
 
         const hitRatingGlobal = parseFloat(hitRatingInput?.value || 0) || 0;
 
@@ -2139,20 +2430,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     return stats;
 
                 })
-
                 .filter(Boolean);
-
         }
-
-
 
         const actives = collectActivesWithOrder(activeSelects, 0, cp);
 
         const eliteActives = collectActivesWithOrder(eliteActiveSelects, 0, cp);
 
         const auxActives = collectActivesWithOrder(auxActiveSelects, 0, cp);
-
-        
 
         const elitePass = elitePassiveSelects.map(sel => tswData[sel.value]).filter(Boolean).map(a => {
 
@@ -2178,16 +2463,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         });
 
-
-
         let allActives = [...actives, ...eliteActives, ...auxActives];
 
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
 
-
         const allPassives = [...elitePass, ...normPass, ...auxPass];
-
-
 
         if (allActives.length === 0) {
 
@@ -2199,8 +2479,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-
-
         if (eliteActives.length > 1) {
 
             resTotalDps.textContent = "Error: Too many Elite Actives";
@@ -2210,8 +2488,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
 
         }
-
-
 
         const elitePassives = allPassives.filter(a => a.type.includes("Elite"));
 
@@ -2225,8 +2501,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-
-
         // --- SIMULATION ENGINE ---
 
         let time = 0;
@@ -2236,8 +2510,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let secResources = 0;
 
         let totalDamage = 0;
-
-
 
         const statsBreakdown = {};
 
@@ -2719,19 +2991,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let passivePenetrationBonus = 0;
 
-            
+            // Initialize augment bonuses (will be populated later)
+            let augmentMult = 1.0;
+            let augmentPenChanceBonus = 0;
+            let augmentCritChanceBonus = 0;
+            let augmentCritPowerBonus = 0;
+            let augmentHitRatingBonus = 0;
+            let augmentEvadeReductionBonus = 0;
 
             // ========================================
 
             // HIT CALCULATION
 
-            const currentHitRating = hitRating + augmentHitChanceBonus;
+            const currentHitRating = hitRating + augmentHitRatingBonus;
 
-            const isEvaded = enemy.evadeRating > currentHitRating;
+            const effectiveEvadeRating = Math.max(0, enemy.evadeRating - augmentEvadeReductionBonus);
+            const isEvaded = effectiveEvadeRating > currentHitRating;
 
             const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
 
-            let effectiveCritChance = critChance + augmentCritPowerBonus;
+            let effectiveCritChance = critChance + augmentCritChanceBonus;
             
             // Apply Deadly Aim buff if active
             if (playerBuffs.deadlyAim.active) {
@@ -3121,37 +3400,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Apply augment effects
-            let augmentMult = 1.0;
-            let augmentPenChanceBonus = 0;
-            let augmentCritPowerBonus = 0;
-            let augmentHitChanceBonus = 0;
-            
+            // Apply augment effects (variables already declared above)
             if (abilityIndex >= 0) {
                 const augment = getAugmentEffectsForAbility(abilityIndex);
                 if (augment) {
                     const effect = augment.effect;
                     
-                    // Apply damage bonuses based on debuffs
-                    if (effect.damageOnAfflicted && debuffState.afflicted) {
-                        augmentMult *= (1 + effect.damageOnAfflicted);
-                    }
-                    if (effect.damageOnHindered && debuffState.hindered) {
-                        augmentMult *= (1 + effect.damageOnHindered);
-                    }
-                    if (effect.damageOnWeakened && debuffState.weakened) {
-                        augmentMult *= (1 + effect.damageOnWeakened);
+                    // Apply damage multiplier
+                    if (effect.damageMultiplier) {
+                        augmentMult *= effect.damageMultiplier;
                     }
                     
-                    // Apply stat bonuses
+                    // Apply stat bonuses (already in percentage form for new augments)
                     if (effect.penChance) {
-                        augmentPenChanceBonus += effect.penChance * 100; // Convert to percentage
+                        augmentPenChanceBonus += effect.penChance;
+                    }
+                    if (effect.critChance) {
+                        augmentCritChanceBonus += effect.critChance;
                     }
                     if (effect.critPower) {
-                        augmentCritPowerBonus += effect.critPower * 100; // Convert to percentage
+                        augmentCritPowerBonus += effect.critPower;
                     }
-                    if (effect.hitChance) {
-                        augmentHitChanceBonus += effect.hitChance * 100; // Convert to percentage
+                    if (effect.attackRating) {
+                        augmentAttackRatingBonus += effect.attackRating;
+                    }
+                    if (effect.hitRating) {
+                        augmentHitRatingBonus += effect.hitRating;
+                    }
+                    if (effect.evadeReduction) {
+                        augmentEvadeReductionBonus += effect.evadeReduction;
                     }
                 }
             }
@@ -4099,6 +4376,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Apply cooldown reduction augments
                     let actualCooldown = action.cooldown;
+                    
+                    // Find ability index to get the correct augment for cooldown reduction
+                    let abilityIndex = -1;
+                    const allAbilitySelects = [...activeSelects, ...eliteActiveSelects, ...auxActiveSelects];
+                    for (let j = 0; j < allAbilitySelects.length; j++) {
+                        if (allAbilitySelects[j].value && tswData[allAbilitySelects[j].value]) {
+                            const selectedAbility = tswData[allAbilitySelects[j].value];
+                            // Match by name and weapon to ensure correct ability
+                            if (selectedAbility.name === action.name && selectedAbility.weapon === action.weapon) {
+                                abilityIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    
                     if (abilityIndex >= 0) {
                         const augment = getAugmentEffectsForAbility(abilityIndex);
                         if (augment && augment.effect.cooldownReduction) {
@@ -4107,6 +4399,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     activeCooldowns[i] = actualCooldown;
+                    
+                    // Apply team cooldown reduction from Mercurial and Accelerating augments
+                    if (abilityIndex >= 0) {
+                        const augment = getAugmentEffectsForAbility(abilityIndex);
+                        if (augment && augment.effect) {
+                            let teamCooldownReduction = 0;
+                            
+                            // Check for Mercurial Augment (teamCooldownReduction)
+                            if (augment.effect.teamCooldownReduction) {
+                                teamCooldownReduction = augment.effect.teamCooldownReduction;
+                            }
+                            // Check for Accelerating Augment (cooldownReduction but applies to team)
+                            else if (augment.effect.cooldownReduction) {
+                                teamCooldownReduction = augment.effect.cooldownReduction;
+                            }
+                            
+                            if (teamCooldownReduction > 0) {
+                                // Apply cooldown reduction to all active abilities
+                                for (let j = 0; j < allActives.length; j++) {
+                                    if (activeCooldowns[j] > 0) {
+                                        activeCooldowns[j] = activeCooldowns[j] * (1 - teamCooldownReduction / 100);
+                                    }
+                                }
+                                
+                                // Apply cooldown reduction to all passive abilities
+                                for (let j = 0; j < allPassives.length; j++) {
+                                    if (passiveCooldowns[j] > 0) {
+                                        passiveCooldowns[j] = passiveCooldowns[j] * (1 - teamCooldownReduction / 100);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     
 
@@ -4298,6 +4623,50 @@ document.addEventListener('DOMContentLoaded', () => {
                         playerBuffs.shotgunWedding.endTime = time + 10; // Effect duration after channel
                         playerBuffs.shotgunWedding.stacks = 0; // Reset stacks, will be incremented per hit
                     }
+                    
+                    // Calculate augment bonuses for passive buff effects
+                    let augmentHitRatingBonusForPassives = 0;
+                    let augmentEvadeReductionBonusForPassives = 0;
+                    let augmentPenChanceBonusForPassives = 0;
+                    
+                    // Find ability index to get the correct augment for passive effects
+                    let abilityIndexForPassives = -1;
+                    const allAbilitySelectsForPassives = [...activeSelects, ...eliteActiveSelects, ...auxActiveSelects];
+                    for (let j = 0; j < allAbilitySelectsForPassives.length; j++) {
+                        if (allAbilitySelectsForPassives[j].value && tswData[allAbilitySelectsForPassives[j].value]) {
+                            const selectedAbility = tswData[allAbilitySelectsForPassives[j].value];
+                            // Match by name and weapon to ensure correct ability
+                            if (selectedAbility.name === action.name && selectedAbility.weapon === action.weapon) {
+                                abilityIndexForPassives = j;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (abilityIndexForPassives >= 0) {
+                        const augment = getAugmentEffectsForAbility(abilityIndexForPassives);
+                        if (augment && augment.effect) {
+                            if (augment.effect.hitRating) {
+                                augmentHitRatingBonusForPassives += augment.effect.hitRating;
+                            }
+                            if (augment.effect.evadeReduction) {
+                                augmentEvadeReductionBonusForPassives += augment.effect.evadeReduction;
+                            }
+                            if (augment.effect.penChance) {
+                                augmentPenChanceBonusForPassives += augment.effect.penChance;
+                            }
+                        }
+                    }
+                    
+                    // Calculate hit results for passive buff effects
+                    const currentHitRatingForPassives = action.hitRating + augmentHitRatingBonusForPassives;
+                    const effectiveEvadeRatingForPassives = Math.max(0, enemy.evadeRating - augmentEvadeReductionBonusForPassives);
+                    const isEvadedForPassives = effectiveEvadeRatingForPassives > currentHitRatingForPassives;
+                    const isGlanced = !isEvadedForPassives && enemy.defenseRating > currentHitRatingForPassives;
+                    
+                    // Calculate penetration status for passive effects
+                    const effectivePenChanceForPassives = action.penChance + augmentPenChanceBonusForPassives;
+                    const isPenetrated = Math.random() * 100 < effectivePenChanceForPassives;
                     
                     // Apply passive buff effects
                     // Lethality - +1.25% damage per stack on hit, removed on glance
