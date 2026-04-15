@@ -1,5 +1,108 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Augment Data Structure
+    const AUGMENTS = {
+        // Damage Augments
+        piercing_light: {
+            name: "Piercing Light",
+            type: "damage",
+            effect: { penChance: 0.05 },
+            description: "+5% Penetration Chance"
+        },
+        fierce_strike: {
+            name: "Fierce Strike", 
+            type: "damage",
+            effect: { critPower: 0.10 },
+            description: "+10% Crit Power"
+        },
+        accurate_attack: {
+            name: "Accurate Attack",
+            type: "damage", 
+            effect: { hitChance: 0.05 },
+            description: "+5% Hit Chance"
+        },
+        ruthless_execution: {
+            name: "Ruthless Execution",
+            type: "damage",
+            effect: { damageOnAfflicted: 0.10 },
+            description: "+10% Damage on Afflicted targets"
+        },
+        elemental_force: {
+            name: "Elemental Force",
+            type: "damage",
+            effect: { damageOnAfflicted: 0.15 },
+            description: "+15% Damage on Afflicted targets"
+        },
+        subsonic_rounds: {
+            name: "Subsonic Rounds",
+            type: "damage",
+            effect: { damageOnHindered: 0.20 },
+            description: "+20% Damage on Hindered targets"
+        },
+        expose_weakness: {
+            name: "Expose Weakness",
+            type: "damage",
+            effect: { damageOnWeakened: 0.10 },
+            description: "+10% Damage on Weakened targets"
+        },
+        
+        // Support Augments (including healing ones for Signet of Equilibrium)
+        acceleration: {
+            name: "Acceleration",
+            type: "support",
+            effect: { cooldownReduction: 0.15 },
+            description: "-15% Cooldown Time"
+        },
+        multicast: {
+            name: "Multicast",
+            type: "support",
+            effect: { additionalTargets: 1 },
+            description: "+1 Target"
+        },
+        chain_reaction: {
+            name: "Chain Reaction", 
+            type: "support",
+            effect: { additionalTargets: 1 },
+            description: "+1 Target"
+        },
+        calculated_defense: {
+            name: "Calculated Defense",
+            type: "support",
+            effect: { blockRating: 0.05 },
+            description: "+5% Block Rating"
+        },
+        tactical_retreat: {
+            name: "Tactical Retreat",
+            type: "support",
+            effect: { hateGeneration: 0.15 },
+            description: "+15% Hate Generation"
+        },
+        evasive_maneuvers: {
+            name: "Evasive Maneuvers",
+            type: "support",
+            effect: { evadeChance: 0.50 },
+            description: "+50% Evade Chance"
+        },
+        throat: {
+            name: "Throat",
+            type: "support",
+            effect: { evadeChance: 0.50 },
+            description: "+50% Evade Chance"
+        },
+        transfuse: {
+            name: "Transfuse",
+            type: "support",
+            effect: { evadeChance: 0.50 },
+            description: "+50% Evade Chance"
+        },
+        inspire: {
+            name: "Inspire",
+            type: "support",
+            effect: { evadeChance: 0.50 },
+            description: "+50% Evade Chance"
+        }
+    };
+
     // Elements
 
     const cpInput = document.getElementById('combat-power');
@@ -62,6 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const auxPassiveContainer = document.getElementById('aux-passive-container');
 
+    const augmentsContainer = document.getElementById('augments-container');
+
 
 
     // Dropdown arrays to keep track of them
@@ -77,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalPassiveSelects = [];
 
     const auxPassiveSelects = [];
+
+    const augmentSelects = [];  // Augment selections for abilities
 
 
 
@@ -1308,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+        createAugmentUI();
         calculate();
 
     }
@@ -1315,6 +1423,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Mathematical Helpers
+
+    // Get augment effects for a specific ability
+    function getAugmentEffectsForAbility(abilityIndex) {
+        const augmentSelect = augmentSelects[abilityIndex];
+        if (!augmentSelect || !augmentSelect.value) {
+            return null;
+        }
+        
+        return AUGMENTS[augmentSelect.value];
+    }
 
     function getAbilityStats(ability, cp, critChance, critPower, penChance, resourcesUsed) {
 
@@ -1418,11 +1536,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const baseDamage = scalingToUse * cp;
 
-        const critMultiplier = 1 + ((critChance / 100) * (critPower / 100));
+        // Apply augment effects to base stats
+        let modifiedCritChance = critChance;
+        let modifiedCritPower = critPower;
+        let modifiedPenChance = penChance;
+        let damageMultiplier = 1.0;
 
-        const penMultiplier = 1 + ((penChance / 100) * 0.15);
+        // Note: Augment effects will be applied during simulation based on ability index
+        // Here we just calculate base damage, augment effects are applied per-cast in simulation
 
-        const avgDamage = baseDamage * critMultiplier * penMultiplier;
+        const critMultiplier = 1 + ((modifiedCritChance / 100) * (modifiedCritPower / 100));
+
+        const penMultiplier = 1 + ((modifiedPenChance / 100) * 0.15);
+
+        const avgDamage = baseDamage * critMultiplier * penMultiplier * damageMultiplier;
 
 
 
@@ -2275,6 +2402,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // DoT effect tracking system
 
         let activeDoTEffects = [];
+        
+        // Player buff tracking system
+        let playerBuffs = {
+            // Damage buffs
+            deadlyAim: { active: false, endTime: 0, critChanceBonus: 0 },
+            breachingShot: { active: false, endTime: 0, penChanceBonus: 0 },
+            lethality: { active: false, endTime: 0, stacks: 0, damageBonusPercent: 0 },
+            outForAKill: { active: false, endTime: 0, penChanceBonus: 0 },
+            noContest: { active: false, endTime: 0, damageBonusPercent: 0 },
+            
+            // Penetration buffs
+            minorPenetration: { active: false, endTime: 0, penChanceBonus: 0 },
+            penetrationRating: { active: false, endTime: 0, stacks: 0, penRatingBonus: 0 },
+            
+            // Protection buffs
+            protection: { active: false, endTime: 0, stacks: 0, protectionBonus: 0 },
+            flakJacket: { active: false, endTime: 0, damageReduction: 0 },
+            defensiveTurret: { active: false, endTime: 0, damageReduction: 0 },
+            
+            // Utility buffs
+            lockStockBarrel: { active: false, endTime: 0 },
+            shotgunWedding: { active: false, endTime: 0, stacks: 0, damageBonusPercent: 0 },
+            
+            // Cooldown effects
+            uncalibrated: { active: false, endTime: 0 }, // Deadly Aim cooldown
+            depleted: { active: false, endTime: 0 } // Breaching Shot cooldown
+        };
 
         
 
@@ -2571,21 +2725,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // HIT CALCULATION
 
-            // ========================================
-
-            
-
-            // Apply hit rating bonuses (no real talismans provide this currently)
-
-            let currentHitRating = hitRating;
-
-            
+            const currentHitRating = hitRating + augmentHitChanceBonus;
 
             const isEvaded = enemy.evadeRating > currentHitRating;
 
             const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
 
-            let effectiveCritChance = critChance;
+            let effectiveCritChance = critChance + augmentCritPowerBonus;
+            
+            // Apply Deadly Aim buff if active
+            if (playerBuffs.deadlyAim.active) {
+                effectiveCritChance += playerBuffs.deadlyAim.critChanceBonus;
+            }
             
             // Molten Steel: 30% additional chance to critically hit
             if (ability.name === "Molten Steel") {
@@ -2594,45 +2745,33 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const isCrit = ability.name === "Full Momentum" ? false : Math.random() < (effectiveCritChance / 100);
 
-            
-
-            // Apply Lycanthrope Bone Powder penetration bonus if active
-
-            let currentPenRating = penRating;
-
+            const currentPenRating = penRating;
             if (talismanEffects.lycanthropeBonePowder.enabled && time <= talismanEffects.lycanthropeBonePowder.endTime) {
-
                 currentPenRating += talismanEffects.lycanthropeBonePowder.penetrationBonus;
-
             }
 
+            const currentPenChance = penChance + passivePenetrationBonus + augmentPenChanceBonus;
             
+            // Apply all penetration buffs
+            if (playerBuffs.breachingShot.active) {
+                currentPenChance += playerBuffs.breachingShot.penChanceBonus;
+            }
+            if (playerBuffs.outForAKill.active) {
+                currentPenChance += playerBuffs.outForAKill.penChanceBonus;
+            }
+            if (playerBuffs.minorPenetration.active) {
+                currentPenChance += playerBuffs.minorPenetration.penChanceBonus;
+            }
 
-            // Apply penetration chance bonuses (no real talismans provide this currently)
-
-            let currentPenChance = penChance + passivePenetrationBonus;
-
-            
-
-            // Only use manual penetration chance since rating-to-% scaling isn't implemented yet
             const randomPen = Math.random() < (currentPenChance / 100);
             const isPenetrated = randomPen;
 
-
-
             if (isEvaded) {
-
                 damageMult = 0;
-
             } else {
-
                 if (isGlanced) damageMult *= 0.5;
-
                 if (isPenetrated) damageMult *= 1.5;
-
             }
-
-
 
             // ========================================
 
@@ -2964,8 +3103,99 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // ========================================
+            // AUGMENT EFFECTS PROCESSING
+            // ========================================
+            
+            // Find ability index to get the correct augment
+            let abilityIndex = -1;
+            const allAbilitySelects = [...activeSelects, ...eliteActiveSelects, ...auxActiveSelects];
+            for (let j = 0; j < allAbilitySelects.length; j++) {
+                if (allAbilitySelects[j].value && tswData[allAbilitySelects[j].value]) {
+                    const selectedAbility = tswData[allAbilitySelects[j].value];
+                    // Match by name and weapon to ensure correct ability
+                    if (selectedAbility.name === ability.name && selectedAbility.weapon === ability.weapon) {
+                        abilityIndex = j;
+                        break;
+                    }
+                }
+            }
+            
+            // Apply augment effects
+            let augmentMult = 1.0;
+            let augmentPenChanceBonus = 0;
+            let augmentCritPowerBonus = 0;
+            let augmentHitChanceBonus = 0;
+            
+            if (abilityIndex >= 0) {
+                const augment = getAugmentEffectsForAbility(abilityIndex);
+                if (augment) {
+                    const effect = augment.effect;
+                    
+                    // Apply damage bonuses based on debuffs
+                    if (effect.damageOnAfflicted && debuffState.afflicted) {
+                        augmentMult *= (1 + effect.damageOnAfflicted);
+                    }
+                    if (effect.damageOnHindered && debuffState.hindered) {
+                        augmentMult *= (1 + effect.damageOnHindered);
+                    }
+                    if (effect.damageOnWeakened && debuffState.weakened) {
+                        augmentMult *= (1 + effect.damageOnWeakened);
+                    }
+                    
+                    // Apply stat bonuses
+                    if (effect.penChance) {
+                        augmentPenChanceBonus += effect.penChance * 100; // Convert to percentage
+                    }
+                    if (effect.critPower) {
+                        augmentCritPowerBonus += effect.critPower * 100; // Convert to percentage
+                    }
+                    if (effect.hitChance) {
+                        augmentHitChanceBonus += effect.hitChance * 100; // Convert to percentage
+                    }
+                }
+            }
+
+            // Apply player damage buffs
+            let playerBuffMult = 1.0;
+            
+            // Lethality damage bonus
+            if (playerBuffs.lethality.active) {
+                playerBuffMult *= (1 + playerBuffs.lethality.damageBonusPercent / 100);
+            }
+            
+            // No Contest damage bonus
+            if (playerBuffs.noContest.active) {
+                playerBuffMult *= (1 + playerBuffs.noContest.damageBonusPercent / 100);
+            }
+            
+            // Shotgun Wedding damage bonus
+            if (playerBuffs.shotgunWedding.active && ability.weapon === 'Shotgun') {
+                playerBuffMult *= (1 + (playerBuffs.shotgunWedding.stacks * 25) / 100); // 25% per stack
+            }
+
             // Calculate damage with passive bonuses included
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult;
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult * augmentMult * playerBuffMult;
+
+            // ========================================
+            // SIGNET OF EQUILIBRIUM - HEALING BUFF
+            // ========================================
+            
+            // Note: Signet of Equilibrium is a healing signet that provides a 15% damage buff
+            // to the target when critically healing. This requires actual healing abilities,
+            // not just augments with evade chance. The evade chance augments (Evasive Maneuvers,
+            // Throat, Transfuse, Inspire) do not provide healing - they are utility augments.
+            // 
+            // For proper Signet of Equilibrium implementation, we would need:
+            // 1. Actual healing abilities in the game data
+            // 2. Healing mechanics (instead of damage)
+            // 3. Target buff tracking system
+            // 4. 15-second cooldown management
+            //
+            // Since the current simulator focuses on damage calculations and doesn't have
+            // healing abilities or target buff tracking, Signet of Equilibrium functionality
+            // would require significant additional infrastructure beyond the scope of
+            // the current augment system.
 
             // Dust of the Black Pharaoh: whenever you critically hit,
 
@@ -3867,7 +4097,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     time += timeTaken;
 
-                    activeCooldowns[i] = action.cooldown;
+                    // Apply cooldown reduction augments
+                    let actualCooldown = action.cooldown;
+                    if (abilityIndex >= 0) {
+                        const augment = getAugmentEffectsForAbility(abilityIndex);
+                        if (augment && augment.effect.cooldownReduction) {
+                            actualCooldown = action.cooldown * (1 - augment.effect.cooldownReduction);
+                        }
+                    }
+                    
+                    activeCooldowns[i] = actualCooldown;
 
                     
 
@@ -3977,6 +4216,156 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let j = 0; j < passiveCounterCooldowns.length; j++) passiveCounterCooldowns[j] -= timeTaken;
 
                     
+
+                    // ========================================
+                    // PLAYER BUFF APPLICATION
+                    // ========================================
+                    
+                    // ========================================
+                    // PLAYER BUFF APPLICATION
+                    // ========================================
+                    
+                    // Deadly Aim - +40% Crit Chance for 10 seconds
+                    if (action.name === "Deadly Aim" && !playerBuffs.uncalibrated.active) {
+                        let deadlyAimDuration = 10; // Base duration
+                        let uncalibratedDuration = 90; // Base cooldown
+                        
+                        // Only reduce duration/cooldown if Calling The Shots passive is equipped
+                        const callingTheShotsPassive = allPassives.find(p => p.name === "Calling The Shots");
+                        if (callingTheShotsPassive) {
+                            deadlyAimDuration -= 30; // Reduces recharge time by 30 seconds
+                            uncalibratedDuration -= 30; // Reduces duration of Uncalibrated effect by 30 seconds
+                        }
+                        
+                        playerBuffs.deadlyAim.active = true;
+                        playerBuffs.deadlyAim.endTime = time + Math.max(0, deadlyAimDuration);
+                        playerBuffs.deadlyAim.critChanceBonus = 40;
+                        playerBuffs.uncalibrated.active = true;
+                        playerBuffs.uncalibrated.endTime = time + Math.max(0, uncalibratedDuration);
+                    }
+                    
+                    // Breaching Shot - +45% Pen Chance for 8 seconds
+                    if (action.name === "Breaching Shot" && !playerBuffs.depleted.active) {
+                        let breachingShotDuration = 8; // Base duration
+                        let depletedDuration = 90; // Base cooldown
+                        
+                        // Only reduce duration/cooldown if Breach Party passive is equipped
+                        const breachPartyPassive = allPassives.find(p => p.name === "Breach Party");
+                        if (breachPartyPassive) {
+                            breachingShotDuration -= 30; // Reduces recharge time by 30 seconds
+                            depletedDuration -= 30; // Reduces duration of Depleted effect by 30 seconds
+                        }
+                        
+                        playerBuffs.breachingShot.active = true;
+                        playerBuffs.breachingShot.endTime = time + Math.max(0, breachingShotDuration);
+                        playerBuffs.breachingShot.penChanceBonus = 45;
+                        playerBuffs.depleted.active = true;
+                        playerBuffs.depleted.endTime = time + Math.max(0, depletedDuration);
+                    }
+                    
+                    // Out For A Kill - +10% Pen Chance for 8 seconds (when enemies are killed)
+                    if (action.name === "Out For A Kill") {
+                        // This is a simplified implementation - in reality it triggers on kills
+                        playerBuffs.outForAKill.active = true;
+                        playerBuffs.outForAKill.endTime = time + 8;
+                        playerBuffs.outForAKill.penChanceBonus = 10;
+                    }
+                    
+                    // Flak Jacket - -15% damage taken for 5 seconds
+                    if (action.name === "Flak Jacket") {
+                        playerBuffs.flakJacket.active = true;
+                        playerBuffs.flakJacket.endTime = time + 5;
+                        playerBuffs.flakJacket.damageReduction = 15;
+                    }
+                    
+                    // Defensive Turret - -3% damage taken per resource consumed
+                    if (action.name === "Defensive Turret") {
+                        const resourceCount = action.resourcesUsed || 5; // Default to 5 resources
+                        playerBuffs.defensiveTurret.active = true;
+                        playerBuffs.defensiveTurret.endTime = time + 10; // Turret lasts 10 seconds
+                        playerBuffs.defensiveTurret.damageReduction = 3 * resourceCount;
+                    }
+                    
+                    // Lock, Stock & Barrel - Next Shotgun consumer builds 5 resources
+                    if (action.name === "Lock, Stock & Barrel") {
+                        playerBuffs.lockStockBarrel.active = true;
+                        playerBuffs.lockStockBarrel.endTime = time + 20;
+                    }
+                    
+                    // Shotgun Wedding - +25% damage per hit, stacks up to 4 times
+                    if (action.name === "Shotgun Wedding") {
+                        playerBuffs.shotgunWedding.active = true;
+                        playerBuffs.shotgunWedding.endTime = time + 10; // Effect duration after channel
+                        playerBuffs.shotgunWedding.stacks = 0; // Reset stacks, will be incremented per hit
+                    }
+                    
+                    // Apply passive buff effects
+                    // Lethality - +1.25% damage per stack on hit, removed on glance
+                    if (action.type === "Active" && !isGlanced) {
+                        const lethalityPassive = allPassives.find(p => p.name === "Lethality");
+                        if (lethalityPassive) {
+                            playerBuffs.lethality.active = true;
+                            playerBuffs.lethality.endTime = time + 10;
+                            playerBuffs.lethality.stacks = Math.min(10, (playerBuffs.lethality.stacks || 0) + 1);
+                            playerBuffs.lethality.damageBonusPercent = playerBuffs.lethality.stacks * 1.25;
+                        }
+                    }
+                    
+                    // Remove Lethality stacks on glance
+                    if (isGlanced) {
+                        playerBuffs.lethality.stacks = 0;
+                        playerBuffs.lethality.damageBonusPercent = 0;
+                        if (playerBuffs.lethality.stacks === 0) {
+                            playerBuffs.lethality.active = false;
+                        }
+                    }
+                    
+                    // Beanbag Rounds - Minor Penetration on Hindered application
+                    if (action.appliedDebuffs.includes('hindered')) {
+                        const beanbagPassive = allPassives.find(p => p.name === "Beanbag Rounds");
+                        if (beanbagPassive) {
+                            playerBuffs.minorPenetration.active = true;
+                            playerBuffs.minorPenetration.endTime = time + 8;
+                            playerBuffs.minorPenetration.penChanceBonus = 15;
+                        }
+                    }
+                    
+                    // Overpenetration - Minor Penetration after 3 penetrations
+                    if (isPenetrated) {
+                        const overpenetrationPassive = allPassives.find(p => p.name === "Overpenetration");
+                        if (overpenetrationPassive) {
+                            // Simplified - just grant the buff on any penetration
+                            playerBuffs.minorPenetration.active = true;
+                            playerBuffs.minorPenetration.endTime = time + 8;
+                            playerBuffs.minorPenetration.penChanceBonus = 15;
+                        }
+                    }
+                    
+                    // No Contest - +10% damage after applying Hindered
+                    if (action.appliedDebuffs.includes('hindered')) {
+                        const noContestPassive = allPassives.find(p => p.name === "No Contest");
+                        if (noContestPassive) {
+                            playerBuffs.noContest.active = true;
+                            playerBuffs.noContest.endTime = time + 8;
+                            playerBuffs.noContest.damageBonusPercent = 10;
+                        }
+                    }
+                    
+                    // Update all player buff durations
+                    playerBuffs.deadlyAim.active = time <= playerBuffs.deadlyAim.endTime;
+                    playerBuffs.breachingShot.active = time <= playerBuffs.breachingShot.endTime;
+                    playerBuffs.lethality.active = time <= playerBuffs.lethality.endTime;
+                    playerBuffs.outForAKill.active = time <= playerBuffs.outForAKill.endTime;
+                    playerBuffs.noContest.active = time <= playerBuffs.noContest.endTime;
+                    playerBuffs.minorPenetration.active = time <= playerBuffs.minorPenetration.endTime;
+                    playerBuffs.penetrationRating.active = time <= playerBuffs.penetrationRating.endTime;
+                    playerBuffs.protection.active = time <= playerBuffs.protection.endTime;
+                    playerBuffs.flakJacket.active = time <= playerBuffs.flakJacket.endTime;
+                    playerBuffs.defensiveTurret.active = time <= playerBuffs.defensiveTurret.endTime;
+                    playerBuffs.lockStockBarrel.active = time <= playerBuffs.lockStockBarrel.endTime;
+                    playerBuffs.shotgunWedding.active = time <= playerBuffs.shotgunWedding.endTime;
+                    playerBuffs.uncalibrated.active = time <= playerBuffs.uncalibrated.endTime;
+                    playerBuffs.depleted.active = time <= playerBuffs.depleted.endTime;
 
                     // Update debuff durations
 
