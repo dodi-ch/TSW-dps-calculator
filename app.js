@@ -3452,27 +3452,67 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Calculate damage with passive bonuses included
-            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult * augmentMult * playerBuffMult;
+            const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult * augmentMult * playerBuffMult * equilibriumMult;
 
             // ========================================
             // SIGNET OF EQUILIBRIUM - HEALING BUFF
             // ========================================
             
-            // Note: Signet of Equilibrium is a healing signet that provides a 15% damage buff
-            // to the target when critically healing. This requires actual healing abilities,
-            // not just augments with evade chance. The evade chance augments (Evasive Maneuvers,
-            // Throat, Transfuse, Inspire) do not provide healing - they are utility augments.
-            // 
-            // For proper Signet of Equilibrium implementation, we would need:
-            // 1. Actual healing abilities in the game data
-            // 2. Healing mechanics (instead of damage)
-            // 3. Target buff tracking system
-            // 4. 15-second cooldown management
-            //
-            // Since the current simulator focuses on damage calculations and doesn't have
-            // healing abilities or target buff tracking, Signet of Equilibrium functionality
-            // would require significant additional infrastructure beyond the scope of
-            // the current augment system.
+            // Initialize equilibrium tracking if not exists
+            if (!window._equilibriumTracker) {
+                window._equilibriumTracker = {
+                    lastHealTime: 0,
+                    activeBuff: false,
+                    buffEndTime: 0,
+                    healCount: 0,
+                    critHealCount: 0
+                };
+            }
+            
+            const equilibrium = window._equilibriumTracker;
+            const currentTime = simulationTime;
+            
+            // Check if Signet of Equilibrium is active (check for signet in major slot)
+            const equilibriumActive = window._signetBonuses?.equilibrium || false;
+            
+            // Process healing augments for equilibrium procs
+            if (equilibriumActive && abilityIndex >= 0) {
+                const augment = getAugmentEffectsForAbility(abilityIndex);
+                if (augment && augment.effect && augment.effect.teamHeal) {
+                    equilibrium.healCount++;
+                    
+                    // Calculate critical heal chance (use player's crit chance)
+                    const healCritChance = totalCritChance / 100;
+                    const isHealCrit = Math.random() < healCritChance;
+                    
+                    if (isHealCrit && currentTime - equilibrium.lastHealTime >= 15) {
+                        // Critical heal occurred and cooldown is ready
+                        equilibrium.critHealCount++;
+                        equilibrium.lastHealTime = currentTime;
+                        equilibrium.activeBuff = true;
+                        equilibrium.buffEndTime = currentTime + 15; // 15 second buff duration
+                        
+                        // Add equilibrium damage buff
+                        if (!window._equilibriumBuff) {
+                            window._equilibriumBuff = { active: true, damageBonus: 15 };
+                        }
+                    }
+                }
+            }
+            
+            // Check if equilibrium buff should still be active
+            if (equilibrium.activeBuff && currentTime >= equilibrium.buffEndTime) {
+                equilibrium.activeBuff = false;
+                if (window._equilibriumBuff) {
+                    window._equilibriumBuff.active = false;
+                }
+            }
+            
+            // Apply equilibrium damage bonus if active
+            let equilibriumMult = 1.0;
+            if (window._equilibriumBuff && window._equilibriumBuff.active) {
+                equilibriumMult += window._equilibriumBuff.damageBonus / 100; // 15% damage bonus
+            }
 
             // Dust of the Black Pharaoh: whenever you critically hit,
 
@@ -3983,7 +4023,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             return; // Don't process as regular passive, already handled as damage bonus
                         }
 
-                        const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult;
+                        const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult * equilibriumMult;
 
                         totalDamage += pActualDmg;
 
@@ -4350,7 +4390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     pSignetMult += sBonus.weapon[passive.weapon] / 100;
                                 }
                                 
-                                const gunsmokeDamage = (passive.scalingToUse || 0) * cp * pSignetMult;
+                                const gunsmokeDamage = (passive.scalingToUse || 0) * cp * pSignetMult * equilibriumMult;
                                 totalDamage += gunsmokeDamage;
                             }
                         });
@@ -5317,6 +5357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- Major talisman signets ---
 
             23: { slot: 'major', stat: 'attack-rating', value: [47, 94, 141] }, // Amelioration (heal - not DPS relevant)
+            70: { slot: 'major', stat: 'equilibrium', value: [1, 1, 1] }, // Signet of Equilibrium (healing crit buff)
 
 
 
@@ -5697,6 +5738,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 signetBonuses.weapon[signet.weapon] = (signetBonuses.weapon[signet.weapon] || 0) + bonus;
 
                             }
+
+                            break;
+
+                        case 'equilibrium':
+
+                            // Signet of Equilibrium: enables healing crit buff functionality
+
+                            signetBonuses.equilibrium = true;
 
                             break;
 
