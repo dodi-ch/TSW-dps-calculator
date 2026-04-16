@@ -1248,6 +1248,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ability || !ability.description) return false;
 
         
+        // Debug Molten Steel classification
+        if (ability.name === "Molten Steel") {
+            console.log(`isBuilderAbility called for Molten Steel - desc: "${ability.description}"`);
+        }
 
         const desc = ability.description.toLowerCase();
 
@@ -1695,11 +1699,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return AUGMENTS[augmentSelect.value];
     }
 
-    function getAbilityStats(ability, cp, critChance, critPower, penChance, resourcesUsed) {
+    function getAbilityStats(ability, cp, critChance, critPower, penChance, resourcesUsed, minResources) {
 
         if (!ability) return null;
 
-
+        // Handle undefined minResources
+        if (minResources === undefined) {
+            minResources = 0;
+        }
 
         const desc = ability.description || "";
 
@@ -1771,6 +1778,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let effectiveResources = resourcesUsed;
 
+        // Respect minimum resource requirement if set
+        if (minResources && minResources > 0) {
+            effectiveResources = Math.max(resourcesUsed, minResources);
+        }
+
         if (resourceConsumption > 0 && !damageScalesWithResources) {
 
             effectiveResources = resourceConsumption;
@@ -1779,18 +1791,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        // --- Scaling selection ---
+        // --- Enhanced scaling selection with RDB data ---
 
         let scalingToUse = ability.scaling || 0;
 
-        if (ability.scaling_5 > 0 && ability.scaling_1 > 0) {
+        // Only apply resource scaling to abilities that can actually scale with different resource amounts
+        // This means: "Consumes all X Resources" AND "based on the number of resources consumed"
+        const canScaleWithResources = (
+            /Consumes all\s+\w+\s+Resources?/i.test(desc) && 
+            (/based on the number of resources consumed/i.test(desc) ||
+             /Damage scales based on the number of resources consumed/i.test(desc))
+        );
 
-            scalingToUse = ability.scaling_1 + ((effectiveResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
-
-        } else if (ability.scaling_5 > 0 && effectiveResources === 5) {
-
+        // Check for enhanced resource scaling data, but only apply to abilities that can scale
+        if (ability.scaling_5 > 0 && ability.scaling_1 > 0 && canScaleWithResources) {
+            
+            // Use specific resource scaling if available
+            const resourceKey = `scaling_${effectiveResources}`;
+            if (ability[resourceKey] !== undefined) {
+                scalingToUse = ability[resourceKey];
+            } else {
+                // Fallback to linear interpolation if specific value not available
+                scalingToUse = ability.scaling_1 + ((effectiveResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+            }
+            
+        } else if (ability.scaling_5 > 0 && effectiveResources === 5 && canScaleWithResources) {
             scalingToUse = ability.scaling_5;
-
+        } else if (resourceConsumption > 0 && !canScaleWithResources) {
+            // For fixed resource abilities, use the scaling value that matches their fixed consumption
+            const fixedResourceKey = `scaling_${resourceConsumption}`;
+            if (ability[fixedResourceKey] !== undefined) {
+                scalingToUse = ability[fixedResourceKey];
+            } else {
+                // Fallback to the main scaling value
+                scalingToUse = ability.scaling || 0;
+            }
         }
 
 
@@ -2275,6 +2310,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             affectsDronesOrTurrets,
 
+            description: ability.description,
+
             originalAbility: ability
 
         };
@@ -2417,15 +2454,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const wStats = getStatsForWeapon(ability.weapon);
 
-                    const stats = getAbilityStats(ability, cp, wStats.critChance, wStats.critPower, wStats.penChance, resourcesForActives);
+                    const minResVal = parseInt(sel.dataset.minResources || '0');
+                    const minResources = !isNaN(minResVal) ? minResVal : 0;
+                    
+                    const stats = getAbilityStats(ability, cp, wStats.critChance, wStats.critPower, wStats.penChance, resourcesForActives, minResources);
 
                     const orderVal = parseFloat(sel.dataset.order || '');
 
                     stats.orderPriority = !isNaN(orderVal) && orderVal > 0 ? orderVal : 0;
 
-                    const minResVal = parseInt(sel.dataset.minResources || '0');
-
-                    stats.minResources = !isNaN(minResVal) ? minResVal : 0;
+                    stats.minResources = minResources;
 
                     return stats;
 
@@ -2443,7 +2481,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const wStats = getStatsForWeapon(a.weapon);
 
-            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5, 0);
 
         });
 
@@ -2451,7 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const wStats = getStatsForWeapon(a.weapon);
 
-            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5, 0);
 
         });
 
@@ -2459,13 +2497,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const wStats = getStatsForWeapon(a.weapon);
 
-            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5);
+            return getAbilityStats(a, cp, wStats.critChance, wStats.critPower, wStats.penChance, 5, 0);
 
         });
 
         let allActives = [...actives, ...eliteActives, ...auxActives];
 
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
+        
+        // Debug: Check if Molten Steel is in allActives
+        const moltenSteel = allActives.find(a => a.name === "Molten Steel");
+        if (moltenSteel) {
+            console.log("Molten Steel found in allActives:", moltenSteel);
+        } else {
+            console.log("Molten Steel NOT found in allActives");
+            console.log("All actives:", allActives.map(a => a.name));
+        }
 
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
@@ -2508,6 +2555,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let primResources = 0;
 
         let secResources = 0;
+
+        let auxResources = 0;
 
         let totalDamage = 0;
 
@@ -2971,7 +3020,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        function performAttack(ability, weaponForStats, debuffState = {}, cp = 0) {
+        function performAttack(ability, weaponForStats, debuffState = {}, cp = 0, actualConsumedResources = 0) {
+
 
             // Deterministic Combat Logic
 
@@ -3238,10 +3288,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 rawBaseDmg = tetherDamage + detonationBase;
 
             } else {
-
-                // Use scaling * cp for base damage
-
-                rawBaseDmg = (ability.scalingToUse || 0) * cp;
+                // Recalculate scaling based on minResources setting for accurate damage
+                let scalingToUse = ability.scaling || 0;
+                
+                // For abilities that scale with resources, use minResources setting
+                if (ability.damageScalesWithResources && ability.minResources > 0) {
+                    const resourceKey = `scaling_${ability.minResources}`;
+                    if (ability[resourceKey] !== undefined) {
+                        scalingToUse = ability[resourceKey];
+                    } else if (ability.scaling_1 > 0 && ability.scaling_5 > 0) {
+                        // Fallback to linear interpolation
+                        scalingToUse = ability.scaling_1 + ((ability.minResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+                    }
+                }
+                
+                rawBaseDmg = scalingToUse * cp;
 
             }
 
@@ -3451,9 +3512,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 playerBuffMult *= (1 + (playerBuffs.shotgunWedding.stacks * 25) / 100); // 25% per stack
             }
 
+            // Apply equilibrium damage bonus if active
+            let equilibriumMult = 1.0;
+            if (window._equilibriumBuff && window._equilibriumBuff.active) {
+                equilibriumMult += window._equilibriumBuff.damageBonus / 100; // 15% damage bonus
+            }
+
             // Calculate damage with passive bonuses included
             const actualDmg = rawBaseDmg * finalMult * signetMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult * momentumMult * passiveDamageMult * augmentMult * playerBuffMult * equilibriumMult;
-
+            
+            
             // ========================================
             // SIGNET OF EQUILIBRIUM - HEALING BUFF
             // ========================================
@@ -3470,7 +3538,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const equilibrium = window._equilibriumTracker;
-            const currentTime = simulationTime;
+            const currentTime = time;
             
             // Check if Signet of Equilibrium is active (check for signet in major slot)
             const equilibriumActive = window._signetBonuses?.equilibrium || false;
@@ -3509,7 +3577,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Apply equilibrium damage bonus if active
-            let equilibriumMult = 1.0;
             if (window._equilibriumBuff && window._equilibriumBuff.active) {
                 equilibriumMult += window._equilibriumBuff.damageBonus / 100; // 15% damage bonus
             }
@@ -3673,6 +3740,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const damageName = ability.name.includes("(Effect)") 
                         ? ability.name.replace(" (Effect)", "")
                         : (ability.originalName || ability.name);
+                    
+                    // Debug Molten Steel
+                    if (ability.name === "Molten Steel") {
+                        console.log(`Adding Molten Steel to statsBreakdown - damage: ${finalDamage}, casts: 1`);
+                    }
                     
                     
                     let abilityIndex = -1;
@@ -4097,10 +4169,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const action = allActives[i];
 
+                // Debug: Log all abilities being processed
+                console.log(`Processing ability: ${action.name}`);
 
                 if (activeCooldowns[i] > 0) {
 
-
+                    console.log(`Skipping ${action.name} - on cooldown`);
                     continue;
 
                 }
@@ -4108,7 +4182,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (time < currentCastEndTime) {
 
                     // We're still casting, skip to next ability
-
+                    if (action.name === "Molten Steel") {
+                        console.log(`Skipping Molten Steel - still casting (${time} < ${currentCastEndTime})`);
+                    }
                     continue;
 
                 }
@@ -4152,12 +4228,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 // For abilities that consume all resources, the consumption amount is different from the requirement
                 let consumeAmount = reqResources;
                 if (action.resourceConsumption > 0 && action.resourceRequirement !== action.resourceConsumption) {
-                    // Special case: Make Molten Steel consume exactly the min resources amount
-                    if (action.name === "Molten Steel") {
-                        const minRes = action.minResources || 1;
-                        consumeAmount = minRes; // Consume exactly the min resources amount
+                    consumeAmount = action.resourceConsumption;
+                }
+                
+                // For "consume all resources" abilities, use minResources setting instead of consuming all
+                if (action.resourceConsumption > 0 && action.resourceRequirement !== action.resourceConsumption) {
+                    // Use minResources setting if available, otherwise consume what's available
+                    if (action.minResources && action.minResources > 0) {
+                        consumeAmount = action.minResources;
                     } else {
-                        consumeAmount = action.resourceConsumption;
+                        if (isPrim) {
+                            consumeAmount = Math.min(consumeAmount, primResources);
+                        }
+                        if (isSec) {
+                            consumeAmount = Math.min(consumeAmount, secResources);
+                        }
                     }
                 }
 
@@ -4166,7 +4251,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
 
                 if (!isValidWeapon) {
-
+                    if (action.name === "Molten Steel") {
+                        console.log(`Molten Steel filtered out - invalid weapon. isPrim: ${isPrim}, isSec: ${isSec}, isAux: ${isAux}, primWeapon: ${primWeapon}`);
+                    }
                     continue;
 
                 }
@@ -4174,27 +4261,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 if (action.isConsumer) {
-
+                    if (action.name === "Molten Steel") {
+                        console.log(`Molten Steel resource check: reqResources=${reqResources}, minResources=${action.minResources}, isPrim=${isPrim}, primResources=${primResources}`);
+                    }
                     // Use the higher of inherent requirement and user-set min resources
                     const minRes = action.minResources || 0;
                     const finalMinRes = Math.max(reqResources, minRes);
 
                     if (isPrim && primResources < finalMinRes) {
-
+                        if (action.name === "Molten Steel") {
+                            console.log(`Molten Steel cannot cast: primResources ${primResources} < finalMinRes ${finalMinRes}`);
+                        }
                         canCast = false;
 
                     }
 
                     if (isSec && secResources < finalMinRes) {
-
+                        if (action.name === "Molten Steel") {
+                            console.log(`Molten Steel cannot cast: secResources ${secResources} < finalMinRes ${finalMinRes}`);
+                        }
                         canCast = false;
 
                     }
-
                 }
 
 
                 if (!canCast) {
+                    if (action.name === "Molten Steel") {
+                        console.log(`Molten Steel filtered out - cannot cast. isConsumer: ${action.isConsumer}, primResources: ${primResources}, secResources: ${secResources}`);
+                    }
                     continue;
                 }
 
@@ -4223,12 +4318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // For abilities that consume all resources, check if we have at least the minimum
                         let otherConsumeAmount = otherReqResources;
                         if (otherAction.resourceConsumption > 0 && otherAction.resourceRequirement !== otherAction.resourceConsumption) {
-                            if (otherAction.name === "Molten Steel") {
-                                const otherMinRes = otherAction.minResources || 1;
-                                otherConsumeAmount = otherMinRes;
-                            } else {
-                                otherConsumeAmount = otherAction.resourceConsumption;
-                            }
+                            otherConsumeAmount = otherAction.resourceConsumption;
                         }
                         
                         if (otherAction.isConsumer) {
@@ -4298,7 +4388,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
 
                     if (!canCastWithDebuffs) {
-
+                        if (action.name === "Molten Steel") {
+                            console.log(`Molten Steel filtered out - debuff requirements not met. requiredDebuffs: ${action.requiredDebuffs}`);
+                        }
                         // Skip this ability if debuff requirements aren't met
 
 
@@ -4339,7 +4431,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (wouldAffectPlayer(action)) {
 
-
+                        console.log(`Skipping ${action.name} - would affect player`);
                         continue; // Skip abilities that would affect player
 
                     }
@@ -4350,14 +4442,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (wouldAffectDronesOrTurrets(action)) {
 
-
+                        console.log(`Skipping ${action.name} - would affect drones/turrets`);
                         continue; // Skip abilities that would affect drones/turrets
 
                     }
 
-                    
 
-                    performAttack(action, action.weapon, currentDebuffState, cp);
+                    performAttack(action, action.weapon, currentDebuffState, cp, consumeAmount);
 
 
 
@@ -4504,7 +4595,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         if (isSec) {
-
                             secResources -= consumeAmount;
 
                         }
@@ -4522,12 +4612,45 @@ document.addEventListener('DOMContentLoaded', () => {
                                 secResources = Math.min(5, secResources + 5);
                             }
                         } else {
-                            // Regular builders only add 1 resource to their specific weapon
-                            if (isPrim) {
-                                primResources = Math.min(5, primResources + 1);
+                            // Check if ability builds resources for all equipped weapons (handle various wording)
+                            const buildsForAllWeapons = action.description && (
+                                action.description.includes("Builds 1 resource for each equipped weapon") ||
+                                action.description.includes("Builds a weapon resource for each equipped weapon") ||
+                                action.description.includes("Builds 2 resource for each equipped weapon")
+                            );
+                            
+                                                        
+                            // Determine how many resources to build per weapon
+                            let resourcesToBuild = 1;
+                            if (action.description && action.description.includes("Builds 2 resource for each equipped weapon")) {
+                                resourcesToBuild = 2;
                             }
-                            if (isSec) {
-                                secResources = Math.min(5, secResources + 1);
+                            
+                            if (buildsForAllWeapons) {
+                                // Build resources for all equipped weapons
+                                if (primWeapon !== "All") {
+                                    primResources = Math.min(5, primResources + resourcesToBuild);
+                                    if (action.name === "Ignite") {
+                                        console.log(`${action.name} built ${resourcesToBuild} primary resource(s) for ALL weapons: primResources now ${primResources}`);
+                                    }
+                                }
+                                if (secWeapon !== "All") {
+                                    secResources = Math.min(5, secResources + resourcesToBuild);
+                                    if (action.name === "Ignite") {
+                                        console.log(`${action.name} built ${resourcesToBuild} secondary resource(s) for ALL weapons: secResources now ${secResources}`);
+                                    }
+                                }
+                                if (auxWeapon !== "All") {
+                                    auxResources = Math.min(5, auxResources + resourcesToBuild);
+                                }
+                            } else {
+                                // Regular builders only add 1 resource to their specific weapon
+                                if (isPrim) {
+                                    primResources = Math.min(5, primResources + 1);
+                                }
+                                if (isSec) {
+                                    secResources = Math.min(5, secResources + 1);
+                                }
                             }
                         }
 

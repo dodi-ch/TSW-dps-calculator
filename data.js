@@ -1,4 +1,5 @@
-// TSW DPS Calculator Data - Updated Power Line-Voltaic Detonation
+// TSW DPS Calculator Data - Enhanced with RDB Resource Scaling
+// Updated with proper 1-5 resource scaling from RDB data
 // Scaling updated to 6.113601 from RDB data
 
 const tswData = [
@@ -33,16 +34,19 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Out for a Kill",
-    "scaling": 1.309595,
-    "scaling_1": 1.196083126,
-    "scaling_5": 2.368324063,
+    "scaling": 1.6649795008000001,
+    "scaling_1": 1.196083,
+    "scaling_5": 2.368324,
     "note": "Updated from RDB: Update scaling from 1.196 to 1.310",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Shotgun Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. Enermies who are killed shortly after being hit will grant you a beneficial effect for 8 seconds which increases the Penetration Chance of your attacks from manifestations, turrets, mines or drones by 10%",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Out For A Kill.png"
+    "icon": "Out For A Kill.png",
+    "scaling_2": 1.430531,
+    "scaling_3": 1.66498,
+    "scaling_4": 2.016652
   },
   {
     "tree": "Enforce",
@@ -61,16 +65,19 @@ const tswData = [
   {
     "tree": "Enforce",
     "name": "Buckshot",
-    "scaling": 1.892707,
+    "scaling": 1.7178584052,
     "scaling_1": 1.65566,
-    "scaling_5": 1.811156013,
+    "scaling_5": 1.811156,
     "note": "Updated from RDB: Update scaling from 1.656 to 1.893",
     "cast_time": 1.5,
     "cooldown": 10,
     "description": "A single target attack that deals 125 physical damage, or 137 physical damage if you have 5 Shotgun resources on the target",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Buckshot.png"
+    "icon": "Buckshot.png",
+    "scaling_2": 1.686759,
+    "scaling_3": 1.717858,
+    "scaling_4": 1.764507
   },
   {
     "tree": "Enforce",
@@ -173,16 +180,19 @@ const tswData = [
   {
     "tree": "Control",
     "name": "Both Barrels",
-    "scaling": 0.6577122449,
-    "scaling_1": 0.6577122449,
-    "scaling_5": 1.302421941,
+    "scaling": 0.9155961233400001,
+    "scaling_1": 0.657712,
+    "scaling_5": 1.302422,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Cone: Affects up to 6 enemies in a 60 degree 7 metre cone in front of you. Consumes all Shotgun Resources. A cone Blast attack that deals 50 - 99 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Both Barrels.png"
+    "icon": "Both Barrels.png",
+    "scaling_2": 0.786654,
+    "scaling_3": 0.915596,
+    "scaling_4": 1.109009
   },
   {
     "tree": "Control",
@@ -229,16 +239,19 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Riot Act",
-    "scaling": 0.598117231,
-    "scaling_1": 0.598117231,
-    "scaling_5": 1.184315459,
+    "scaling": 0.8325965222,
+    "scaling_1": 0.598117,
+    "scaling_5": 1.184315,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around the target. Consumes all Shotgun Resources. A TAoE attack that deals 45 - 90 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Riot Act.png"
+    "icon": "Riot Act.png",
+    "scaling_2": 0.715357,
+    "scaling_3": 0.832597,
+    "scaling_4": 1.008456
   },
   {
     "tree": "Crackdown",
@@ -257,16 +270,19 @@ const tswData = [
   {
     "tree": "Crackdown",
     "name": "Stopping Power",
-    "scaling": 0.6577122449,
-    "scaling_1": 0.6577122449,
-    "scaling_5": 1.302421941,
+    "scaling": 0.9155961233400001,
+    "scaling_1": 0.657712,
+    "scaling_5": 1.302422,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Cone: Affects up to 6 enemies in a 7 metre long 60 degree cone in front of you. Consumes all Shotgun Resources. A cone attack that deals 50 - 99 physical damage, based on the number of resources consumed. This attack will penetrate any targets that are Hindered.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Stopping Power.png"
+    "icon": "Stopping Power.png",
+    "scaling_2": 0.786654,
+    "scaling_3": 0.915596,
+    "scaling_4": 1.109009
   },
   {
     "tree": "Crackdown",
@@ -425,16 +441,19 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Raging Bullet",
-    "scaling": 0,
-    "scaling_1": 1.216069188,
-    "scaling_5": 2.407320637,
+    "scaling": 1.6925697676,
+    "scaling_1": 1.216069,
+    "scaling_5": 2.407321,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Shotgun Resources. A single target Strike attack that deals 77 - 153 physical damage. If the target is between 3 and 9 metres from you it will instead deal 86 - 170 physical damage, or if the target is closer that 3 metres it will deal 92 - 182 physical damage. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Raging Bullet.png"
+    "icon": "Raging Bullet.png",
+    "scaling_2": 1.454319,
+    "scaling_3": 1.69257,
+    "scaling_4": 2.049945
   },
   {
     "tree": "Close Encounters",
@@ -453,16 +472,19 @@ const tswData = [
   {
     "tree": "Close Encounters",
     "name": "Heavy Recoil",
-    "scaling": 1.012031692,
-    "scaling_1": 1.012031692,
-    "scaling_5": 2.184428148,
+    "scaling": 1.4809902743999999,
+    "scaling_1": 1.012032,
+    "scaling_5": 2.184428,
     "note": "Dash damage: 0.18529",
     "cast_time": 1,
     "cooldown": 5,
     "description": "Consumes all Shotgun Resources. A single target attack that deals 77 - 165 physical damage, based on the number of resources consumed. If the target is Weakened you also dash 10 metres backward, dealing 14 physical damage to up to 6 enemies in a 6 metre wide area on your way.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Heavy Recoil.png"
+    "icon": "Heavy Recoil.png",
+    "scaling_2": 1.246511,
+    "scaling_3": 1.48099,
+    "scaling_4": 1.832709
   },
   {
     "tree": "Close Encounters",
@@ -523,16 +545,19 @@ const tswData = [
   {
     "tree": "Securing the Perimeter",
     "name": "Shotgun Turret",
-    "scaling": 0.1876221033,
-    "scaling_1": 0.1876221033,
-    "scaling_5": 0.3722660779,
+    "scaling": 0.26147969314,
+    "scaling_1": 0.187622,
+    "scaling_5": 0.372266,
     "note": "",
     "cast_time": 1,
     "cooldown": 10,
     "description": "Consumes all Shotgun Resources. A Blast attack that places a turret at your feet. The turret will fire every 1 seconds for 5 seconds, affecting up to 6 enemies in a 7 metre long 120 degree cone in front of you, dealing 14 - 28 physical damage, based on the number of resources consumed. This ability has a 7 metre range.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Shotgun Turret.png"
+    "icon": "Shotgun Turret.png",
+    "scaling_2": 0.224551,
+    "scaling_3": 0.26148,
+    "scaling_4": 0.316873
   },
   {
     "tree": "Securing the Perimeter",
@@ -551,16 +576,19 @@ const tswData = [
   {
     "tree": "Securing the Perimeter",
     "name": "Tear Gas",
-    "scaling": 0.6577122449,
-    "scaling_1": 0.6577122449,
-    "scaling_5": 1.302421941,
+    "scaling": 0.9155961233400001,
+    "scaling_1": 0.657712,
+    "scaling_5": 1.302422,
     "note": "Non-Hindered: scaling_1: 0.59812, scaling_5: 1.18432",
     "cast_time": 1,
     "cooldown": 4,
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around your target. Consumes all Shotgun Resources. A TAoE attack that deals 45 - 90 physical damage, or 50 - 99 physical damage to Hindered targets. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Tear Gas.png"
+    "icon": "Tear Gas.png",
+    "scaling_2": 0.786654,
+    "scaling_3": 0.915596,
+    "scaling_4": 1.109009
   },
   {
     "tree": "Securing the Perimeter",
@@ -747,16 +775,19 @@ const tswData = [
   {
     "tree": "Tactical Surprise",
     "name": "Sure Shot",
-    "scaling": 1.196083126,
-    "scaling_1": 1.196083126,
-    "scaling_5": 2.368324063,
+    "scaling": 1.6649795008000001,
+    "scaling_1": 1.196083,
+    "scaling_5": 2.368324,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Shotgun Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Hindered, you also cleanse 1 detrimental effect from your defensice target and purge 1 beneficial effect from the target.",
     "type": "Active",
     "weapon": "Shotgun",
-    "icon": "Sure Shot.png"
+    "icon": "Sure Shot.png",
+    "scaling_2": 1.430531,
+    "scaling_3": 1.66498,
+    "scaling_4": 2.016652
   },
   {
     "tree": "Tactical Surprise",
@@ -817,16 +848,19 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Shootout",
-    "scaling": 0.5424097896,
-    "scaling_1": 0.5424097896,
-    "scaling_5": 0.8146081089,
+    "scaling": 0.6785089492499999,
+    "scaling_1": 0.54241,
+    "scaling_5": 0.814608,
     "note": "",
     "cast_time": 2.5,
     "cooldown": 4,
     "description": "Channelled: Every 0.5 seconds for 2.5 seconds. Consumes all Pistol Resources. A channelled Focus attack that deals 41 - 62 physical damage per hit, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Shootout.png"
+    "icon": "Shootout.png",
+    "scaling_2": 0.610459,
+    "scaling_3": 0.678509,
+    "scaling_4": 0.746559
   },
   {
     "tree": "Armed",
@@ -845,16 +879,19 @@ const tswData = [
   {
     "tree": "Armed",
     "name": "Drone Kit",
-    "scaling": 0.1495293077,
-    "scaling_1": 0.1495293077,
-    "scaling_5": 0.2958079784,
+    "scaling": 0.22266864305,
+    "scaling_1": 0.149529,
+    "scaling_5": 0.295808,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Pistol Resources. Summons a drone that will follow you around for 20 seconds. Every 2 seconds it will fire at the closest enemy within 5 metres and deal 11 - 22 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Drone Kit.png"
+    "icon": "Drone Kit.png",
+    "scaling_2": 0.186099,
+    "scaling_3": 0.222669,
+    "scaling_4": 0.259238
   },
   {
     "tree": "Armed",
@@ -957,16 +994,19 @@ const tswData = [
   {
     "tree": "Dangerous",
     "name": "Wanted",
-    "scaling": 0.598117231,
-    "scaling_1": 0.598117231,
-    "scaling_5": 1.184315459,
+    "scaling": 0.891216345,
+    "scaling_1": 0.598117,
+    "scaling_5": 1.184315,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Chain: Jumps up to 5 metres 5 times, hitting up to 6 enemies. Consumes all Pistol Resources. A Chain attack that deals 45 - 90 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Wanted.png"
+    "icon": "Wanted.png",
+    "scaling_2": 0.744667,
+    "scaling_3": 0.891216,
+    "scaling_4": 1.037766
   },
   {
     "tree": "Dangerous",
@@ -1013,16 +1053,19 @@ const tswData = [
   {
     "tree": "Bullet Hell",
     "name": "Start & Finish",
-    "scaling": 0.9222271637,
-    "scaling_1": 0.9222271637,
-    "scaling_5": 2.009244111,
+    "scaling": 1.4657356373500001,
+    "scaling_1": 0.922227,
+    "scaling_5": 2.009244,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Pistol Resources. A single  target attack that performs 2 hits. The first hit deals 23 physical damage. The second hit deals 63 - 146 physical damage, or 70 - 152 physical damage if the target is Weakened.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Start Finish.png"
+    "icon": "Start Finish.png",
+    "scaling_2": 1.193981,
+    "scaling_3": 1.465736,
+    "scaling_4": 1.73749
   },
   {
     "tree": "Bullet Hell",
@@ -1041,16 +1084,19 @@ const tswData = [
   {
     "tree": "Bullet Hell",
     "name": "Big Forty Five",
-    "scaling": 0,
-    "scaling_1": 1.753394283,
-    "scaling_5": 3.024977673,
+    "scaling": 2.389185978,
+    "scaling_1": 1.753394,
+    "scaling_5": 3.024978,
     "note": "",
     "cast_time": 1.5,
     "cooldown": 4,
     "description": "Consumes all Pistol Resources. A single target attack that deals 133 - 229 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Big Forty Five.png"
+    "icon": "Big Forty Five.png",
+    "scaling_2": 2.07129,
+    "scaling_3": 2.389186,
+    "scaling_4": 2.707082
   },
   {
     "tree": "Bullet Hell",
@@ -1209,16 +1255,19 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Semi-Auto",
-    "scaling": 0.2210433245,
-    "scaling_1": 0.2210433245,
-    "scaling_5": 0.3499852638,
+    "scaling": 0.28551429415,
+    "scaling_1": 0.221043,
+    "scaling_5": 0.349985,
     "note": "",
     "cast_time": 2,
     "cooldown": 4,
     "description": "Channelled: Every 0.4 seconds for 2 seconds. Chain: Jumps up to 5 metres 5 times, hitting up to 6 enemies. Consumes all Pistol Resources. A channelled Chain attack that deals 17 - 27 physical damage per hit, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Semiauto.png"
+    "icon": "Semiauto.png",
+    "scaling_2": 0.253279,
+    "scaling_3": 0.285514,
+    "scaling_4": 0.31775
   },
   {
     "tree": "Last One Standing",
@@ -1237,16 +1286,19 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Set 'Em Up",
-    "scaling": 0.6154539623,
-    "scaling_1": 0.6154539623,
-    "scaling_5": 1.220072468,
+    "scaling": 0.9177632151499999,
+    "scaling_1": 0.615454,
+    "scaling_5": 1.220072,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around the target. Consumes all Pistol Resources. A TAoE attack that deals 47 - 92 physical damage, based on the number of resources consumed. If any affected target is Hindered you gain 2 resources for your secondary weapon.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Set EM up.png"
+    "icon": "Set EM up.png",
+    "scaling_2": 0.766609,
+    "scaling_3": 0.917763,
+    "scaling_4": 1.068918
   },
   {
     "tree": "Last One Standing",
@@ -1265,16 +1317,19 @@ const tswData = [
   {
     "tree": "Last One Standing",
     "name": "Bullet Ballet",
-    "scaling": 0.579742372,
-    "scaling_1": 0.2759732524,
-    "scaling_5": 1.448363221,
+    "scaling": 0.8621682367,
+    "scaling_1": 0.275973,
+    "scaling_5": 1.448363,
     "note": "",
     "cast_time": 2,
     "cooldown": 20,
     "description": "Channelled: Every 0.2 seconds for 2 seconds. PBAoE: Affects up to 6 enemies in a 10 metre radius around you. Consumes all Pistol Resources. A channelled PBAoE attack 44 physical damage per hit. If you have pistol resources on a target the final hit of this attack deals an additional 21 - 110 physical damage to targets, based on the number of resources consumed. Also, whenever you hit, you gain a single stack of Critical Rating effect, which increases your Critical Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times. While channelling you are rooted to the ground. Applies Vulnerable to Melee.",
     "type": "Elite Active",
     "weapon": "Pistol",
-    "icon": "Bullet Ballet.png"
+    "icon": "Bullet Ballet.png",
+    "scaling_2": 0.569071,
+    "scaling_3": 0.862168,
+    "scaling_4": 1.155266
   },
   {
     "tree": "Troubleshooting",
@@ -1307,16 +1362,19 @@ const tswData = [
   {
     "tree": "Troubleshooting",
     "name": "Bond, Strong Bond",
-    "scaling": 0.2392429994,
-    "scaling_1": 0.2392429994,
-    "scaling_5": 0.3812004638,
+    "scaling": 0.3102217316,
+    "scaling_1": 0.239243,
+    "scaling_5": 0.3812,
     "note": "",
     "cast_time": 3,
     "cooldown": 4,
     "description": "Channelled: Every 0.3 seconds for 3 seconds. Consumers all Pistol Resources. A channelled attack that deals 18 - 29 physical damage, based on the number of resources consumed. At the end of the channel, cleanses 1 detrimental effect from up to 5 allies within 5 metres of you.",
     "type": "Active",
     "weapon": "Pistol",
-    "icon": "Bond, Strong Bond.png"
+    "icon": "Bond, Strong Bond.png",
+    "scaling_2": 0.274732,
+    "scaling_3": 0.310222,
+    "scaling_4": 0.345711
   },
   {
     "tree": "Troubleshooting",
@@ -1755,16 +1813,19 @@ const tswData = [
   {
     "tree": "Support",
     "name": "Fire in the Hole",
-    "scaling": 0.6095236583,
-    "scaling_1": 0.6095236583,
-    "scaling_5": 1.208127512,
+    "scaling": 0.90882558515,
+    "scaling_1": 0.609524,
+    "scaling_5": 1.208128,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Assault Rifle Resources. Sticks a spiked grenade to the target which deals 46 - 91 physical damage and then detonates 2 seconds later dealing 46 - 91 physical damage, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "Fire In The Hole.png"
+    "icon": "Fire In The Hole.png",
+    "scaling_2": 0.759175,
+    "scaling_3": 0.908826,
+    "scaling_4": 1.058477
   },
   {
     "tree": "Support",
@@ -1783,16 +1844,19 @@ const tswData = [
   {
     "tree": "Take Point",
     "name": "Three Round Burst",
-    "scaling": 0.3990692355,
-    "scaling_1": 0.3990692355,
-    "scaling_5": 0.7892040852,
+    "scaling": 0.59413666035,
+    "scaling_1": 0.399069,
+    "scaling_5": 0.789204,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Assault Rifle Resources. A single target Burst attack that hits 3 times, dealing 30 - 60 physical damage per hit, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "Three Round Burst.png"
+    "icon": "Three Round Burst.png",
+    "scaling_2": 0.496603,
+    "scaling_3": 0.594137,
+    "scaling_4": 0.69167
   },
   {
     "tree": "Take Point",
@@ -1839,16 +1903,19 @@ const tswData = [
   {
     "tree": "Take Point",
     "name": "Where it Hurts",
-    "scaling": 1.144215,
-    "scaling_1": 1.194229578,
-    "scaling_5": 2.40136438,
+    "scaling": 1.7977969790000001,
+    "scaling_1": 1.19423,
+    "scaling_5": 2.401364,
     "note": "Updated from RDB: None",
     "cast_time": 1,
     "cooldown": 12,
     "description": "Consumes all Assault Rifle Resources. A single target attack that deals 90 - 182 physical damage, based on the number of resource consumed. If you hit an Afflicted target, the target becomes Hindered and its movement speed is reduced by 70% for 4 seconds.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "Where It Hurts.png"
+    "icon": "Where It Hurts.png",
+    "scaling_2": 1.496013,
+    "scaling_3": 1.797797,
+    "scaling_4": 2.099581
   },
   {
     "tree": "Take Point",
@@ -2007,16 +2074,19 @@ const tswData = [
   {
     "tree": "Bombardment",
     "name": "Frag Grenade",
-    "scaling": 0.598117231,
-    "scaling_1": 0.598117231,
-    "scaling_5": 1.184315459,
+    "scaling": 0.891216345,
+    "scaling_1": 0.598117,
+    "scaling_5": 1.184315,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around your target. Consumes all Assault Rifle Resources. A TAoE attack that deals 45 - 90 physical damage. If you hit a Hindered target, an explosion centred around that target is triggered, dealing 9 - 18 physical damage. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "Frag Grenade.png"
+    "icon": "Frag Grenade.png",
+    "scaling_2": 0.744667,
+    "scaling_3": 0.891216,
+    "scaling_4": 1.037766
   },
   {
     "tree": "Bombardment",
@@ -2035,7 +2105,7 @@ const tswData = [
   {
     "tree": "Bombardment",
     "name": "High Explosive Grenade",
-    "scaling": 0.5797,
+    "scaling": 0.8641300000000001,
     "scaling_1": 0.5797,
     "scaling_5": 1.14856,
     "note": "",
@@ -2044,7 +2114,10 @@ const tswData = [
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around your target. Consumes all Assault Rifle Resources. A TAoE attack that deals 44 - 87 physical damage, or 55 - 109 physical damage to targets that are Afflicted. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "High Explosive Grenade.png"
+    "icon": "High Explosive Grenade.png",
+    "scaling_2": 0.721915,
+    "scaling_3": 0.86413,
+    "scaling_4": 1.006345
   },
   {
     "tree": "Bombardment",
@@ -2133,16 +2206,19 @@ const tswData = [
   {
     "tree": "Squad Duty",
     "name": "Transfuse Anima",
-    "scaling": 1.094956,
-    "scaling_1": 1.042345018,
-    "scaling_5": 2.24947982,
+    "scaling": 1.645912419,
+    "scaling_1": 1.042345,
+    "scaling_5": 2.24948,
     "note": "Updated from RDB: None",
     "cast_time": 1,
     "cooldown": 4,
     "description": "Consumes all Assault Rifle Resources. A single target attack that deals 79 - 170 physical damage, based on the number of resources consumed. Heals the defensive target for 7.1% of the damage dealt. If the target is Hindered, the defensive target also gains a 2% leech effect for 10 seconds.",
     "type": "Active",
     "weapon": "Assault Rifle",
-    "icon": "Transfuse Anima.png"
+    "icon": "Transfuse Anima.png",
+    "scaling_2": 1.344129,
+    "scaling_3": 1.645912,
+    "scaling_4": 1.947696
   },
   {
     "tree": "Squad Duty",
@@ -2399,16 +2475,19 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Balanced Blade",
-    "scaling": 0.5976111438,
-    "scaling_1": 0.5976111438,
-    "scaling_5": 1.184302483,
+    "scaling": 0.83228767948,
+    "scaling_1": 0.597611,
+    "scaling_5": 1.184302,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Blade Resources. A PBAoE attack that deals 45 - 90 physical damage, based on the number of resources consumed. Builds 2 Blade Resources if any affected targets are Impaired.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Balanced Blade.png"
+    "icon": "Balanced Blade.png",
+    "scaling_2": 0.714949,
+    "scaling_3": 0.832288,
+    "scaling_4": 1.008295
   },
   {
     "tree": "Method",
@@ -2427,16 +2506,19 @@ const tswData = [
   {
     "tree": "Method",
     "name": "Dancing Blade",
-    "scaling": 0.543012119,
-    "scaling_1": 0.543012119,
-    "scaling_5": 0.8150145333,
+    "scaling": 0.65181308472,
+    "scaling_1": 0.543012,
+    "scaling_5": 0.815015,
     "note": "",
     "cast_time": 2.5,
     "cooldown": 0,
     "description": "Channelled: Every 0.5 seconds for 2.5 seconds. Consumes all Blade Resources. A channelled Focus attack that deals 41 - 62 physical damage per hit, based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Dancing Blade.png"
+    "icon": "Dancing Blade.png",
+    "scaling_2": 0.597413,
+    "scaling_3": 0.651813,
+    "scaling_4": 0.733414
   },
   {
     "tree": "Method",
@@ -2623,16 +2705,19 @@ const tswData = [
   {
     "tree": "Wind through Grass",
     "name": "Destiny",
-    "scaling": 0.7364581182,
-    "scaling_1": 0.7364581182,
-    "scaling_5": 1.908498274,
+    "scaling": 1.20527418052,
+    "scaling_1": 0.736458,
+    "scaling_5": 1.908498,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Blade Resources. A single target attack that deals 56 - 145 physical damage, based on the number of resources consumed. If the target is Afflicted, it also applies a damage over time effect that deals 12 physical damage every second for 4 seconds.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Destiny.png"
+    "icon": "Destiny.png",
+    "scaling_2": 0.970866,
+    "scaling_3": 1.205274,
+    "scaling_4": 1.556886
   },
   {
     "tree": "Wind through Grass",
@@ -2917,16 +3002,19 @@ const tswData = [
   {
     "tree": "Runing of the Jagged",
     "name": "Binding Wounds",
-    "scaling": 1.196214997,
-    "scaling_1": 1.196214997,
-    "scaling_5": 2.368604965,
+    "scaling": 1.6651709842,
+    "scaling_1": 1.196215,
+    "scaling_5": 2.368605,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Blade Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Impaired, it becomes Afflicted with a damage over time effect that deals 7 physical damage every 1 seconds for 3 seconds. This ability generates additional hate.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Binding Wounds.png"
+    "icon": "Binding Wounds.png",
+    "scaling_2": 1.430693,
+    "scaling_3": 1.665171,
+    "scaling_4": 2.016888
   },
   {
     "tree": "Runing of the Jagged",
@@ -3127,16 +3215,19 @@ const tswData = [
   {
     "tree": "The Cutting Artist",
     "name": "Steel Palace",
-    "scaling": 0.5942212789,
-    "scaling_1": 0.5942212789,
-    "scaling_5": 1.177658143,
+    "scaling": 0.8275960245399999,
+    "scaling_1": 0.594221,
+    "scaling_5": 1.177658,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Blade Resources. A PBAoE Frenzy attack that deals 44 -88 physical damage, based on the number of resources consumed. If any affected targets are Afflicted, you gain the Minor Ward effect, which reduces all damage received by 7.5% for 8 seconds.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Steel Palace.png"
+    "icon": "Steel Palace.png",
+    "scaling_2": 0.710909,
+    "scaling_3": 0.827596,
+    "scaling_4": 1.002627
   },
   {
     "tree": "The Cutting Artist",
@@ -3213,16 +3304,19 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Hell to Pay",
-    "scaling": 0.6546140042,
-    "scaling_1": 0.6546140042,
-    "scaling_5": 1.29628671,
+    "scaling": 0.9754503571,
+    "scaling_1": 0.654614,
+    "scaling_5": 1.296287,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "A hammer blast that deals 65 \u2013 130 damage in a column in front of you. Consumes all hammer resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Hell To Pay.png"
+    "icon": "Hell To Pay.png",
+    "scaling_2": 0.815032,
+    "scaling_3": 0.97545,
+    "scaling_4": 1.135869
   },
   {
     "tree": "Brawn",
@@ -3241,16 +3335,19 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Haymaker",
-    "scaling": 1.196214997,
-    "scaling_1": 1.196214997,
-    "scaling_5": 2.368604965,
+    "scaling": 1.7824099809999998,
+    "scaling_1": 1.196215,
+    "scaling_5": 2.368605,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Hammer strike that deals 119 - 236 damage based on number of resources consumed. If the target is impaired deals 137 - 271. Consumes all hammer resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Haymaker.png"
+    "icon": "Haymaker.png",
+    "scaling_2": 1.489312,
+    "scaling_3": 1.78241,
+    "scaling_4": 2.075507
   },
   {
     "tree": "Brawn",
@@ -3409,16 +3506,19 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Molten Steel",
-    "scaling": 1.148564939,
-    "scaling_1": 1.148564939,
-    "scaling_5": 2.273304849,
+    "scaling": 1.7109348939999998,
+    "scaling_1": 1.148565,
+    "scaling_5": 2.273305,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "A single target attack that deals 114 \u2013 226 damage based on the number of resources consumed. This attack has a 30% additional chance to critically hit. Deals 15% additional critical damage. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Molten Steel.png"
+    "icon": "Molten Steel.png",
+    "scaling_2": 1.42975,
+    "scaling_3": 1.710935,
+    "scaling_4": 1.99212
   },
   {
     "tree": "Industrial Action",
@@ -3437,16 +3537,19 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Bone Breaker",
-    "scaling": 1.262726536,
-    "scaling_1": 1.262726536,
-    "scaling_5": 2.500635334,
+    "scaling": 1.881680935,
+    "scaling_1": 1.262727,
+    "scaling_5": 2.500635,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "A single target attack that deals 114 - 226 damage, or 126 - 249 if the target is weakened. Damage scales on resources consumed. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Bone Breaker.png"
+    "icon": "Bone Breaker.png",
+    "scaling_2": 1.572204,
+    "scaling_3": 1.881681,
+    "scaling_4": 2.191158
   },
   {
     "tree": "Industrial Action",
@@ -4011,16 +4114,19 @@ const tswData = [
   {
     "tree": "Feral",
     "name": "Hog Wild",
-    "scaling": 0.642542605,
-    "scaling_1": 0.642542605,
-    "scaling_5": 1.223323105,
+    "scaling": 0.9329328549999999,
+    "scaling_1": 0.642543,
+    "scaling_5": 1.223323,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "A cone Blast attack that deals 70 \u2013 133 physical damage based on the number of resources. Gives you the Savage Sweep effect, causing the next Fist consumer you activate to deal 4 -18 physical damage in an area around you.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": "Hog Wild.png"
+    "icon": "Hog Wild.png",
+    "scaling_2": 0.787738,
+    "scaling_3": 0.932933,
+    "scaling_4": 1.078128
   },
   {
     "tree": "Feral",
@@ -4151,16 +4257,19 @@ const tswData = [
   {
     "tree": "Primal",
     "name": "Wild at Heart",
-    "scaling": 1.16841913,
-    "scaling_1": 1.16841913,
-    "scaling_5": 2.223669372,
+    "scaling": 1.6960442509999998,
+    "scaling_1": 1.168419,
+    "scaling_5": 2.223669,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Fist resources. A single target attack that deals 95 \u2013 180 physical damage, based on the number of resources. Gives you Feral Regrowth effect, causing your next Fist consumer to heal you for 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": "Wild at Heart.png"
+    "icon": "Wild at Heart.png",
+    "scaling_2": 1.432232,
+    "scaling_3": 1.696044,
+    "scaling_4": 1.959857
   },
   {
     "tree": "Primal",
@@ -4207,16 +4316,19 @@ const tswData = [
   {
     "tree": "The Wilderness",
     "name": "One-Two",
-    "scaling": 0.8467812386,
-    "scaling_1": 0.8467812386,
-    "scaling_5": 1.901038771,
+    "scaling": 1.3739100048000001,
+    "scaling_1": 0.846781,
+    "scaling_5": 1.901039,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Fist resources. A Burst attack with two consecutive hits that deals 26 and 69 \u2013 154 physical damage based on the resources consumed. Gives you the Savage Sweep effect, causing the next Fist resource consumer you activate to deal 3 \u2013 14 physical damage in a area around you.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": "Onetwo.png"
+    "icon": "Onetwo.png",
+    "scaling_2": 1.110346,
+    "scaling_3": 1.37391,
+    "scaling_4": 1.637474
   },
   {
     "tree": "The Wilderness",
@@ -4431,16 +4543,19 @@ const tswData = [
   {
     "tree": "The Streets",
     "name": "Savage",
-    "scaling": 0.7346439902,
-    "scaling_1": 0.7346439902,
-    "scaling_5": 1.31542449,
+    "scaling": 1.0250342401,
+    "scaling_1": 0.734644,
+    "scaling_5": 1.315424,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumers all Fist resources. A cone attack that deals 60 \u2013 107 physical damage, based on resources consumed. Gives you Savage Sweep effect, causing the next Fist resource consumed to deal 3 -14 physical damage in an area around you. If any targets are Impaired it also gives you the Feral Regrowth effect, causing your next Fist resource consumer to heal you for 6 \u2013 30.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": "Savage.png"
+    "icon": "Savage.png",
+    "scaling_2": 0.879839,
+    "scaling_3": 1.025034,
+    "scaling_4": 1.170229
   },
   {
     "tree": "The Streets",
@@ -4725,16 +4840,19 @@ const tswData = [
   {
     "tree": "Play with Fire",
     "name": "Inner Spark",
-    "scaling": 0.1050727176,
-    "scaling_1": 0.1050727176,
-    "scaling_5": 0.2040835476,
+    "scaling": 0.1545781326,
+    "scaling_1": 0.105073,
+    "scaling_5": 0.204084,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumers all Fist resources. You give your defensive target a reactive heal effect that heals for 7 -13 whenever It is attacked, based on resources consumed. The effect has a duration of 10 seconds.",
     "type": "Active",
     "weapon": "Fist",
-    "icon": "Inner Spark.png"
+    "icon": "Inner Spark.png",
+    "scaling_2": 0.129825,
+    "scaling_3": 0.154578,
+    "scaling_4": 0.179331
   },
   {
     "tree": "Play with Fire",
@@ -5579,16 +5697,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Call for Eris",
-    "scaling": 0.289871186,
-    "scaling_1": 0.289871186,
-    "scaling_5": 0.3127035055,
+    "scaling": 9.591877937316895,
+    "scaling_1": 2.944603,
+    "scaling_5": 3.175982,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Chaos Resources. A Burst attack that deals 70 magical damage. Also performs an additional hit per resource consumed, dealing 22 - 24 magical damage per hit. Damage of the additional hits cales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Call For Eris.png"
+    "icon": "Call For Eris.png",
+    "scaling_2": 46.919609,
+    "scaling_3": 9.591878,
+    "scaling_4": 581.834534
   },
   {
     "tree": "",
@@ -5607,16 +5728,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Schism",
-    "scaling": 1.111834686,
-    "scaling_1": 1.111834686,
-    "scaling_5": 2.202822472,
+    "scaling": 1.4936804110999997,
+    "scaling_1": 1.111835,
+    "scaling_5": 2.202822,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Chaos Resources. A single target attack that deals 84 - 167 magical damage, or 104 - 206 magical damage if the target has below 35% remaining health. Damage scales based on the number of resources consumed.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Schism.png"
+    "icon": "Schism.png",
+    "scaling_2": 1.275483,
+    "scaling_3": 1.49368,
+    "scaling_4": 1.820977
   },
   {
     "tree": "",
@@ -5775,16 +5899,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Four Horsemen",
-    "scaling": 0.2779586715,
-    "scaling_1": 0.2779586715,
-    "scaling_5": 0.4487047126,
+    "scaling": 0.337719785885,
+    "scaling_1": 0.277959,
+    "scaling_5": 0.448705,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Chaos Resources. A single target Burst that hits 4 times, dealing 21 - 34 magical damage per hit, based on the number of resources consumed. Each hit causes the next hit to deal more damage, this bonus stops if a hit glances",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Four Horsemen.png"
+    "icon": "Four Horsemen.png",
+    "scaling_2": 0.303571,
+    "scaling_3": 0.33772,
+    "scaling_4": 0.388944
   },
   {
     "tree": "",
@@ -5803,16 +5930,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Pulling the Strings",
-    "scaling": 1.149557649,
-    "scaling_1": 1.149557649,
-    "scaling_5": 2.321947617,
+    "scaling": 1.5598941378,
+    "scaling_1": 1.149558,
+    "scaling_5": 2.321948,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Chaos Resources. A single target attack with a 7 metre range that deals 87 - 176 magical damage, based on the number of resources consumed. If the target is Weakened, you gain the Minor Hit Chance effect, which reduces the chance of glancing by 10% for 8 seconds.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Pulling The Strings.png"
+    "icon": "Pulling The Strings.png",
+    "scaling_2": 1.325416,
+    "scaling_3": 1.559894,
+    "scaling_4": 1.911611
   },
   {
     "tree": "",
@@ -5971,16 +6101,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Maelstrom",
-    "scaling": 0.598117231,
-    "scaling_1": 0.598117231,
-    "scaling_5": 1.184315459,
+    "scaling": 0.8032866108,
+    "scaling_1": 0.598117,
+    "scaling_5": 1.184315,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Chaos Resources. A PBAoE attack that deals 45 - 90 magical damage.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Maelstrom.png"
+    "icon": "Maelstrom.png",
+    "scaling_2": 0.686047,
+    "scaling_3": 0.803287,
+    "scaling_4": 0.979146
   },
   {
     "tree": "",
@@ -5999,16 +6132,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Cry Havoc",
-    "scaling": 0.5515247655,
-    "scaling_1": 0.5515247655,
-    "scaling_5": 1.137722994,
+    "scaling": 0.7566941454749999,
+    "scaling_1": 0.551525,
+    "scaling_5": 1.137723,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "TAoE: Affects up to 6 enemies in a 5 metre radius around your target. Consumes all Chaos Resources. A TAoE attack that deals 42 - 86 magical damage, based on the number of resources consumed. If any target in the affected area is Impaired, it creates a damaging ground area at their feet which deals 9 magical damage every second for 5 seconds.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Cry Havoc.png"
+    "icon": "Cry Havoc.png",
+    "scaling_2": 0.639454,
+    "scaling_3": 0.756694,
+    "scaling_4": 0.932554
   },
   {
     "tree": "",
@@ -6097,16 +6233,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Suffering and Solace",
-    "scaling": 1.196214997,
-    "scaling_1": 1.196214997,
-    "scaling_5": 2.368604965,
+    "scaling": 1.6065514858,
+    "scaling_1": 1.196215,
+    "scaling_5": 2.368605,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
     "description": "Consumes all Chaos Resources. A single target attack that deals 91 - 179 magical damage, based on the number of resources consumed. If the target is Impaired, you also gain a beneficial effect causing the next 3 hits against you to reflect 3% per resource of the damage dealt back to the attacker.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Suffering And Solace.png"
+    "icon": "Suffering And Solace.png",
+    "scaling_2": 1.372073,
+    "scaling_3": 1.606551,
+    "scaling_4": 1.958268
   },
   {
     "tree": "",
@@ -6265,16 +6404,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Karma",
-    "scaling": 0.5456914104,
-    "scaling_1": 0.5456914104,
-    "scaling_5": 1.080598406,
+    "scaling": 0.73290885886,
+    "scaling_1": 0.545691,
+    "scaling_5": 1.080598,
     "note": "",
     "cast_time": 1,
     "cooldown": 4,
     "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Chaos Resources. A PBAoE Frenzy attack that deals 41 - 81 magical damage, based on the number of resources consumed. Also applies a detrimental effect to affected targets that causes them to heal the next targets that causes them to heal the next target they hit for a percentage of their target's maximum health.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Karma.png"
+    "icon": "Karma.png",
+    "scaling_2": 0.625927,
+    "scaling_3": 0.732909,
+    "scaling_4": 0.893381
   },
   {
     "tree": "",
@@ -6293,16 +6435,19 @@ const tswData = [
   {
     "tree": "",
     "name": "Reality Fracture",
-    "scaling": 0.1430280335,
-    "scaling_1": 0.1430280335,
-    "scaling_5": 0.2838889756,
+    "scaling": 0.19232936323500002,
+    "scaling_1": 0.143028,
+    "scaling_5": 0.283889,
     "note": "",
     "cast_time": 1,
     "cooldown": 10,
     "description": "GTAoE: Affects up to 6 enemies in a 5 metre radius around the targeted point, pulsing every second for 6 seconds. Consumes all Chaos Resources. A GTAoE that deals 11 - 22 magical damage, or 13 - 25 magical damage if the target is Weakened. Damage scales based on the number of resources consumed. This attack generates a high amount of hate.",
     "type": "Active",
     "weapon": "Chaos",
-    "icon": "Reality Fracture.png"
+    "icon": "Reality Fracture.png",
+    "scaling_2": 0.164157,
+    "scaling_3": 0.192329,
+    "scaling_4": 0.234588
   },
   {
     "tree": "",
