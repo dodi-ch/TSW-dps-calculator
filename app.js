@@ -1557,6 +1557,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let bonusDamageWithDebuffs = false;
 
+        let isBonusDamageOnly = false;
+
         
 
         // Check if ability requires specific debuffs
@@ -6401,20 +6403,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
                     }
                     // Trigger calculation after augment import
-                    setTimeout(calculate, 100);
+                    setTimeout(calculate, 300);
                 }, 500); // 500ms delay to allow UI to update
             }
 
             // Show results for abilities only (augments will show their own results)
             if (!augmentsText) {
-                // Only show results if no augments to import
-                if (errors.length > 0) {
-                    showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${errors.join('; ')}`, true);
-                } else {
-                    showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
-                    // Trigger calculation after import
-                    setTimeout(calculate, 100);
-                }
+                // Ensure all dropdowns are properly updated after import
+                setTimeout(() => {
+                    updateAbilityDropdowns();
+                    // Only show results if no augments to import
+                    if (errors.length > 0) {
+                        showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${errors.join('; ')}`, true);
+                    } else {
+                        showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
+                        // Trigger calculation after import
+                        setTimeout(calculate, 200);
+                    }
+                }, 100);
             }
 
         } catch (error) {
