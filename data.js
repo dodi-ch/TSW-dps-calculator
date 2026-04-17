@@ -3002,19 +3002,19 @@ const tswData = [
   {
     "tree": "Runing of the Jagged",
     "name": "Binding Wounds",
+    "description": "Consumes all Blade Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Impaired, it becomes Afflicted with a damage over time effect that deals 7 physical damage every 1 seconds for 3 seconds. This ability generates additional hate.",
     "scaling": 1.6651709842,
     "scaling_1": 1.196215,
+    "scaling_2": 1.430693,
+    "scaling_3": 1.665171,
+    "scaling_4": 2.016888,
     "scaling_5": 2.368605,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Consumes all Blade Resources. A single target attack that deals 91 - 179 physical damage, based on the number of resources consumed. If the target is Impaired, it becomes Afflicted with a damage over time effect that deals 7 physical damage every 1 seconds for 3 seconds. This ability generates additional hate.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Binding Wounds.png",
-    "scaling_2": 1.430693,
-    "scaling_3": 1.665171,
-    "scaling_4": 2.016888
+    "icon": "Binding Wounds.png"
   },
   {
     "tree": "Runing of the Jagged",
@@ -3215,19 +3215,19 @@ const tswData = [
   {
     "tree": "The Cutting Artist",
     "name": "Steel Palace",
+    "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Blade Resources. A PBAoE Frenzy attack that deals 44 -88 physical damage, based on the number of resources consumed. If any affected targets are Afflicted, you gain the Minor Ward effect, which reduces all damage received by 7.5% for 8 seconds.",
     "scaling": 0.8275960245399999,
     "scaling_1": 0.594221,
+    "scaling_2": 0.710909,
+    "scaling_3": 0.827596,
+    "scaling_4": 1.002627,
     "scaling_5": 1.177658,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "PBAoE: Affects up to 6 enemies in a 5 metre radius around you. Consumes all Blade Resources. A PBAoE Frenzy attack that deals 44 -88 physical damage, based on the number of resources consumed. If any affected targets are Afflicted, you gain the Minor Ward effect, which reduces all damage received by 7.5% for 8 seconds.",
     "type": "Active",
     "weapon": "Blade",
-    "icon": "Steel Palace.png",
-    "scaling_2": 0.710909,
-    "scaling_3": 0.827596,
-    "scaling_4": 1.002627
+    "icon": "Steel Palace.png"
   },
   {
     "tree": "The Cutting Artist",
@@ -3304,19 +3304,19 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Hell to Pay",
+    "description": "A hammer blast that deals 65 \u2013 130 damage in a column in front of you. Consumes all hammer resources.",
     "scaling": 0.9754503571,
     "scaling_1": 0.654614,
+    "scaling_2": 0.815032,
+    "scaling_3": 0.97545,
+    "scaling_4": 1.135869,
     "scaling_5": 1.296287,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A hammer blast that deals 65 \u2013 130 damage in a column in front of you. Consumes all hammer resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Hell To Pay.png",
-    "scaling_2": 0.815032,
-    "scaling_3": 0.97545,
-    "scaling_4": 1.135869
+    "icon": "Hell To Pay.png"
   },
   {
     "tree": "Brawn",
@@ -3335,19 +3335,19 @@ const tswData = [
   {
     "tree": "Brawn",
     "name": "Haymaker",
+    "description": "Hammer strike that deals 119 - 236 damage based on number of resources consumed. If the target is impaired deals 137 - 271. Consumes all hammer resources.",
     "scaling": 1.7824099809999998,
     "scaling_1": 1.196215,
+    "scaling_2": 1.489312,
+    "scaling_3": 1.78241,
+    "scaling_4": 2.075507,
     "scaling_5": 2.368605,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "Hammer strike that deals 119 - 236 damage based on number of resources consumed. If the target is impaired deals 137 - 271. Consumes all hammer resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Haymaker.png",
-    "scaling_2": 1.489312,
-    "scaling_3": 1.78241,
-    "scaling_4": 2.075507
+    "icon": "Haymaker.png"
   },
   {
     "tree": "Brawn",
@@ -3506,19 +3506,19 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Molten Steel",
+    "description": "A single target attack that deals 114 \u2013 226 damage based on the number of resources consumed. This attack has a 30% additional chance to critically hit. Deals 15% additional critical damage. Consumes all Hammer Resources.",
     "scaling": 1.7109348939999998,
     "scaling_1": 1.148565,
+    "scaling_2": 1.42975,
+    "scaling_3": 1.710935,
+    "scaling_4": 1.99212,
     "scaling_5": 2.273305,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A single target attack that deals 114 \u2013 226 damage based on the number of resources consumed. This attack has a 30% additional chance to critically hit. Deals 15% additional critical damage. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Molten Steel.png",
-    "scaling_2": 1.42975,
-    "scaling_3": 1.710935,
-    "scaling_4": 1.99212
+    "icon": "Molten Steel.png"
   },
   {
     "tree": "Industrial Action",
@@ -3537,19 +3537,19 @@ const tswData = [
   {
     "tree": "Industrial Action",
     "name": "Bone Breaker",
+    "description": "A single target attack that deals 114 - 226 damage, or 126 - 249 if the target is weakened. Damage scales on resources consumed. Consumes all Hammer Resources.",
     "scaling": 1.881680935,
     "scaling_1": 1.262727,
+    "scaling_2": 1.572204,
+    "scaling_3": 1.881681,
+    "scaling_4": 2.191158,
     "scaling_5": 2.500635,
     "note": "",
     "cast_time": 1,
     "cooldown": 0,
-    "description": "A single target attack that deals 114 - 226 damage, or 126 - 249 if the target is weakened. Damage scales on resources consumed. Consumes all Hammer Resources.",
     "type": "Active",
     "weapon": "Hammer",
-    "icon": "Bone Breaker.png",
-    "scaling_2": 1.572204,
-    "scaling_3": 1.881681,
-    "scaling_4": 2.191158
+    "icon": "Bone Breaker.png"
   },
   {
     "tree": "Industrial Action",

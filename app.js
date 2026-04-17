@@ -1248,11 +1248,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ability || !ability.description) return false;
 
         
-        // Debug Molten Steel classification
-        if (ability.name === "Molten Steel") {
-            console.log(`isBuilderAbility called for Molten Steel - desc: "${ability.description}"`);
-        }
-
         const desc = ability.description.toLowerCase();
 
         
@@ -1495,6 +1490,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create augment selection UI for each ability
     function createAugmentUI() {
+        // Preserve existing augment selections
+        const existingAugments = [];
+        const currentAugmentWrappers = document.querySelectorAll('#augments-container .augment-wrapper');
+        currentAugmentWrappers.forEach((wrapper) => {
+            const augmentSelect = wrapper.querySelector('.augment-select');
+            if (augmentSelect && augmentSelect.value) {
+                const abilityLabel = wrapper.querySelector('.augment-ability-name');
+                if (abilityLabel) {
+                    existingAugments.push({
+                        abilityName: abilityLabel.textContent,
+                        augmentValue: augmentSelect.value
+                    });
+                }
+            }
+        });
+        
         // Clear existing augment selections
         augmentsContainer.innerHTML = '';
         augmentSelects.length = 0;
@@ -1604,6 +1615,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (allAbilitySelects.every(select => !select.value)) {
             augmentsContainer.innerHTML = '<div style="color: var(--text-secondary); font-size: 0.9rem;">Select abilities above to configure augments</div>';
         }
+        
+        // Restore preserved augment selections
+        existingAugments.forEach(existing => {
+            const matchingWrapper = Array.from(document.querySelectorAll('#augments-container .augment-wrapper')).find(wrapper => {
+                const abilityLabel = wrapper.querySelector('.augment-ability-name');
+                return abilityLabel && abilityLabel.textContent === existing.abilityName;
+            });
+            
+            if (matchingWrapper) {
+                const augmentSelect = matchingWrapper.querySelector('.augment-select');
+                if (augmentSelect) {
+                    // Find the option with matching value
+                    const option = Array.from(augmentSelect.options).find(opt => opt.value === existing.augmentValue);
+                    if (option) {
+                        augmentSelect.value = existing.augmentValue;
+                        console.log('DEBUG: Restored augment for', existing.abilityName, ':', existing.augmentValue);
+                    }
+                }
+            }
+        });
     }
 
     // Update augment options without recreating entire UI
@@ -1798,7 +1829,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only apply resource scaling to abilities that can actually scale with different resource amounts
         // This means: "Consumes all X Resources" AND "based on the number of resources consumed"
         const canScaleWithResources = (
-            /Consumes all\s+\w+\s+Resources?/i.test(desc) && 
+            /consumes.*resources?/i.test(desc.replace(/\s+/g, ' ')) && 
             (/based on the number of resources consumed/i.test(desc) ||
              /Damage scales based on the number of resources consumed/i.test(desc))
         );
@@ -2465,11 +2496,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     stats.minResources = minResources;
 
+                    // Copy all scaling properties from the original ability
+                    stats.scaling_1 = ability.scaling_1;
+                    stats.scaling_2 = ability.scaling_2;
+                    stats.scaling_3 = ability.scaling_3;
+                    stats.scaling_4 = ability.scaling_4;
+                    stats.scaling_5 = ability.scaling_5;
+
                     return stats;
 
                 })
                 .filter(Boolean);
         }
+
 
         const actives = collectActivesWithOrder(activeSelects, 0, cp);
 
@@ -2505,14 +2544,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
         
-        // Debug: Check if Molten Steel is in allActives
-        const moltenSteel = allActives.find(a => a.name === "Molten Steel");
-        if (moltenSteel) {
-            console.log("Molten Steel found in allActives:", moltenSteel);
-        } else {
-            console.log("Molten Steel NOT found in allActives");
-            console.log("All actives:", allActives.map(a => a.name));
-        }
 
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
@@ -3059,6 +3090,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isEvaded = effectiveEvadeRating > currentHitRating;
 
             const isGlanced = !isEvaded && enemy.defenseRating > currentHitRating;
+            
 
             let effectiveCritChance = critChance + augmentCritChanceBonus;
             
@@ -3288,21 +3320,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 rawBaseDmg = tetherDamage + detonationBase;
 
             } else {
-                // Recalculate scaling based on minResources setting for accurate damage
-                let scalingToUse = ability.scaling || 0;
+                // Use the pre-calculated scalingToUse from getAbilityStats
+                let scalingToUse = ability.scalingToUse || 0;
                 
-                // For abilities that scale with resources, use minResources setting
-                if (ability.damageScalesWithResources && ability.minResources > 0) {
-                    const resourceKey = `scaling_${ability.minResources}`;
+                // For abilities that scale with resources, use actual consumed resources
+                if (ability.damageScalesWithResources) {
+                    let resourcesForScaling;
+                    
+                    // Use the actual consumed resources passed to performAttack
+                    if (actualConsumedResources > 0) {
+                        resourcesForScaling = actualConsumedResources;
+                    } else if (ability.minResources && ability.minResources > 0) {
+                        resourcesForScaling = ability.minResources;
+                    } else {
+                        resourcesForScaling = 5; // Default to 5 resources
+                    }
+                    
+                    const resourceKey = `scaling_${resourcesForScaling}`;
+                    const originalScalingToUse = scalingToUse; // Store original value for comparison
+                    
                     if (ability[resourceKey] !== undefined) {
                         scalingToUse = ability[resourceKey];
                     } else if (ability.scaling_1 > 0 && ability.scaling_5 > 0) {
                         // Fallback to linear interpolation
-                        scalingToUse = ability.scaling_1 + ((ability.minResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+                        scalingToUse = ability.scaling_1 + ((resourcesForScaling - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
                     }
+                    
                 }
                 
                 rawBaseDmg = scalingToUse * cp;
+                
 
             }
 
@@ -3741,11 +3788,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? ability.name.replace(" (Effect)", "")
                         : (ability.originalName || ability.name);
                     
-                    // Debug Molten Steel
-                    if (ability.name === "Molten Steel") {
-                        console.log(`Adding Molten Steel to statsBreakdown - damage: ${finalDamage}, casts: 1`);
-                    }
-                    
                     
                     let abilityIndex = -1;
                     for (let i = 0; i < allActives.length; i++) {
@@ -4165,16 +4207,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            for (let i = 0; i < allActives.length; i++) {
+            // Create a copy of allActives to avoid modification during iteration
+            const allActivesCopy = [...allActives];
+            const activeCooldownsCopy = [...activeCooldowns];
+            
+            for (let i = 0; i < allActivesCopy.length; i++) {
+                const action = allActivesCopy[i];
 
-                const action = allActives[i];
-
-                // Debug: Log all abilities being processed
-                console.log(`Processing ability: ${action.name}`);
-
+                
                 if (activeCooldowns[i] > 0) {
 
-                    console.log(`Skipping ${action.name} - on cooldown`);
                     continue;
 
                 }
@@ -4183,7 +4225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // We're still casting, skip to next ability
                     if (action.name === "Molten Steel") {
-                        console.log(`Skipping Molten Steel - still casting (${time} < ${currentCastEndTime})`);
+                        // Skipping Molten Steel - still casting
                     }
                     continue;
 
@@ -4225,35 +4267,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const reqResources = action.resourceRequirement || action.resourceConsumption || 5;
                 
-                // For abilities that consume all resources, the consumption amount is different from the requirement
+                // For abilities that consume all resources, determine the actual consume amount
                 let consumeAmount = reqResources;
                 if (action.resourceConsumption > 0 && action.resourceRequirement !== action.resourceConsumption) {
-                    consumeAmount = action.resourceConsumption;
-                }
-                
-                // For "consume all resources" abilities, use minResources setting instead of consuming all
-                if (action.resourceConsumption > 0 && action.resourceRequirement !== action.resourceConsumption) {
-                    // Use minResources setting if available, otherwise consume what's available
+                    // This is a "consume all resources" ability
                     if (action.minResources && action.minResources > 0) {
+                        // Use the minimum resources setting
                         consumeAmount = action.minResources;
                     } else {
+                        // Consume what's actually available (limited by current resources)
                         if (isPrim) {
-                            consumeAmount = Math.min(consumeAmount, primResources);
+                            consumeAmount = Math.min(action.resourceConsumption, primResources);
                         }
                         if (isSec) {
-                            consumeAmount = Math.min(consumeAmount, secResources);
+                            consumeAmount = Math.min(action.resourceConsumption, secResources);
                         }
                     }
                 }
-
+                
 
 
                 // Abilities can only be cast from equipped weapons (unless primary is "All")
 
                 if (!isValidWeapon) {
                     if (action.name === "Molten Steel") {
-                        console.log(`Molten Steel filtered out - invalid weapon. isPrim: ${isPrim}, isSec: ${isSec}, isAux: ${isAux}, primWeapon: ${primWeapon}`);
-                    }
+                            // Molten Steel filtered out - invalid weapon
+                        }
                     continue;
 
                 }
@@ -4262,7 +4301,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (action.isConsumer) {
                     if (action.name === "Molten Steel") {
-                        console.log(`Molten Steel resource check: reqResources=${reqResources}, minResources=${action.minResources}, isPrim=${isPrim}, primResources=${primResources}`);
+                        // Molten Steel resource check
                     }
                     // Use the higher of inherent requirement and user-set min resources
                     const minRes = action.minResources || 0;
@@ -4270,16 +4309,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isPrim && primResources < finalMinRes) {
                         if (action.name === "Molten Steel") {
-                            console.log(`Molten Steel cannot cast: primResources ${primResources} < finalMinRes ${finalMinRes}`);
+                            // Molten Steel cannot cast: insufficient resources
                         }
                         canCast = false;
 
                     }
 
                     if (isSec && secResources < finalMinRes) {
-                        if (action.name === "Molten Steel") {
-                            console.log(`Molten Steel cannot cast: secResources ${secResources} < finalMinRes ${finalMinRes}`);
-                        }
                         canCast = false;
 
                     }
@@ -4287,9 +4323,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 if (!canCast) {
-                    if (action.name === "Molten Steel") {
-                        console.log(`Molten Steel filtered out - cannot cast. isConsumer: ${action.isConsumer}, primResources: ${primResources}, secResources: ${secResources}`);
-                    }
                     continue;
                 }
 
@@ -4297,11 +4330,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (action.orderPriority === 1 && !action.isConsumer) {
                     // Check if any other ability is available to cast
                     let otherAbilityAvailable = false;
-                    for (let j = 0; j < allActives.length; j++) {
+                    for (let j = 0; j < allActivesCopy.length; j++) {
                         if (j === i) continue; // Skip self
                         
-                        const otherAction = allActives[j];
-                        if (activeCooldowns[j] > 0) continue; // On cooldown
+                        const otherAction = allActivesCopy[j];
+                        if (activeCooldownsCopy[j] > 0) continue; // On cooldown
                         
                         // Check basic availability for other abilities
                         const otherIsPrim = otherAction.weapon === primWeapon;
@@ -4389,7 +4422,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (!canCastWithDebuffs) {
                         if (action.name === "Molten Steel") {
-                            console.log(`Molten Steel filtered out - debuff requirements not met. requiredDebuffs: ${action.requiredDebuffs}`);
+                            // Molten Steel filtered out - debuff requirements not met
                         }
                         // Skip this ability if debuff requirements aren't met
 
@@ -4431,7 +4464,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (wouldAffectPlayer(action)) {
 
-                        console.log(`Skipping ${action.name} - would affect player`);
                         continue; // Skip abilities that would affect player
 
                     }
@@ -4442,7 +4474,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (wouldAffectDronesOrTurrets(action)) {
 
-                        console.log(`Skipping ${action.name} - would affect drones/turrets`);
                         continue; // Skip abilities that would affect drones/turrets
 
                     }
@@ -4630,15 +4661,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Build resources for all equipped weapons
                                 if (primWeapon !== "All") {
                                     primResources = Math.min(5, primResources + resourcesToBuild);
-                                    if (action.name === "Ignite") {
-                                        console.log(`${action.name} built ${resourcesToBuild} primary resource(s) for ALL weapons: primResources now ${primResources}`);
-                                    }
                                 }
                                 if (secWeapon !== "All") {
                                     secResources = Math.min(5, secResources + resourcesToBuild);
-                                    if (action.name === "Ignite") {
-                                        console.log(`${action.name} built ${resourcesToBuild} secondary resource(s) for ALL weapons: secResources now ${secResources}`);
-                                    }
                                 }
                                 if (auxWeapon !== "All") {
                                     auxResources = Math.min(5, auxResources + resourcesToBuild);
@@ -4660,7 +4685,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Effects
 
-                    // Debug: Check if this is a summoning ability
                     const isSummoning = action.name.toLowerCase().includes("drone") || 
                                        action.name.toLowerCase().includes("turret");
                     
@@ -6355,6 +6379,481 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
+
+    // Abilities Import Functionality
+    const buildImportTextarea = document.getElementById('build-import-textarea');
+    const importBuildBtn = document.getElementById('import-build-btn');
+    const exportBuildBtn = document.getElementById('export-build-btn');
+    const clearBuildBtn = document.getElementById('clear-build-btn');
+    const importStatus = document.getElementById('import-status');
+
+    function showImportStatus(message, isError = false) {
+        if (importStatus) {
+            importStatus.textContent = message;
+            importStatus.style.color = isError ? '#ff6b6b' : '#51cf66';
+            importStatus.style.display = 'block';
+            setTimeout(() => {
+                importStatus.style.display = 'none';
+            }, 5000);
+        }
+    }
+
+    function importBuild() {
+        try {
+            const buildText = (buildImportTextarea?.value || '').trim();
+            
+            if (!buildText) {
+                showImportStatus('Please paste build data in the textarea', true);
+                return;
+            }
+
+            // Ensure ability dropdowns are populated before importing
+            updateAbilityDropdowns();
+
+            let importedActives = 0;
+            let importedPassives = 0;
+            let importedAugments = 0;
+            let errors = [];
+
+            // Parse the unified build format
+            // Split on === but handle the format correctly
+            const parts = buildText.split('===').filter(part => part.trim());
+            let currentSection = '';
+            let activesText = '';
+            let passivesText = '';
+            let augmentsText = '';
+
+            parts.forEach(part => {
+                const lines = part.trim().split('\n').filter(line => line.trim());
+                if (lines.length === 0) return;
+                
+                const firstLine = lines[0].trim().toLowerCase();
+                
+                if (firstLine.includes('active abilities')) {
+                    currentSection = 'actives';
+                    // Content starts from line 1 (skip the header)
+                    activesText = lines.slice(1).join('\n').trim();
+                } else if (firstLine.includes('passive abilities')) {
+                    currentSection = 'passives';
+                    // Content starts from line 1 (skip the header)
+                    passivesText = lines.slice(1).join('\n').trim();
+                } else if (firstLine.includes('augments')) {
+                    currentSection = 'augments';
+                    // Content starts from line 1 (skip the header)
+                    augmentsText = lines.slice(1).join('\n').trim();
+                } else {
+                    // This is content for the current section
+                    if (currentSection === 'actives') {
+                        activesText += (activesText ? '\n' : '') + lines.join('\n');
+                    } else if (currentSection === 'passives') {
+                        passivesText += (passivesText ? '\n' : '') + lines.join('\n');
+                    } else if (currentSection === 'augments') {
+                        augmentsText += (augmentsText ? '\n' : '') + lines.join('\n');
+                    }
+                }
+            });
+
+            // Helper function to find ability by name
+            function findAbilityByName(select, abilityName) {
+                const option = Array.from(select.options).find(opt => 
+                    opt.textContent.toLowerCase().includes(abilityName.toLowerCase())
+                );
+                
+                // If exact match not found, try more flexible matching
+                if (!option) {
+                    const fallbackOption = Array.from(select.options).find(opt => {
+                        const optText = opt.textContent.toLowerCase();
+                        const searchText = abilityName.toLowerCase();
+                        return optText.includes(searchText) || searchText.includes(optText);
+                    });
+                    return fallbackOption;
+                }
+                
+                return option;
+            }
+
+            // Import active abilities
+            if (activesText) {
+                const activeLines = activesText.split('\n').filter(line => line.trim());
+                const activeSelectors = document.querySelectorAll('#active-abilities-container .slot-wrapper');
+                const eliteActiveSelect = document.querySelector('#elite-active-1');
+                
+                
+                activeLines.forEach((line, index) => {
+                    const parts = line.split('|').map(p => p.trim());
+                    const abilityName = parts[0];
+                    const priority = parts[1] || '';
+                    const minResources = parts[2] || '';
+
+                    let selector = null;
+                    let select = null;
+                    let priorityInput = null;
+                    let minResInput = null;
+                    let isElite = false;
+
+                    // First try to find in regular active slots
+                    if (index < activeSelectors.length) {
+                        selector = activeSelectors[index];
+                        select = selector.querySelector('select');
+                        priorityInput = selector.querySelector('.slot-order-input');
+                        minResInput = selector.querySelector('.slot-min-resources-input');
+                    }
+
+                    // If not found in regular slots or ability not found there, try elite slot
+                    if (!select || !findAbilityByName(select, abilityName)) {
+                        // Try to find in elite active slot
+                        if (eliteActiveSelect && findAbilityByName(eliteActiveSelect, abilityName)) {
+                            select = eliteActiveSelect;
+                            // For elite active, we need to find the priority/min resources inputs differently
+                            const eliteContainer = eliteActiveSelect.closest('.slot-wrapper') || eliteActiveSelect.parentElement;
+                            if (eliteContainer) {
+                                priorityInput = eliteContainer.querySelector('.slot-order-input');
+                                minResInput = eliteContainer.querySelector('.slot-min-resources-input');
+                            }
+                            isElite = true;
+                        }
+                    }
+
+                    if (select) {
+                        const option = findAbilityByName(select, abilityName);
+                        
+                        if (option) {
+                            select.value = option.value;
+                            // Trigger change event to update UI
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                            importedActives++;
+                            
+                            if (priorityInput && priority) {
+                                priorityInput.value = priority;
+                                priorityInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            if (minResInput && minResources) {
+                                minResInput.value = minResources;
+                                minResInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        } else {
+                            // Check if this is a known non-existent ability and provide a helpful message
+                            if (abilityName.toLowerCase().includes('power line') && abilityName.toLowerCase().includes('voltaic')) {
+                                errors.push(`Active ability not found: ${abilityName}. This ability may not exist in the current game version or weapon setup.`);
+                            } else {
+                                errors.push(`Active ability not found: ${abilityName}`);
+                            }
+                        }
+                    } else {
+                        errors.push(`Active ability not found: ${abilityName}. No suitable slot available.`);
+                    }
+                });
+            }
+
+            // Import passive abilities
+            if (passivesText) {
+                const passiveLines = passivesText.split('\n').filter(line => line.trim());
+                
+                    // Check if we have any elite passives (look for abilities that contain "Elite" in their type)
+                const eliteSelect = document.querySelector('#elite-passive-container select');
+                const normalSelectors = document.querySelectorAll('#normal-passives-container .slot-wrapper');
+                
+                // Try to find if any passive is an elite passive
+                let elitePassiveFound = false;
+                for (let i = 0; i < passiveLines.length; i++) {
+                    const passiveName = passiveLines[i].trim();
+                    if (eliteSelect) {
+                        const option = findAbilityByName(eliteSelect, passiveName);
+                        if (option) {
+                            // This is an elite passive
+                            eliteSelect.value = option.value;
+                            eliteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            importedPassives++;
+                            elitePassiveFound = true;
+                            
+                            // Import remaining passives as normal passives (skip the elite one)
+                            const remainingPassives = passiveLines.slice(i + 1);
+                            remainingPassives.forEach((passiveName, normalIndex) => {
+                                if (normalIndex < normalSelectors.length) {
+                                    const selector = normalSelectors[normalIndex];
+                                    const select = selector.querySelector('select');
+                                    
+                                    if (select) {
+                                        const option = findAbilityByName(select, passiveName);
+                                        if (option) {
+                                            select.value = option.value;
+                                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                                            importedPassives++;
+                                        } else {
+                                            errors.push(`Passive not found: ${passiveName}`);
+                                        }
+                                    }
+                                } else {
+                                    errors.push(`Too many normal passives. Only ${normalSelectors.length} slots available.`);
+                                }
+                            });
+                            break; // Done processing passives
+                        }
+                    }
+                }
+                
+                // If no elite passive was found, treat all passives as normal passives
+                if (!elitePassiveFound) {
+                    passiveLines.forEach((passiveName, index) => {
+                        if (index < normalSelectors.length) {
+                            const selector = normalSelectors[index];
+                            const select = selector.querySelector('select');
+                            
+                            if (select) {
+                                const option = findAbilityByName(select, passiveName);
+                                if (option) {
+                                    select.value = option.value;
+                                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                                    importedPassives++;
+                                } else {
+                                    errors.push(`Passive not found: ${passiveName}`);
+                                }
+                            }
+                        } else {
+                            errors.push(`Too many normal passives. Only ${normalSelectors.length} slots available.`);
+                        }
+                    });
+                }
+            }
+
+            // Import augments - delay to allow augment UI to be created after ability imports
+            if (augmentsText) {
+                // Wait a bit for the augment UI to be created from the ability change events
+                setTimeout(() => {
+                    const augmentLines = augmentsText.split('\n').filter(line => line.trim());
+                    let augmentImportErrors = [];
+                    
+                    augmentLines.forEach((line) => {
+                        const parts = line.split('|').map(p => p.trim());
+                        if (parts.length !== 2) {
+                            augmentImportErrors.push(`Invalid augment format: ${line}. Use: Ability Name|Augment Name`);
+                            return;
+                        }
+
+                        const [abilityName, augmentName] = parts;
+                        
+                        // Find the augment wrapper by ability name
+                        const augmentWrappers = Array.from(document.querySelectorAll('#augments-container .augment-wrapper'));
+                        const augmentWrapper = augmentWrappers.find(wrapper => {
+                            const label = wrapper.querySelector('.augment-ability-name');
+                            return label && label.textContent.toLowerCase().includes(abilityName.toLowerCase());
+                        });
+
+                        if (!augmentWrapper) {
+                            augmentImportErrors.push(`Ability not found for augment: ${abilityName}`);
+                            return;
+                        }
+
+                        const augmentSelect = augmentWrapper.querySelector('.augment-select');
+                        if (augmentSelect) {
+                            // Find the augment option that matches the augment name
+                            const augmentOption = findAbilityByName(augmentSelect, augmentName);
+                            
+                            if (augmentOption) {
+                                augmentSelect.value = augmentOption.value;
+                                // Trigger change event to update UI
+                                augmentSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                importedAugments++;
+                            } else {
+                                augmentImportErrors.push(`Augment not found: ${augmentName}`);
+                            }
+                        }
+                    });
+
+                    // Update the status message with augment import results
+                    if (augmentImportErrors.length > 0) {
+                        const allErrors = [...errors, ...augmentImportErrors];
+                        showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${allErrors.join('; ')}`, true);
+                    } else {
+                        showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
+                    }
+                    // Trigger calculation after augment import
+                    setTimeout(calculate, 100);
+                }, 500); // 500ms delay to allow UI to update
+            }
+
+            // Show results for abilities only (augments will show their own results)
+            if (!augmentsText) {
+                // Only show results if no augments to import
+                if (errors.length > 0) {
+                    showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${errors.join('; ')}`, true);
+                } else {
+                    showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
+                    // Trigger calculation after import
+                    setTimeout(calculate, 100);
+                }
+            }
+
+        } catch (error) {
+            showImportStatus(`Import failed: ${error.message}`, true);
+        }
+    }
+
+    function clearImportFields() {
+        if (buildImportTextarea) buildImportTextarea.value = '';
+        if (importStatus) importStatus.style.display = 'none';
+    }
+
+    function exportAbilities() {
+        try {
+            let exportData = {
+                actives: [],
+                passives: [],
+                augments: []
+            };
+
+            // Ensure ability dropdowns are populated
+            updateAbilityDropdowns();
+            
+            // Capture augment selections immediately to avoid timing issues
+            console.log('DEBUG: Export called, capturing current augment state');
+            
+            // Capture augment state right after dropdown update
+            const augmentWrappersImmediate = document.querySelectorAll('#augments-container .augment-wrapper');
+            augmentWrappersImmediate.forEach((wrapper, index) => {
+                const augmentSelect = wrapper.querySelector('.augment-select');
+                if (augmentSelect) {
+                    console.log('DEBUG: Immediate augment', index, 'selectedIndex:', augmentSelect.selectedIndex, 'value:', augmentSelect.value);
+                }
+            });
+
+            // Export active abilities
+            const activeSelectors = document.querySelectorAll('#active-abilities-container .slot-wrapper');
+            
+            activeSelectors.forEach((selector, index) => {
+                const select = selector.querySelector('select');
+                const priorityInput = selector.querySelector('.slot-order-input');
+                const minResInput = selector.querySelector('.slot-min-resources-input');
+                
+                if (select && select.value) {
+                    const abilityIndex = tswData[select.value];
+                    if (abilityIndex) {
+                        let line = abilityIndex.name;
+                        const priority = priorityInput?.value;
+                        const minRes = minResInput?.value;
+                        
+                        if (priority || minRes) {
+                            line += `|${priority || ''}|${minRes || ''}`;
+                        }
+                        exportData.actives.push(line);
+                    }
+                }
+            });
+
+            // Export elite active
+            const eliteActiveSelect = document.querySelector('#elite-active-container select');
+            if (eliteActiveSelect && eliteActiveSelect.value) {
+                const abilityIndex = tswData[eliteActiveSelect.value];
+                if (abilityIndex) {
+                    exportData.actives.push(abilityIndex.name);
+                }
+            }
+
+            // Export aux active
+            const auxActiveSelect = document.querySelector('#aux-ability-container select');
+            if (auxActiveSelect && auxActiveSelect.value) {
+                const abilityIndex = tswData[auxActiveSelect.value];
+                if (abilityIndex) {
+                    exportData.actives.push(abilityIndex.name);
+                }
+            }
+
+            // Export passives
+            const elitePassiveSelect = document.querySelector('#elite-passive-container select');
+            if (elitePassiveSelect && elitePassiveSelect.value) {
+                const abilityIndex = tswData[elitePassiveSelect.value];
+                if (abilityIndex) {
+                    exportData.passives.push(abilityIndex.name);
+                }
+            }
+
+            const normalPassiveSelects = document.querySelectorAll('#normal-passives-container select');
+            normalPassiveSelects.forEach((select) => {
+                if (select && select.value) {
+                    const abilityIndex = tswData[select.value];
+                    if (abilityIndex) {
+                        exportData.passives.push(abilityIndex.name);
+                    }
+                }
+            });
+
+            // Export augments
+            const augmentWrappers = document.querySelectorAll('#augments-container .augment-wrapper');
+            console.log('DEBUG: Found augment wrappers for export:', augmentWrappers.length);
+            
+            augmentWrappers.forEach((wrapper, index) => {
+                const abilityLabel = wrapper.querySelector('.augment-ability-name');
+                const augmentSelect = wrapper.querySelector('.augment-select');
+                
+                console.log('DEBUG: Wrapper', index, 'abilityLabel:', !!abilityLabel, 'augmentSelect:', !!augmentSelect, 'augmentSelect.value:', augmentSelect?.value);
+                console.log('DEBUG: Augment select options count:', augmentSelect?.options?.length || 0);
+                if (augmentSelect?.options?.length > 0) {
+                    for (let i = 0; i < Math.min(3, augmentSelect.options.length); i++) {
+                        console.log('DEBUG: Augment option', i, ':', augmentSelect.options[i].textContent, 'value:', augmentSelect.options[i].value);
+                    }
+                }
+                
+                if (abilityLabel && augmentSelect && augmentSelect.selectedIndex >= 0) {
+                    const augmentOption = augmentSelect.options[augmentSelect.selectedIndex];
+                    console.log('DEBUG: augmentOption:', !!augmentOption, 'selectedIndex:', augmentSelect.selectedIndex, 'value:', augmentOption?.value, 'text:', augmentOption?.textContent);
+                    
+                    if (augmentOption && augmentOption.value) {
+                        // Extract just the augment name (before the " - " part) for cleaner export
+                        const fullText = augmentOption.textContent;
+                        const augmentName = fullText.split(' - ')[0];
+                        exportData.augments.push(`${abilityLabel.textContent}|${augmentName}`);
+                        console.log('DEBUG: Added augment:', abilityLabel.textContent, '|', augmentName);
+                    }
+                }
+            });
+            
+            console.log('DEBUG: Total augments exported:', exportData.augments.length);
+
+            // Format export text
+            let exportText = '';
+            
+            if (exportData.actives.length > 0) {
+                exportText += '=== ACTIVE ABILITIES ===\n';
+                exportText += exportData.actives.join('\n') + '\n\n';
+            }
+            
+            if (exportData.passives.length > 0) {
+                exportText += '=== PASSIVE ABILITIES ===\n';
+                exportText += exportData.passives.join('\n') + '\n\n';
+            }
+            
+            if (exportData.augments.length > 0) {
+                exportText += '=== AUGMENTS ===\n';
+                exportText += exportData.augments.join('\n') + '\n\n';
+            }
+
+            // Copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(exportText).then(() => {
+                    showImportStatus(`Build exported to clipboard! (${exportData.actives.length} actives, ${exportData.passives.length} passives, ${exportData.augments.length} augments)`);
+                }).catch(() => {
+                    prompt('Copy the build export below:', exportText);
+                });
+            } else {
+                prompt('Copy the build export below:', exportText);
+            }
+
+        } catch (error) {
+            showImportStatus(`Export failed: ${error.message}`, true);
+        }
+    }
+
+    if (importBuildBtn) {
+        importBuildBtn.addEventListener('click', importBuild);
+    }
+
+    if (exportBuildBtn) {
+        exportBuildBtn.addEventListener('click', exportAbilities);
+    }
+
+    if (clearBuildBtn) {
+        clearBuildBtn.addEventListener('click', clearImportFields);
+    }
 
     // Init
 
