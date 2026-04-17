@@ -1277,13 +1277,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let scalingToUse = ability.scaling || 0;
 
-        // Only apply resource scaling to abilities that can actually scale with different resource amounts
-        // This means: "Consumes all X Resources" AND "based on the number of resources consumed"
-        const canScaleWithResources = (
-            /consumes.*resources?/i.test(desc.replace(/\s+/g, ' ')) && 
-            (/based on the number of resources consumed/i.test(desc) ||
-             /Damage scales based on the number of resources consumed/i.test(desc))
-        );
+        // Refined resource scaling detection - only true variable scaling abilities
+        // Must satisfy ALL criteria:
+        // 1. Consume "all resources" (not fixed amounts)
+        // 2. Have scaling_1 and scaling_5 data with different values
+        // 3. Explicitly mention scaling with resources OR have damage ranges
+        const consumesAllResources = /consumes all.*resources?/i.test(desc.replace(/\s+/g, ' '));
+        const mentionsScaling = (/based on the number of resources consumed/i.test(desc) ||
+                               /Damage scales based on the number of resources consumed/i.test(desc));
+        const hasVariableScaling = ability.scaling_1 > 0 && ability.scaling_5 > 0 && ability.scaling_1 !== ability.scaling_5;
+        const hasDamageRange = /\d+\s*-\s*\d+/.test(desc);
+        
+        // Only apply to abilities that truly consume variable amounts of resources
+        const canScaleWithResources = consumesAllResources && hasVariableScaling && (mentionsScaling || hasDamageRange);
 
         // Check for enhanced resource scaling data, but only apply to abilities that can scale
         if (ability.scaling_5 > 0 && ability.scaling_1 > 0 && canScaleWithResources) {
@@ -1563,24 +1569,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
 
-        // Only require weakened debuff for abilities that actually need it to cast
-        // Skip abilities that mention weakened for bonus damage only (not as a requirement)
-        const isBonusDamageOnly = desc.includes("damage to targets that are Weakened") || 
-                                 desc.includes("deals more damage if") ||
-                                 desc.includes("bonus damage if");
+        // Enhanced conditional damage detection
+        // Check for various patterns that indicate bonus damage with specific debuffs
         
-        if (desc.includes("if the target is Weakened") && !isBonusDamageOnly) {
-            requiredDebuffs.push("weakened");
-            bonusDamageWithDebuffs = true;
-        } else if (desc.includes("if the target is Weakened") && isBonusDamageOnly) {
+        // Pattern 1: "or X damage if target is [debuff]"
+        const conditionalDamagePattern = /or\s+\d+\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+the\s+target\s+is\s+(\w+)/i;
+        const conditionalMatch = desc.match(conditionalDamagePattern);
+        
+        if (conditionalMatch) {
+            const debuffType = conditionalMatch[1].toLowerCase();
+            if (["weakened", "hindered", "afflicted", "impaired"].includes(debuffType)) {
+                requiredDebuffs.push(debuffType);
+                bonusDamageWithDebuffs = true;
+            }
+        }
+        
+        // Pattern 2: "X damage, or Y damage if target is [debuff]"
+        const dualDamagePattern = /\d+\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage,\s*or\s+\d+\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+the\s+target\s+is\s+(\w+)/i;
+        const dualMatch = desc.match(dualDamagePattern);
+        
+        if (dualMatch) {
+            const debuffType = dualMatch[1].toLowerCase();
+            if (["weakened", "hindered", "afflicted", "impaired"].includes(debuffType)) {
+                requiredDebuffs.push(debuffType);
+                bonusDamageWithDebuffs = true;
+            }
+        }
+        
+        // Pattern 3: "or X damage to [debuff] targets"
+        const bonusToDebuffPattern = /or\s+\d+\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+to\s+(\w+)\s+targets/i;
+        const bonusMatch = desc.match(bonusToDebuffPattern);
+        
+        if (bonusMatch) {
+            const debuffType = bonusMatch[1].toLowerCase();
+            if (["weakened", "hindered", "afflicted", "impaired"].includes(debuffType)) {
+                requiredDebuffs.push(debuffType);
+                bonusDamageWithDebuffs = true;
+            }
+        }
+        
+        // Pattern 4: Direct conditional phrases
+        if (desc.includes("if the target is Weakened")) {
+            if (!requiredDebuffs.includes("weakened")) {
+                requiredDebuffs.push("weakened");
+                bonusDamageWithDebuffs = true;
+            }
         }
 
         if (desc.includes("if the target is Hindered")) {
-
-            requiredDebuffs.push("hindered");
-
-            bonusDamageWithDebuffs = true;
-
+            if (!requiredDebuffs.includes("hindered")) {
+                requiredDebuffs.push("hindered");
+                bonusDamageWithDebuffs = true;
+            }
         }
 
         if (desc.includes("if the target is Impaired")) {
@@ -2803,9 +2843,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            // Signet % bonuses: apply global, subtype (e.g. Strike +4.5%) and weapon-type (e.g. Blade +3%)
+            // Signet % bonuses: apply global, subtype (e.g. Strike +4.5%), weapon-type (e.g. Blade +3%), and affliction damage
 
-            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0 };
+            const sBonus = window._signetBonuses || { subtype: {}, weapon: {}, critPowerPct: 0, globalDmgPct: 0, afflictionDmgPct: 0 };
 
             let signetMult = 1.0;
 
@@ -2825,6 +2865,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 signetMult += sBonus.weapon[ability.weapon] / 100;
 
+            }
+
+            // Apply affliction damage signet bonus for abilities that apply afflicted debuff
+            if (sBonus.afflictionDmgPct && ability.appliedDebuffs && ability.appliedDebuffs.includes('afflicted')) {
+                signetMult += sBonus.afflictionDmgPct / 100;
             }
 
 
@@ -2970,12 +3015,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (allDebuffsActive) {
 
-                    // Extract bonus damage from description (this is a simplified approach)
-
-                    // In a full implementation, we'd parse the exact bonus values
-
-                    debuffDamageMult = 1.2; // 20% bonus as an example
-
+                    // Parse conditional damage from description
+                    // Look for patterns like "or 56 damage if target is Hindered" or "or 137 damage if 5 resources"
+                    const desc = ability.description || '';
+                    
+                    // Pattern 1: "or X damage if [condition]"
+                    const conditionalMatch = desc.match(/or\s+(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+(.+?)(?:\.|$)/i);
+                    
+                    if (conditionalMatch) {
+                        const bonusDamage = parseFloat(conditionalMatch[1]);
+                        const baseDamage = scalingToUse * cp;
+                        
+                        // Calculate the multiplier needed to achieve the bonus damage
+                        if (baseDamage > 0) {
+                            debuffDamageMult = 1 + (bonusDamage / baseDamage);
+                        }
+                    } else {
+                        // Pattern 2: "X damage, or Y damage if [condition]" 
+                        const dualDamageMatch = desc.match(/(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage,\s*or\s+(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+(.+?)(?:\.|$)/i);
+                        
+                        if (dualDamageMatch) {
+                            const baseDamageDesc = parseFloat(dualDamageMatch[1]);
+                            const bonusDamageDesc = parseFloat(dualDamageMatch[2]);
+                            const baseDamage = scalingToUse * cp;
+                            
+                            // Calculate multiplier based on the ratio of bonus to base damage from description
+                            if (baseDamageDesc > 0 && baseDamage > 0) {
+                                const damageRatio = bonusDamageDesc / baseDamageDesc;
+                                debuffDamageMult = 1 + (damageRatio - 1); // Apply the same ratio to actual damage
+                            }
+                        }
+                    }
                 }
 
             }
@@ -5555,6 +5625,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Signet of Equilibrium: enables healing crit buff functionality
 
                             signetBonuses.equilibrium = true;
+
+                            break;
+
+                        case 'affliction-dmg-pct':
+
+                            // Corruption signet: increases affliction damage
+
+                            signetBonuses.afflictionDmgPct += bonus;
 
                             break;
 
