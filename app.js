@@ -127,37 +127,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Elements
+    // Elements - consolidated queries
+    const elements = {
+        cpInput: document.getElementById('combat-power'),
+        attackRatingInput: document.getElementById('attack-rating'),
+        weaponPowerInput: document.getElementById('weapon-power'),
+        hitRatingInput: document.getElementById('hit-rating'),
+        critChanceInput: document.getElementById('crit-chance'),
+        critPowerInput: document.getElementById('crit-power'),
+        penRatingInput: document.getElementById('pen-rating'),
+        penChanceInput: document.getElementById('pen-chance'),
+        targetEnemySelect: document.getElementById('target-enemy'),
+        enemyStatsDisplay: document.getElementById('enemy-stats-display'),
+        weaponSelect: document.getElementById('weapon-type'),
+        secondaryWeaponSelect: document.getElementById('secondary-weapon-type'),
+        auxWeaponSelect: document.getElementById('auxiliary-weapon-type'),
+        simTimeInput: document.getElementById('simulation-time')
+    };
 
-    const cpInput = document.getElementById('combat-power');
-
-    const attackRatingInput = document.getElementById('attack-rating');
-
-    const weaponPowerInput = document.getElementById('weapon-power');
-
-    const hitRatingInput = document.getElementById('hit-rating');
-
-    const critChanceInput = document.getElementById('crit-chance');
-
-    const critPowerInput = document.getElementById('crit-power');
-
-    const penRatingInput = document.getElementById('pen-rating');
-
-    const penChanceInput = document.getElementById('pen-chance');
-
-    const targetEnemySelect = document.getElementById('target-enemy');
-
-    const enemyStatsDisplay = document.getElementById('enemy-stats-display');
-
-
-
-    const weaponSelect = document.getElementById('weapon-type');
-
-    const secondaryWeaponSelect = document.getElementById('secondary-weapon-type');
-
-    const auxWeaponSelect = document.getElementById('auxiliary-weapon-type');
-
-    const simTimeInput = document.getElementById('simulation-time');
+    // Destructure for easier access
+    const { cpInput, attackRatingInput, weaponPowerInput, hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput, targetEnemySelect, enemyStatsDisplay, weaponSelect, secondaryWeaponSelect, auxWeaponSelect, simTimeInput } = elements;
 
 
 
@@ -169,10 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+    // More elements
     const resTotalDps = document.getElementById('res-total-dps');
-
     const importBtn = document.getElementById('import-btn');
-
     const slotBreakdownContainer = document.getElementById('slot-breakdown-container');
 
 
@@ -400,708 +388,192 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Initialize all the UI elements
-
     function initUI() {
-
-        function createOrderInput(select, defaultOrder) {
-
-            const input = document.createElement('input');
-
-            input.type = 'number';
-
-            input.min = '1';
-
-            input.max = '10';
-
-            input.step = '1';
-
-            input.className = 'slot-order-input';
-
-            input.value = String(defaultOrder);
-
-            input.placeholder = '1';
-
-            input.title = 'Priority: 1 = builder (casts first), 2+ = consumers';
-
-            select.dataset.order = String(defaultOrder);
-
-            input.addEventListener('input', () => {
-
-                const val = parseFloat(input.value);
-
-                if (!isNaN(val) && val > 0) {
-
-                    select.dataset.order = String(val);
-
-                    calculate();
-
-                }
-
-            });
-
-            return input;
-
-        }
-
+        // ========== UI CREATION HELPERS ==========
         
-
-        function createMinResourcesInput(select, defaultMin) {
-
+        // Creates standardized input elements with common properties
+        function createInput(type, className, value, placeholder, min, max, step, title) {
             const input = document.createElement('input');
-
-            input.type = 'number';
-
-            input.min = '0';
-
-            input.max = '5';
-
-            input.step = '1';
-
-            input.className = 'slot-min-resources-input';
-
-            input.value = String(defaultMin);
-
-            input.placeholder = '0';
-
-            input.title = 'Min Resources: Ability only fires when you have at least this many resources built';
-
-            select.dataset.minResources = String(defaultMin);
-
-            input.addEventListener('input', () => {
-
-                const val = parseInt(input.value);
-
-                if (!isNaN(val) && val >= 0 && val <= 5) {
-
-                    select.dataset.minResources = String(val);
-
-                    calculate();
-
-                }
-
-            });
-
+            input.type = type;
+            input.className = className;
+            input.value = String(value);
+            input.placeholder = placeholder;
+            input.min = min;
+            input.max = max;
+            input.step = step;
+            input.title = title;
             return input;
-
         }
 
-        // Active Abilities (6 normal slots)
+        // Creates priority order input for ability slots
+        function createOrderInput(select, defaultOrder) {
+            const input = createInput('number', 'slot-order-input', defaultOrder, '1', '1', '10', '1', 
+                'Priority: 1 = builder (casts first), 2+ = consumers');
+            select.dataset.order = String(defaultOrder);
+            input.addEventListener('input', () => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val) && val > 0) {
+                    select.dataset.order = String(val);
+                    calculate();
+                }
+            });
+            return input;
+        }
 
-        for (let i = 1; i <= 6; i++) {
+        // Creates minimum resources input for ability slots
+        function createMinResourcesInput(select, defaultMin) {
+            const input = createInput('number', 'slot-min-resources-input', defaultMin, '0', '0', '5', '1', 
+                'Min Resources: Ability only fires when you have at least this many resources built');
+            select.dataset.minResources = String(defaultMin);
+            input.addEventListener('input', () => {
+                const val = parseInt(input.value);
+                if (!isNaN(val) && val >= 0 && val <= 5) {
+                    select.dataset.minResources = String(val);
+                    calculate();
+                }
+            });
+            return input;
+        }
 
+        // Creates standardized ability slot wrappers with consistent UI
+        function createSlotWrapper(id, container, slotType = 'normal', slotIndex = 0) {
             const select = document.createElement('select');
-
-            select.id = `active-ability-${i}`;
-
-
+            select.id = id;
 
             const wrapper = document.createElement('div');
-
             wrapper.className = 'slot-wrapper';
 
-
-
+            // Icon placeholder
             const iconBox = document.createElement('div');
-
             iconBox.className = 'slot-icon-box';
-
             iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
 
+            // Determine slot label and styling based on type
+            const slotConfig = {
+                builder: { label: 'Priority (Builders Only)', color: 'var(--priority-builder)', needsOrder: true, needsMinRes: true },
+                active: { label: 'Priority', color: null, needsOrder: true, needsMinRes: true },
+                elite: { label: 'Priority', color: null, needsOrder: true, needsMinRes: true },
+                aux: { label: 'Aux', color: null, needsOrder: true, needsMinRes: false },
+                normal: { label: 'Priority', color: null, needsOrder: false, needsMinRes: false }
+            };
 
-
-            // Add special label for first slot (builders only)
-
-            if (i === 1) {
-
-                wrapper.innerHTML = `<span class="slot-label" style="color: var(--priority-builder);">Priority (Builders Only)</span>`;
-
+            const config = slotConfig[slotType] || slotConfig.normal;
+            
+            // Create label with appropriate styling
+            if (config.color) {
+                wrapper.innerHTML = `<span class="slot-label" style="color: ${config.color};">${config.label}</span>`;
             } else {
-
-                wrapper.innerHTML = `<span class="slot-label">Priority</span>`;
-
+                wrapper.innerHTML = `<span class="slot-label">${config.label}</span>`;
             }
-
             wrapper.appendChild(iconBox);
 
-
-
-            const orderInput = createOrderInput(select, i);
-
-            // Add color blind accessible classes
-            if (i === 1) {
-                orderInput.classList.add('priority-builder');
-                wrapper.classList.add('priority-builder');
-            } else {
-                orderInput.classList.add('priority-normal');
+            // Add priority order input for active abilities
+            if (config.needsOrder) {
+                const defaultOrder = slotType === 'elite' ? 7 : (slotType === 'aux' ? 8 : slotIndex);
+                const orderInput = createOrderInput(select, defaultOrder);
+                
+                if (slotType === 'builder') {
+                    orderInput.classList.add('priority-builder');
+                    wrapper.classList.add('priority-builder');
+                } else {
+                    orderInput.classList.add('priority-normal');
+                }
+                wrapper.appendChild(orderInput);
             }
 
-            wrapper.appendChild(orderInput);
+            // Add minimum resources input for active abilities
+            if (config.needsMinRes) {
+                const minResLabel = document.createElement('span');
+                minResLabel.className = 'slot-min-res-label';
+                minResLabel.textContent = 'Min Res';
+                minResLabel.title = 'Minimum resources required before this ability can fire';
+                wrapper.appendChild(minResLabel);
 
+                const minResInput = createMinResourcesInput(select, 0);
+                minResInput.classList.add('resource-input');
+                wrapper.appendChild(minResInput);
+            }
 
-
-            const minResLabel = document.createElement('span');
-
-            minResLabel.className = 'slot-min-res-label';
-
-            minResLabel.textContent = 'Min Res';
-
-            minResLabel.title = 'Minimum resources required before this ability can fire';
-
-            wrapper.appendChild(minResLabel);
-
-
-
-            const minResInput = createMinResourcesInput(select, 0);
-
-            // Add color blind accessible class for resource inputs
-            minResInput.classList.add('resource-input');
-
-            wrapper.appendChild(minResInput);
-
-
-
+            // Add search functionality
             const searchInput = document.createElement('input');
-
             searchInput.type = 'text';
-
             searchInput.className = 'ability-search-input';
-
-            searchInput.placeholder = i === 1 ? 'Search Builders...' : 'Search...';
-
+            searchInput.placeholder = slotType === 'builder' ? 'Search Builders...' : 'Search...';
             searchInput.addEventListener('input', () => {
-
                 select.dataset.searchTerm = searchInput.value;
-
                 updateAbilityDropdowns();
-
             });
-
             wrapper.appendChild(searchInput);
 
-
-
+            // Add dropdown UI components
             const display = document.createElement('div');
-
             display.className = 'ability-dropdown-display';
-
             display.textContent = '-- None --';
-
             wrapper.appendChild(display);
 
-
-
             const list = document.createElement('div');
-
             list.className = 'ability-dropdown-list';
-
             wrapper.appendChild(list);
 
-
-
+            // Dropdown toggle functionality
             display.addEventListener('click', () => {
-
                 list.style.display = list.style.display === 'block' ? 'none' : 'block';
-
             });
 
-
-
+            // Finalize slot setup
             wrapper.appendChild(select);
-
             select.style.display = 'none';
+            container.appendChild(wrapper);
 
-            activeContainer.appendChild(wrapper);
-
-
-
+            // Add change event listener for slot updates
             select.addEventListener('change', () => {
-
                 updateSlotIcon(select, wrapper);
-
                 createAugmentUI();
-
                 calculate();
-
             });
 
-            activeSelects.push(select);
-
+            return { wrapper, select };
         }
 
+        // ========== ABILITY SLOTS CREATION ==========
+        
+        // Active Abilities (6 slots - first is builder-only)
+        for (let i = 1; i <= 6; i++) {
+            const slotType = i === 1 ? 'builder' : 'active';
+            const { select } = createSlotWrapper(`active-ability-${i}`, activeContainer, slotType, i);
+            activeSelects.push(select);
+        }
 
-
-        // Elite Active (1 dedicated slot)
-
-        const eliteActiveWrapper = document.createElement('div');
-
-        eliteActiveWrapper.className = 'slot-wrapper';
-
+        // Elite Active (1 slot)
         const eliteActiveLabel = document.createElement('h3');
-
-        eliteActiveLabel.style.margin = '0 0 0.5rem 0';
-
-        eliteActiveLabel.style.fontSize = '1.1rem';
-
-        eliteActiveLabel.style.fontWeight = '600';
-
-        eliteActiveLabel.style.color = 'var(--text-primary)';
-
+        eliteActiveLabel.style.cssText = 'margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 600; color: var(--text-primary)';
         eliteActiveLabel.textContent = 'Elite Active';
-
-        eliteActiveWrapper.appendChild(eliteActiveLabel);
-
-        const priorityLabel = document.createElement('span');
-
-        priorityLabel.className = 'slot-label';
-
-        priorityLabel.textContent = 'Priority';
-
-        eliteActiveWrapper.appendChild(priorityLabel);
-
-        const eliteActiveIconBox = document.createElement('div');
-
-        eliteActiveIconBox.className = 'slot-icon-box';
-
-        eliteActiveIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-        eliteActiveWrapper.appendChild(eliteActiveIconBox);
-
-        const eliteActiveSelect = document.createElement('select');
-
-        eliteActiveSelect.id = 'elite-active-1';
-
-        const eliteOrderInput = createOrderInput(eliteActiveSelect, 7);
-
-        eliteOrderInput.title = 'Priority: 7 = after main abilities (default)';
-        eliteOrderInput.classList.add('priority-normal');
-
-        eliteActiveWrapper.appendChild(eliteOrderInput);
-
-        const eliteMinResLabel = document.createElement('span');
-
-        eliteMinResLabel.className = 'slot-min-res-label';
-
-        eliteMinResLabel.textContent = 'Min Res';
-
-        eliteMinResLabel.title = 'Minimum resources required before this ability can fire';
-
-        eliteActiveWrapper.appendChild(eliteMinResLabel);
-
-        const eliteMinResInput = createMinResourcesInput(eliteActiveSelect, 0);
-        eliteMinResInput.classList.add('resource-input');
-
-        eliteActiveWrapper.appendChild(eliteMinResInput);
-
-        const eliteActiveSearchInput = document.createElement('input');
-
-        eliteActiveSearchInput.type = 'text';
-
-        eliteActiveSearchInput.className = 'ability-search-input';
-
-        eliteActiveSearchInput.placeholder = 'Search...';
-
-        eliteActiveSearchInput.addEventListener('input', () => {
-
-            eliteActiveSelect.dataset.searchTerm = eliteActiveSearchInput.value;
-
-            updateAbilityDropdowns();
-
-        });
-
-        eliteActiveWrapper.appendChild(eliteActiveSearchInput);
-
-        const eliteActiveDisplay = document.createElement('div');
-
-        eliteActiveDisplay.className = 'ability-dropdown-display';
-
-        eliteActiveDisplay.textContent = '-- None --';
-
-        eliteActiveWrapper.appendChild(eliteActiveDisplay);
-
-        const eliteActiveList = document.createElement('div');
-
-        eliteActiveList.className = 'ability-dropdown-list';
-
-        eliteActiveWrapper.appendChild(eliteActiveList);
-
-        eliteActiveDisplay.addEventListener('click', () => {
-
-            eliteActiveList.style.display = eliteActiveList.style.display === 'block' ? 'none' : 'block';
-
-        });
-
-        eliteActiveWrapper.appendChild(eliteActiveSelect);
-
-        eliteActiveSelect.style.display = 'none';
-
-        activeContainer.appendChild(eliteActiveWrapper);
-
-        eliteActiveSelect.addEventListener('change', () => {
-
-            updateSlotIcon(eliteActiveSelect, eliteActiveWrapper);
-
-            createAugmentUI();
-
-            calculate();
-
-        });
-
+        activeContainer.appendChild(eliteActiveLabel);
+        
+        const { select: eliteActiveSelect } = createSlotWrapper('elite-active-1', activeContainer, 'elite');
         eliteActiveSelects.push(eliteActiveSelect);
 
-
-
-        // Aux Active (1 slot)
-
-        const auxWrapper = document.createElement('div');
-
-        auxWrapper.className = 'slot-wrapper';
-
-        const auxIconBox = document.createElement('div');
-
-        auxIconBox.className = 'slot-icon-box';
-
-        auxIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-        auxWrapper.innerHTML = '<span class="slot-label">Aux</span>';
-
-        auxWrapper.appendChild(auxIconBox);
-
-        const auxSelect = document.createElement('select');
-
-        auxSelect.id = `aux-active-1`;
-
-        const auxOrderInput = createOrderInput(auxSelect, 8);
-        auxOrderInput.classList.add('priority-normal');
-        auxWrapper.appendChild(auxOrderInput);
-
-        const auxSearchInput = document.createElement('input');
-
-        auxSearchInput.type = 'text';
-
-        auxSearchInput.className = 'ability-search-input';
-
-        auxSearchInput.placeholder = 'Search...';
-
-        auxSearchInput.addEventListener('input', () => {
-
-            auxSelect.dataset.searchTerm = auxSearchInput.value;
-
-            updateAbilityDropdowns();
-
-        });
-
-        auxWrapper.appendChild(auxSearchInput);
-
-
-
-        const auxDisplay = document.createElement('div');
-
-        auxDisplay.className = 'ability-dropdown-display';
-
-        auxDisplay.textContent = '-- None --';
-
-        auxWrapper.appendChild(auxDisplay);
-
-
-
-        const auxList = document.createElement('div');
-
-        auxList.className = 'ability-dropdown-list';
-
-        auxWrapper.appendChild(auxList);
-
-
-
-        auxDisplay.addEventListener('click', () => {
-
-            auxList.style.display = auxList.style.display === 'block' ? 'none' : 'block';
-
-        });
-
-
-
-        auxWrapper.appendChild(auxSelect);
-
-        auxSelect.style.display = 'none';
-
-        auxActiveContainer.appendChild(auxWrapper);
-
-        auxSelect.addEventListener('change', () => {
-
-            updateSlotIcon(auxSelect, auxWrapper);
-
-            createAugmentUI();
-
-            calculate();
-
-        });
-
+        // Auxiliary Active (1 slot)
+        const { select: auxSelect } = createSlotWrapper('aux-active-1', auxActiveContainer, 'aux');
         auxActiveSelects.push(auxSelect);
 
-
-
+        // ========== PASSIVE SLOTS CREATION ==========
+        
         // Elite Passive (1 slot)
-
-        const eliteWrapper = document.createElement('div');
-
-        eliteWrapper.className = 'slot-wrapper';
-
-        const eliteIconBox = document.createElement('div');
-
-        eliteIconBox.className = 'slot-icon-box';
-
-        eliteIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-        eliteWrapper.innerHTML = '<span class="slot-label">Elite</span>';
-
-        eliteWrapper.appendChild(eliteIconBox);
-
-        const eliteSelect = document.createElement('select');
-
-        eliteSelect.id = `elite-passive-1`;
-
-        const eliteSearchInput = document.createElement('input');
-
-        eliteSearchInput.type = 'text';
-
-        eliteSearchInput.className = 'ability-search-input';
-
-        eliteSearchInput.placeholder = 'Search...';
-
-        eliteSearchInput.addEventListener('input', () => {
-
-            eliteSelect.dataset.searchTerm = eliteSearchInput.value;
-
-            updateAbilityDropdowns();
-
-        });
-
-        eliteWrapper.appendChild(eliteSearchInput);
-
-
-
-        const eliteDisplay = document.createElement('div');
-
-        eliteDisplay.className = 'ability-dropdown-display';
-
-        eliteDisplay.textContent = '-- None --';
-
-        eliteWrapper.appendChild(eliteDisplay);
-
-
-
-        const eliteList = document.createElement('div');
-
-        eliteList.className = 'ability-dropdown-list';
-
-        eliteWrapper.appendChild(eliteList);
-
-
-
-        eliteDisplay.addEventListener('click', () => {
-
-            eliteList.style.display = eliteList.style.display === 'block' ? 'none' : 'block';
-
-        });
-
-
-
-        eliteWrapper.appendChild(eliteSelect);
-
-        eliteSelect.style.display = 'none';
-
-        elitePassiveContainer.appendChild(eliteWrapper);
-
-        eliteSelect.addEventListener('change', () => {
-
-            updateSlotIcon(eliteSelect, eliteWrapper);
-
-            calculate();
-
-        });
-
+        const { select: eliteSelect } = createSlotWrapper('elite-passive-1', elitePassiveContainer, 'normal');
         elitePassiveSelects.push(eliteSelect);
 
-
-
         // Normal Passives (6 slots)
-
         for (let i = 1; i <= 6; i++) {
-
-            const select = document.createElement('select');
-
-            select.id = `normal-passive-${i}`;
-
-
-
-            const wrapper = document.createElement('div');
-
-            wrapper.className = 'slot-wrapper';
-
-
-
-            const iconBox = document.createElement('div');
-
-            iconBox.className = 'slot-icon-box';
-
-            iconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-
-
-            wrapper.innerHTML = `<span class="slot-label">${i}</span>`;
-
-            wrapper.appendChild(iconBox);
-
-
-
-            const searchInput = document.createElement('input');
-
-            searchInput.type = 'text';
-
-            searchInput.className = 'ability-search-input';
-
-            searchInput.placeholder = 'Search...';
-
-            searchInput.addEventListener('input', () => {
-
-                select.dataset.searchTerm = searchInput.value;
-
-                updateAbilityDropdowns();
-
-            });
-
-            wrapper.appendChild(searchInput);
-
-
-
-            const display = document.createElement('div');
-
-            display.className = 'ability-dropdown-display';
-
-            display.textContent = '-- None --';
-
-            wrapper.appendChild(display);
-
-
-
-            const list = document.createElement('div');
-
-            list.className = 'ability-dropdown-list';
-
-            wrapper.appendChild(list);
-
-
-
-            display.addEventListener('click', () => {
-
-                list.style.display = list.style.display === 'block' ? 'none' : 'block';
-
-            });
-
-
-
-            wrapper.appendChild(select);
-
-            select.style.display = 'none';
-
-            normalPassivesContainer.appendChild(wrapper);
-
-
-
-            select.addEventListener('change', () => {
-
-                updateSlotIcon(select, wrapper);
-
-                calculate();
-
-            });
-
+            const { wrapper, select } = createSlotWrapper(`normal-passive-${i}`, normalPassivesContainer, 'normal');
+            // Update label to show slot number for normal passives
+            const label = wrapper.querySelector('.slot-label');
+            if (label) label.textContent = i;
             normalPassiveSelects.push(select);
-
         }
 
-
-
-        // Aux Passive (1 slot)
-
-        const auxPassWrapper = document.createElement('div');
-
-        auxPassWrapper.className = 'slot-wrapper';
-
-        const auxPassIconBox = document.createElement('div');
-
-        auxPassIconBox.className = 'slot-icon-box';
-
-        auxPassIconBox.innerHTML = '<div class="slot-icon-placeholder"></div>';
-
-        auxPassWrapper.innerHTML = '<span class="slot-label">Aux</span>';
-
-        auxPassWrapper.appendChild(auxPassIconBox);
-
-        const auxPassSelect = document.createElement('select');
-
-        auxPassSelect.id = `aux-passive-1`;
-
-        const auxPassSearchInput = document.createElement('input');
-
-        auxPassSearchInput.type = 'text';
-
-        auxPassSearchInput.className = 'ability-search-input';
-
-        auxPassSearchInput.placeholder = 'Search...';
-
-        auxPassSearchInput.addEventListener('input', () => {
-
-            auxPassSelect.dataset.searchTerm = auxPassSearchInput.value;
-
-            updateAbilityDropdowns();
-
-        });
-
-        auxPassWrapper.appendChild(auxPassSearchInput);
-
-
-
-        const auxPassDisplay = document.createElement('div');
-
-        auxPassDisplay.className = 'ability-dropdown-display';
-
-        auxPassDisplay.textContent = '-- None --';
-
-        auxPassWrapper.appendChild(auxPassDisplay);
-
-
-
-        const auxPassList = document.createElement('div');
-
-        auxPassList.className = 'ability-dropdown-list';
-
-        auxPassWrapper.appendChild(auxPassList);
-
-
-
-        auxPassDisplay.addEventListener('click', () => {
-
-            auxPassList.style.display = auxPassList.style.display === 'block' ? 'none' : 'block';
-
-        });
-
-
-
-        auxPassWrapper.appendChild(auxPassSelect);
-
-        auxPassSelect.style.display = 'none';
-
-        auxPassiveContainer.appendChild(auxPassWrapper);
-
-        auxPassSelect.addEventListener('change', () => {
-
-            updateSlotIcon(auxPassSelect, auxPassWrapper);
-
-            calculate();
-
-        });
-
+        // Auxiliary Passive (1 slot)
+        const { select: auxPassSelect } = createSlotWrapper('aux-passive-1', auxPassiveContainer, 'aux');
         auxPassiveSelects.push(auxPassSelect);
 
     }
@@ -1120,58 +592,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    // Populate Weapons
-
+    // Populate Weapons - simplified
     const weapons = new Set(tswData.map(a => a.weapon));
+    const sortedWeapons = Array.from(weapons).sort().filter(w => w && w !== "Aux" && w !== "Anima Deviations");
 
-    const sortedWeapons = Array.from(weapons).sort();
-
-
+    // Helper to create and append option
+    const addOption = (select, value, text) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = text;
+        select.appendChild(opt);
+    };
 
     sortedWeapons.forEach(w => {
-
-        // Exclude placeholders
-
-        if (!w || w === "Aux" || w === "Anima Deviations") return;
-
-
-
-        // auxiliary weapons get their own dropdown
-
         if (AUX_WEAPONS.includes(w)) {
-
-            const opt = document.createElement('option');
-
-            opt.value = w;
-
-            opt.textContent = w;
-
-            auxWeaponSelect.appendChild(opt);
-
-            return;
-
+            addOption(auxWeaponSelect, w, w);
+        } else {
+            addOption(weaponSelect, w, w);
+            addOption(secondaryWeaponSelect, w, w);
         }
-
-
-
-        const option1 = document.createElement('option');
-
-        option1.value = w;
-
-        option1.textContent = w;
-
-        weaponSelect.appendChild(option1);
-
-
-
-        const option2 = document.createElement('option');
-
-        option2.value = w;
-
-        option2.textContent = w;
-
-        secondaryWeaponSelect.appendChild(option2);
-
     });
 
 
@@ -1643,7 +1082,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const option = Array.from(augmentSelect.options).find(opt => opt.value === existing.augmentValue);
                     if (option) {
                         augmentSelect.value = existing.augmentValue;
-                        console.log('DEBUG: Restored augment for', existing.abilityName, ':', existing.augmentValue);
                     }
                 }
             }
@@ -1927,12 +1365,32 @@ document.addEventListener('DOMContentLoaded', () => {
             requiresSpecificAbility = "Pump Action";
         }
 
+        // Parse active ability self-buffs that provide damage bonuses
+        let selfDamageBuff = { percent: 0, duration: 0, aoe: false };
+        if (ability.type && ability.type.includes("Active")) {
+            // Look for self-buff patterns in active abilities - multiple patterns
+            const damageBuffMatch = desc.match(
+                /damage.*is.*increased.*by\s+(\d+(?:\.\d+)?)%|damage.*increased.*by\s+(\d+(?:\.\d+)?)%|damage.*increased.*by\s+(\d+(?:\.\d+)?)%/i
+            );
+            if (damageBuffMatch) {
+                selfDamageBuff.percent = parseFloat(damageBuffMatch[1] || damageBuffMatch[2] || damageBuffMatch[3]) || 0;
+                // Extract duration if specified
+                const durationMatch = desc.match(/for\s+(\d+)\s*seconds?/i);
+                selfDamageBuff.duration = parseInt(durationMatch[1]) || 10; // Default 10 seconds
+                // Check if it's an area effect
+                selfDamageBuff.aoe = desc.includes('area') || desc.includes('radius') || desc.includes('PBAoE');
+            }
+        }
+
         // Extraction of damage bonus percentage for passive abilities
         let damageBonusPercent = 0;
         if (ability.type && ability.type.includes("Passive")) {
-            const bonusMatch = desc.match(/increases.*damage.*by\s+(\d+)%|damage.*by\s+(\d+)%/i);
+            // Comprehensive regex to match various DPS bonus patterns
+            const bonusMatch = desc.match(
+                /increases.*damage.*by\s+(\d+(?:\.\d+)?)%|damage.*by\s+(\d+(?:\.\d+)?)%|damage.*dealt.*by\s+(\d+(?:\.\d+)?)%/i
+            );
             if (bonusMatch) {
-                damageBonusPercent = parseInt(bonusMatch[1] || bonusMatch[2]) || 0;
+                damageBonusPercent = parseFloat(bonusMatch[1] || bonusMatch[2] || bonusMatch[3]) || 0;
             }
         }
 
@@ -2352,6 +1810,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             penetrationBonusPercent,
 
+            selfDamageBuff,
+
             affectsDronesOrTurrets,
 
             description: ability.description,
@@ -2363,6 +1823,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculate() {
+
 
         // Get base attack rating from input
         const baseAttackRating = parseFloat(attackRatingInput?.value || 0) || 0;
@@ -2557,6 +2018,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allActives.sort((a, b) => (a.orderPriority || 0) - (b.orderPriority || 0));
         
+        
 
         const allPassives = [...elitePass, ...normPass, ...auxPass];
 
@@ -2606,12 +2068,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statsBreakdown = {};
 
-        [...allActives, ...allPassives].forEach((a, index) => {
-
-            const key = index < allActives.length ? `active_${index}_${a.name}` : `passive_${index - allActives.length}_${a.name}`;
-
+        // Create stable statsBreakdown keys that don't depend on sorted order
+        allActives.forEach((a, index) => {
+            const key = `active_${a.weapon}_${a.name}`;
             statsBreakdown[key] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: a.name };
-
+        });
+        
+        allPassives.forEach((a, index) => {
+            const key = `passive_${a.weapon}_${a.name}`;
+            statsBreakdown[key] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: a.name };
         });
 
         // Pre-create a separate line for Dust of the Black Pharaoh procs
@@ -2790,10 +2255,93 @@ document.addEventListener('DOMContentLoaded', () => {
             lockStockBarrel: { active: false, endTime: 0 },
             shotgunWedding: { active: false, endTime: 0, stacks: 0, damageBonusPercent: 0 },
             
+            // Active ability self-buffs
+            mastersHouse: { active: false, endTime: 0, damageBonusPercent: 0 },
+            genericDamageBuff: { active: false, endTime: 0, damageBonusPercent: 0 },
+            
+            // Short Fuse team damage buff
+            shortFuse: { active: false, endTime: 0, damageBonusPercent: 0 },
+            
             // Cooldown effects
             uncalibrated: { active: false, endTime: 0 }, // Deadly Aim cooldown
             depleted: { active: false, endTime: 0 } // Breaching Shot cooldown
         };
+        
+        // Clear buffs for abilities that are not equipped (moved here after playerBuffs is defined)
+        const equippedAbilityNames = new Set(allActives.map(action => action.name));
+        
+        // Clear Short Fuse if not equipped
+        if (!equippedAbilityNames.has("Short Fuse") && playerBuffs.shortFuse.active) {
+            playerBuffs.shortFuse.active = false;
+            playerBuffs.shortFuse.endTime = 0;
+            playerBuffs.shortFuse.damageBonusPercent = 0;
+        }
+        
+        // Clear Masters House if not equipped
+        if (!equippedAbilityNames.has("Masters House") && playerBuffs.mastersHouse.active) {
+            playerBuffs.mastersHouse.active = false;
+            playerBuffs.mastersHouse.endTime = 0;
+            playerBuffs.mastersHouse.damageBonusPercent = 0;
+        }
+        
+        // Clear Shotgun Wedding if not equipped
+        if (!equippedAbilityNames.has("Shotgun Wedding") && playerBuffs.shotgunWedding.active) {
+            playerBuffs.shotgunWedding.active = false;
+            playerBuffs.shotgunWedding.endTime = 0;
+            playerBuffs.shotgunWedding.stacks = 0;
+            playerBuffs.shotgunWedding.damageBonusPercent = 0;
+        }
+        
+        // Clear Deadly Aim if not equipped
+        if (!equippedAbilityNames.has("Deadly Aim") && playerBuffs.deadlyAim.active) {
+            playerBuffs.deadlyAim.active = false;
+            playerBuffs.deadlyAim.endTime = 0;
+            playerBuffs.deadlyAim.critChanceBonus = 0;
+        }
+        
+        // Clear Breaching Shot if not equipped
+        if (!equippedAbilityNames.has("Breaching Shot") && playerBuffs.breachingShot.active) {
+            playerBuffs.breachingShot.active = false;
+            playerBuffs.breachingShot.endTime = 0;
+            playerBuffs.breachingShot.penChanceBonus = 0;
+        }
+        
+        // Clear Out For A Kill if not equipped
+        if (!equippedAbilityNames.has("Out For A Kill") && playerBuffs.outForAKill.active) {
+            playerBuffs.outForAKill.active = false;
+            playerBuffs.outForAKill.endTime = 0;
+            playerBuffs.outForAKill.penChanceBonus = 0;
+        }
+        
+        // Clear Flak Jacket if not equipped
+        if (!equippedAbilityNames.has("Flak Jacket") && playerBuffs.flakJacket.active) {
+            playerBuffs.flakJacket.active = false;
+            playerBuffs.flakJacket.endTime = 0;
+            playerBuffs.flakJacket.damageReduction = 0;
+        }
+        
+        // Clear Defensive Turret if not equipped
+        if (!equippedAbilityNames.has("Defensive Turret") && playerBuffs.defensiveTurret.active) {
+            playerBuffs.defensiveTurret.active = false;
+            playerBuffs.defensiveTurret.endTime = 0;
+            playerBuffs.defensiveTurret.damageReduction = 0;
+        }
+        
+        // Clear Lock, Stock & Barrel if not equipped
+        if (!equippedAbilityNames.has("Lock, Stock & Barrel") && playerBuffs.lockStockBarrel.active) {
+            playerBuffs.lockStockBarrel.active = false;
+            playerBuffs.lockStockBarrel.endTime = 0;
+        }
+        
+        // Team buffs from augment procs
+        const teamBuffs = {
+            damageBuff: { active: false, endTime: 0, percent: 0 },
+            healingBuff: { active: false, endTime: 0, percent: 0 },
+            damageReduction: { active: false, endTime: 0, percent: 0 }
+        };
+        
+        // Augment cooldown tracking
+        const augmentCooldowns = new Map(); // Map<abilityIndex, endTime>
 
         
 
@@ -3441,19 +2989,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allPassives.forEach(passive => {
                 if (passive.damageBonusPercent > 0) {
                     
-                    // Check if this passive applies to the current ability's weapon
+                    // Check if this passive applies to the current ability
                     const desc = passive.originalAbility && passive.originalAbility.description || "";
-                    const hasExplicitWeaponRequirement = desc && (
-                        (desc.includes("Shotgun") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Pistol") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Blade") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Hammer") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Fist") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Assault Rifle") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Chaos") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Elementalism") && (desc.includes("abilities") || desc.includes("ability"))) ||
-                        (desc.includes("Blood") && (desc.includes("abilities") || desc.includes("ability")))
-                    );
                     
                     // Check if current ability is a drone/turret ability
                     const isDroneOrTurretAbility = ability.name.toLowerCase().includes("drone") || 
@@ -3462,11 +2999,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                                     (ability.originalAbility.description.toLowerCase().includes("summons a drone") ||
                                                      ability.originalAbility.description.toLowerCase().includes("places a turret")));
                     
-                    // Apply bonus if weapon matches the requirement OR if passive specifically affects drones/turrets and current ability is drone/turret
-                    const isMatchingWeapon = !hasExplicitWeaponRequirement || passive.weapon === ability.weapon;
-                    const shouldApplyToDroneTurret = passive.affectsDronesOrTurrets && isDroneOrTurretAbility;
+                    // Apply bonus based on conditions:
+                    // 1. If passive affects drones/turrets and current ability is drone/turret
+                    // 2. If passive weapon matches current ability weapon
+                    // 3. If passive doesn't specify a weapon (general passive)
+                    const shouldApply = (passive.affectsDronesOrTurrets && isDroneOrTurretAbility) ||
+                                       (passive.weapon === ability.weapon) ||
+                                       (!passive.weapon || passive.weapon === "");
                     
-                    if (isMatchingWeapon || shouldApplyToDroneTurret) {
+                    if (shouldApply) {
                         const passiveBonus = 1.0 + passive.damageBonusPercent / 100;
                         passiveDamageMult *= passiveBonus;
                         
@@ -3551,6 +3092,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (effect.evadeReduction) {
                         augmentEvadeReductionBonus += effect.evadeReduction;
                     }
+                    
+                    // Process team buff augments (these affect all abilities)
+                    // Check cooldown before applying team buffs
+                    const augmentCooldownEnd = augmentCooldowns.get(abilityIndex) || 0;
+                    const cooldownTime = effect.cooldown || 0;
+                    
+                    if (time >= augmentCooldownEnd) {
+                        if (effect.teamDamageBuff && effect.teamDamageBuff > 0) {
+                            // Apply team damage buff
+                            teamBuffs.damageBuff.active = true;
+                            teamBuffs.damageBuff.endTime = time + (effect.duration || 5);
+                            teamBuffs.damageBuff.percent = Math.max(teamBuffs.damageBuff.percent, effect.teamDamageBuff);
+                            // Set cooldown
+                            if (cooldownTime > 0) {
+                                augmentCooldowns.set(abilityIndex, time + cooldownTime);
+                            }
+                        }
+                        
+                        if (effect.teamHealingBuff && effect.teamHealingBuff > 0) {
+                            // Apply team healing buff
+                            teamBuffs.healingBuff.active = true;
+                            teamBuffs.healingBuff.endTime = time + (effect.duration || 5);
+                            teamBuffs.healingBuff.percent = Math.max(teamBuffs.healingBuff.percent, effect.teamHealingBuff);
+                            // Set cooldown
+                            if (cooldownTime > 0) {
+                                augmentCooldowns.set(abilityIndex, time + cooldownTime);
+                            }
+                        }
+                        
+                        if (effect.teamDamageReduction && effect.teamDamageReduction > 0) {
+                            // Apply team damage reduction buff
+                            teamBuffs.damageReduction.active = true;
+                            teamBuffs.damageReduction.endTime = time + (effect.duration || 5);
+                            teamBuffs.damageReduction.percent = Math.max(teamBuffs.damageReduction.percent, effect.teamDamageReduction);
+                            // Set cooldown
+                            if (cooldownTime > 0) {
+                                augmentCooldowns.set(abilityIndex, time + cooldownTime);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -3570,6 +3151,34 @@ document.addEventListener('DOMContentLoaded', () => {
             // Shotgun Wedding damage bonus
             if (playerBuffs.shotgunWedding.active && ability.weapon === 'Shotgun') {
                 playerBuffMult *= (1 + (playerBuffs.shotgunWedding.stacks * 25) / 100); // 25% per stack
+            }
+            
+            // Masters House damage bonus
+            if (playerBuffs.mastersHouse.active) {
+                playerBuffMult *= (1 + playerBuffs.mastersHouse.damageBonusPercent / 100);
+            }
+            
+            // Generic damage buff from other active abilities
+            if (playerBuffs.genericDamageBuff.active) {
+                playerBuffMult *= (1 + playerBuffs.genericDamageBuff.damageBonusPercent / 100);
+            }
+            
+            // Apply team damage buffs from augment procs
+            if (teamBuffs.damageBuff.active) {
+                playerBuffMult *= (1 + teamBuffs.damageBuff.percent / 100);
+            }
+            
+            // Apply Short Fuse team damage buff
+            if (playerBuffs.shortFuse.active) {
+                let shortFuseBonus = playerBuffs.shortFuse.damageBonusPercent;
+                
+                // Check for Final Fuse passive upgrade
+                const finalFusePassive = allPassives.find(p => p.name === "Final Fuse");
+                if (finalFusePassive) {
+                    shortFuseBonus = 30; // Final Fuse upgrades to 30%
+                }
+                
+                playerBuffMult *= (1 + shortFuseBonus / 100);
             }
 
             // Apply equilibrium damage bonus if active
@@ -3802,14 +3411,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         : (ability.originalName || ability.name);
                     
                     
-                    let abilityIndex = -1;
-                    for (let i = 0; i < allActives.length; i++) {
-                        if (allActives[i].name === damageName) {
-                            abilityIndex = i;
-                            break;
-                        }
-                    }
-                    const abilityKey = abilityIndex >= 0 ? `active_${abilityIndex}_${damageName}` : damageName;
+                    // Create stable key that matches the initialization format
+                    const weapon = ability.weapon || ability.originalAbility?.weapon || 'Unknown';
+                    const abilityKey = `active_${weapon}_${damageName}`;
                     
                     if (!statsBreakdown[abilityKey]) {
                         statsBreakdown[abilityKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: damageName };
@@ -4288,11 +3892,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Use the minimum resources setting
                         consumeAmount = action.minResources;
                     } else {
-                        // Consume what's actually available (limited by current resources)
-                        if (isPrim) {
+                        // Consume what's actually available for each weapon
+                        if (isPrim && isSec) {
+                            // Dual wield: consume from both weapons
+                            consumeAmount = Math.min(action.resourceConsumption, primResources, secResources);
+                        } else if (isPrim) {
+                            // Primary only
                             consumeAmount = Math.min(action.resourceConsumption, primResources);
-                        }
-                        if (isSec) {
+                        } else if (isSec) {
+                            // Secondary only
                             consumeAmount = Math.min(action.resourceConsumption, secResources);
                         }
                     }
@@ -4339,66 +3947,74 @@ document.addEventListener('DOMContentLoaded', () => {
                     continue;
                 }
 
-                // Slot 1 Builder Priority Rule: Only cast slot 1 builders when no other ability is available
+                // Slot 1 Builder Priority Rule: Only cast pure resource builders when no other ability is available
+                // Allow damage-dealing builders (like Blade Torrent) to be cast alongside consumers
                 if (action.orderPriority === 1 && !action.isConsumer) {
-                    // Check if any other ability is available to cast
-                    let otherAbilityAvailable = false;
-                    for (let j = 0; j < allActivesCopy.length; j++) {
-                        if (j === i) continue; // Skip self
-                        
-                        const otherAction = allActivesCopy[j];
-                        if (activeCooldownsCopy[j] > 0) continue; // On cooldown
-                        
-                        // Check basic availability for other abilities
-                        const otherIsPrim = otherAction.weapon === primWeapon;
-                        const otherIsSec = otherAction.weapon === secWeapon;
-                        const otherIsAux = otherAction.weapon === auxWeapon;
-                        const otherIsValidWeapon = otherIsPrim || otherIsSec || otherIsAux || primWeapon === "All";
-                        
-                        if (!otherIsValidWeapon) continue;
-                        
-                        // Check resource requirements for other abilities
-                        let otherCanCast = true;
-                        const otherReqResources = otherAction.resourceRequirement || otherAction.resourceConsumption || 5;
-                        
-                        // For abilities that consume all resources, check if we have at least the minimum
-                        let otherConsumeAmount = otherReqResources;
-                        if (otherAction.resourceConsumption > 0 && otherAction.resourceRequirement !== otherAction.resourceConsumption) {
-                            otherConsumeAmount = otherAction.resourceConsumption;
-                        }
-                        
-                        if (otherAction.isConsumer) {
-                            const otherMinRes = otherAction.minResources || 0;
-                            const otherFinalMinRes = Math.max(otherReqResources, otherMinRes);
-                            
-                            if (otherIsPrim && primResources < otherFinalMinRes) {
-                                otherCanCast = false;
-                            }
-                            if (otherIsSec && secResources < otherFinalMinRes) {
-                                otherCanCast = false;
-                            }
-                            // Auxiliary weapons don't use resources, so they're always available
-                        }
-                        
-                        // For builders, check if we have room for more resources
-                        if (!otherAction.isConsumer && otherAction.tree !== "Aux") {
-                            if (otherIsPrim && primResources >= 5) {
-                                otherCanCast = false; // Already at max resources
-                            }
-                            if (otherIsSec && secResources >= 5) {
-                                otherCanCast = false; // Already at max resources
-                            }
-                        }
-                        
-                        if (otherCanCast) {
-                            otherAbilityAvailable = true;
-                            break;
-                        }
-                    }
+                    // Check if this is a damage-dealing builder vs pure resource builder
+                    const isDamageBuilder = action.scaling > 0; // Has damage scaling
                     
-                    if (otherAbilityAvailable) {
-                        continue; // Skip slot 1 builder, other ability is available
+                    // Only apply priority rule to pure resource builders (no damage scaling)
+                    if (!isDamageBuilder) {
+                        // Check if any other ability is available to cast
+                        let otherAbilityAvailable = false;
+                        for (let j = 0; j < allActivesCopy.length; j++) {
+                            if (j === i) continue; // Skip self
+                            
+                            const otherAction = allActivesCopy[j];
+                            if (activeCooldownsCopy[j] > 0) continue; // On cooldown
+                            
+                            // Check basic availability for other abilities
+                            const otherIsPrim = otherAction.weapon === primWeapon;
+                            const otherIsSec = otherAction.weapon === secWeapon;
+                            const otherIsAux = otherAction.weapon === auxWeapon;
+                            const otherIsValidWeapon = otherIsPrim || otherIsSec || otherIsAux || primWeapon === "All";
+                            
+                            if (!otherIsValidWeapon) continue;
+                            
+                            // Check resource requirements for other abilities
+                            let otherCanCast = true;
+                            const otherReqResources = otherAction.resourceRequirement || otherAction.resourceConsumption || 5;
+                            
+                            // For abilities that consume all resources, check if we have at least the minimum
+                            let otherConsumeAmount = otherReqResources;
+                            if (otherAction.resourceConsumption > 0 && otherAction.resourceRequirement !== otherAction.resourceConsumption) {
+                                otherConsumeAmount = otherAction.resourceConsumption;
+                            }
+                            
+                            if (otherAction.isConsumer) {
+                                const otherMinRes = otherAction.minResources || 0;
+                                const otherFinalMinRes = Math.max(otherReqResources, otherMinRes);
+                                
+                                if (otherIsPrim && primResources < otherFinalMinRes) {
+                                    otherCanCast = false;
+                                }
+                                if (otherIsSec && secResources < otherFinalMinRes) {
+                                    otherCanCast = false;
+                                }
+                                // Auxiliary weapons don't use resources, so they're always available
+                            }
+                            
+                            // For builders, check if we have room for more resources
+                            if (!otherAction.isConsumer && otherAction.tree !== "Aux") {
+                                if (otherIsPrim && primResources >= 5) {
+                                    otherCanCast = false; // Already at max resources
+                                }
+                                if (otherIsSec && secResources >= 5) {
+                                    otherCanCast = false; // Already at max resources
+                                }
+                            }
+                            
+                            if (otherCanCast) {
+                                otherAbilityAvailable = true;
+                                break;
+                            }
+                        }
+                        
+                        if (otherAbilityAvailable) {
+                            continue; // Skip pure resource builder, other ability is available
+                        }
                     }
+                    // Damage builders proceed normally (can be cast alongside consumers)
                 }
 
                 if (canCast) {
@@ -4824,6 +4440,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         playerBuffs.shotgunWedding.stacks = 0; // Reset stacks, will be incremented per hit
                     }
                     
+                    // Handle active ability self-buffs
+                    if (action.selfDamageBuff && action.selfDamageBuff.percent > 0) {
+                        // Masters House and similar abilities
+                        if (action.name === "Masters House") {
+                            playerBuffs.mastersHouse.active = true;
+                            playerBuffs.mastersHouse.endTime = time + action.selfDamageBuff.duration;
+                            playerBuffs.mastersHouse.damageBonusPercent = action.selfDamageBuff.percent;
+                        } else {
+                            // Generic damage buff for other abilities
+                            playerBuffs.genericDamageBuff.active = true;
+                            playerBuffs.genericDamageBuff.endTime = time + action.selfDamageBuff.duration;
+                            playerBuffs.genericDamageBuff.damageBonusPercent = action.selfDamageBuff.percent;
+                        }
+                    }
+                    
+                    // Short Fuse - team damage buff
+                    if (action.name === "Short Fuse") {
+                        // Base Short Fuse gives 20% damage increase
+                        playerBuffs.shortFuse.active = true;
+                        playerBuffs.shortFuse.endTime = time + 10; // 10 second duration
+                        playerBuffs.shortFuse.damageBonusPercent = 20; // Base value
+                    }
+                    
+                    
                     // Calculate augment bonuses for passive buff effects
                     let augmentHitRatingBonusForPassives = 0;
                     let augmentEvadeReductionBonusForPassives = 0;
@@ -4926,15 +4566,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     playerBuffs.lethality.active = time <= playerBuffs.lethality.endTime;
                     playerBuffs.outForAKill.active = time <= playerBuffs.outForAKill.endTime;
                     playerBuffs.noContest.active = time <= playerBuffs.noContest.endTime;
+                    playerBuffs.shotgunWedding.active = time <= playerBuffs.shotgunWedding.endTime;
+                    playerBuffs.mastersHouse.active = time <= playerBuffs.mastersHouse.endTime;
+                    playerBuffs.genericDamageBuff.active = time <= playerBuffs.genericDamageBuff.endTime;
                     playerBuffs.minorPenetration.active = time <= playerBuffs.minorPenetration.endTime;
                     playerBuffs.penetrationRating.active = time <= playerBuffs.penetrationRating.endTime;
                     playerBuffs.protection.active = time <= playerBuffs.protection.endTime;
                     playerBuffs.flakJacket.active = time <= playerBuffs.flakJacket.endTime;
                     playerBuffs.defensiveTurret.active = time <= playerBuffs.defensiveTurret.endTime;
                     playerBuffs.lockStockBarrel.active = time <= playerBuffs.lockStockBarrel.endTime;
-                    playerBuffs.shotgunWedding.active = time <= playerBuffs.shotgunWedding.endTime;
                     playerBuffs.uncalibrated.active = time <= playerBuffs.uncalibrated.endTime;
                     playerBuffs.depleted.active = time <= playerBuffs.depleted.endTime;
+                    
+                    // Update team buff durations
+                    teamBuffs.damageBuff.active = time <= teamBuffs.damageBuff.endTime;
+                    teamBuffs.healingBuff.active = time <= teamBuffs.healingBuff.endTime;
+                    teamBuffs.damageReduction.active = time <= teamBuffs.damageReduction.endTime;
+                    
+                    // Update Short Fuse buff duration
+                    playerBuffs.shortFuse.active = time <= playerBuffs.shortFuse.endTime;
 
                     // Update debuff durations
 
@@ -5675,7 +5325,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (vals.length < 7) {
 
-                    console.warn(`Invalid data format for slot ${slot.id}: ${data}`);
 
                     return;
 
@@ -6048,16 +5697,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+    // ========== EVENT LISTENERS SETUP ==========
+    
+    // Weapon and enemy selection changes
+    const weaponChangeElements = [weaponSelect, secondaryWeaponSelect, auxWeaponSelect];
+    weaponChangeElements.forEach(select => {
+        select.addEventListener('change', updateAbilityDropdowns);
+    });
+    
     targetEnemySelect.addEventListener('change', updateAbilityDropdowns);
-
     targetEnemySelect.addEventListener('change', calculate);
-
-    weaponSelect.addEventListener('change', updateAbilityDropdowns);
-
-    secondaryWeaponSelect.addEventListener('change', updateAbilityDropdowns);
-
-    auxWeaponSelect.addEventListener('change', updateAbilityDropdowns);
-
     simTimeInput.addEventListener('input', calculate);
 
 
@@ -6367,28 +6016,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    [attackRatingInput, weaponPowerInput].forEach(input => {
-
+    // Combat power related inputs
+    const combatPowerInputs = [attackRatingInput, weaponPowerInput];
+    combatPowerInputs.forEach(input => {
         if (input) {
-
             input.addEventListener('input', () => {
-
                 updateCombatPower();
-
                 calculate();
-
             });
-
         }
-
     });
 
-
-
-    [hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput].forEach(input => {
-
+    // Stat inputs that trigger recalculation
+    const statInputs = [hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput];
+    statInputs.forEach(input => {
         if (input) input.addEventListener('input', calculate);
-
     });
 
 
@@ -6717,18 +6359,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Ensure ability dropdowns are populated
             updateAbilityDropdowns();
-            
-            // Capture augment selections immediately to avoid timing issues
-            console.log('DEBUG: Export called, capturing current augment state');
-            
-            // Capture augment state right after dropdown update
-            const augmentWrappersImmediate = document.querySelectorAll('#augments-container .augment-wrapper');
-            augmentWrappersImmediate.forEach((wrapper, index) => {
-                const augmentSelect = wrapper.querySelector('.augment-select');
-                if (augmentSelect) {
-                    console.log('DEBUG: Immediate augment', index, 'selectedIndex:', augmentSelect.selectedIndex, 'value:', augmentSelect.value);
-                }
-            });
 
             // Export active abilities
             const activeSelectors = document.querySelectorAll('#active-abilities-container .slot-wrapper');
@@ -6792,35 +6422,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Export augments
             const augmentWrappers = document.querySelectorAll('#augments-container .augment-wrapper');
-            console.log('DEBUG: Found augment wrappers for export:', augmentWrappers.length);
             
             augmentWrappers.forEach((wrapper, index) => {
                 const abilityLabel = wrapper.querySelector('.augment-ability-name');
                 const augmentSelect = wrapper.querySelector('.augment-select');
                 
-                console.log('DEBUG: Wrapper', index, 'abilityLabel:', !!abilityLabel, 'augmentSelect:', !!augmentSelect, 'augmentSelect.value:', augmentSelect?.value);
-                console.log('DEBUG: Augment select options count:', augmentSelect?.options?.length || 0);
-                if (augmentSelect?.options?.length > 0) {
-                    for (let i = 0; i < Math.min(3, augmentSelect.options.length); i++) {
-                        console.log('DEBUG: Augment option', i, ':', augmentSelect.options[i].textContent, 'value:', augmentSelect.options[i].value);
-                    }
-                }
                 
                 if (abilityLabel && augmentSelect && augmentSelect.selectedIndex >= 0) {
                     const augmentOption = augmentSelect.options[augmentSelect.selectedIndex];
-                    console.log('DEBUG: augmentOption:', !!augmentOption, 'selectedIndex:', augmentSelect.selectedIndex, 'value:', augmentOption?.value, 'text:', augmentOption?.textContent);
                     
                     if (augmentOption && augmentOption.value) {
                         // Extract just the augment name (before the " - " part) for cleaner export
                         const fullText = augmentOption.textContent;
                         const augmentName = fullText.split(' - ')[0];
                         exportData.augments.push(`${abilityLabel.textContent}|${augmentName}`);
-                        console.log('DEBUG: Added augment:', abilityLabel.textContent, '|', augmentName);
                     }
                 }
             });
             
-            console.log('DEBUG: Total augments exported:', exportData.augments.length);
 
             // Format export text
             let exportText = '';
