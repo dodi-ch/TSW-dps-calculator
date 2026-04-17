@@ -513,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (i === 1) {
 
-                wrapper.innerHTML = `<span class="slot-label" style="color: #4CAF50;">Priority (Builders Only)</span>`;
+                wrapper.innerHTML = `<span class="slot-label" style="color: var(--priority-builder);">Priority (Builders Only)</span>`;
 
             } else {
 
@@ -526,6 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             const orderInput = createOrderInput(select, i);
+
+            // Add color blind accessible classes
+            if (i === 1) {
+                orderInput.classList.add('priority-builder');
+                wrapper.classList.add('priority-builder');
+            } else {
+                orderInput.classList.add('priority-normal');
+            }
 
             wrapper.appendChild(orderInput);
 
@@ -544,6 +552,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             const minResInput = createMinResourcesInput(select, 0);
+
+            // Add color blind accessible class for resource inputs
+            minResInput.classList.add('resource-input');
 
             wrapper.appendChild(minResInput);
 
@@ -662,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const eliteOrderInput = createOrderInput(eliteActiveSelect, 7);
 
         eliteOrderInput.title = 'Priority: 7 = after main abilities (default)';
+        eliteOrderInput.classList.add('priority-normal');
 
         eliteActiveWrapper.appendChild(eliteOrderInput);
 
@@ -676,6 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
         eliteActiveWrapper.appendChild(eliteMinResLabel);
 
         const eliteMinResInput = createMinResourcesInput(eliteActiveSelect, 0);
+        eliteMinResInput.classList.add('resource-input');
 
         eliteActiveWrapper.appendChild(eliteMinResInput);
 
@@ -758,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         auxSelect.id = `aux-active-1`;
 
         const auxOrderInput = createOrderInput(auxSelect, 8);
-
+        auxOrderInput.classList.add('priority-normal');
         auxWrapper.appendChild(auxOrderInput);
 
         const auxSearchInput = document.createElement('input');
