@@ -68,6 +68,26 @@ h1 {
     letter-spacing: 2px;
 }
 
+.mode-switch {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.mode-switch .btn-secondary {
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 212, 170, 0.2);
+}
+
+.mode-switch .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
+}
+
 main {
     display: grid;
     grid-template-columns: 1fr 1fr;
