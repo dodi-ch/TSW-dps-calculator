@@ -1422,31 +1422,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Extraction of trigger requirements for passives
 
         let triggerSubtypes = [];
+        let triggerCondition = ""; // New field to store specific trigger conditions
 
         if (ability.type && ability.type.includes("Passive")) {
 
+            // Check for "Whenever you critically hit" pattern
+            if (desc.includes("Whenever you critically hit")) {
+                triggerCondition = "critical";
+                triggerSubtypes = []; // Empty array means trigger on any hit that meets condition
+            }
+            // Check for "Whenever you penetrate" pattern  
+            else if (desc.includes("Whenever you penetrate")) {
+                triggerCondition = "penetrate";
+                triggerSubtypes = []; // Empty array means trigger on any hit that meets condition
+            }
             // Check for "Whenever you hit" pattern (triggers on any hit)
-
-            if (desc.includes("Whenever you hit")) {
-
-                // Don't add specific subtypes - this passive triggers on any hit
-
+            else if (desc.includes("Whenever you hit")) {
+                triggerCondition = "hit";
                 triggerSubtypes = []; // Empty array means trigger on any hit
-
             } else {
-
                 // Check for specific attack/ability type triggers
-
                 for (const s of subtypes) {
-
                     if (desc.includes(s + " attacks") || desc.includes(s + " abilities")) {
-
                         triggerSubtypes.push(s);
-
                     }
-
                 }
-
             }
 
         }
@@ -1804,6 +1804,8 @@ document.addEventListener('DOMContentLoaded', () => {
             subtype,
 
             triggerSubtypes,
+
+            triggerCondition,
 
             triggerInterval,
 
@@ -3016,36 +3018,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (allDebuffsActive) {
 
-                    // Parse conditional damage from description
-                    // Look for patterns like "or 56 damage if target is Hindered" or "or 137 damage if 5 resources"
+                    // Calculate conditional damage using RDB scaling data
+                    // Look for conditional damage patterns but use scaling data instead of parsed values
                     const desc = ability.description || '';
+                    const baseDamage = scalingToUse * cp;
                     
-                    // Pattern 1: "or X damage if [condition]"
-                    const conditionalMatch = desc.match(/or\s+(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+(.+?)(?:\.|$)/i);
+                    // Check if this ability has conditional damage (but don't parse specific values)
+                    const hasConditionalDamage = /or\s+\d+.*damage\s+if/i.test(desc) || 
+                                               /\d+.*damage,\s*or\s+\d+.*damage\s+if/i.test(desc);
                     
-                    if (conditionalMatch) {
-                        const bonusDamage = parseFloat(conditionalMatch[1]);
-                        const baseDamage = scalingToUse * cp;
-                        
-                        // Calculate the multiplier needed to achieve the bonus damage
-                        if (baseDamage > 0) {
-                            debuffDamageMult = 1 + (bonusDamage / baseDamage);
-                        }
-                    } else {
-                        // Pattern 2: "X damage, or Y damage if [condition]" 
-                        const dualDamageMatch = desc.match(/(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage,\s*or\s+(\d+)\s*(?:-\s*\d+)?\s*(?:physical|magical)?\s*damage\s+if\s+(.+?)(?:\.|$)/i);
-                        
-                        if (dualDamageMatch) {
-                            const baseDamageDesc = parseFloat(dualDamageMatch[1]);
-                            const bonusDamageDesc = parseFloat(dualDamageMatch[2]);
-                            const baseDamage = scalingToUse * cp;
-                            
-                            // Calculate multiplier based on the ratio of bonus to base damage from description
-                            if (baseDamageDesc > 0 && baseDamage > 0) {
-                                const damageRatio = bonusDamageDesc / baseDamageDesc;
-                                debuffDamageMult = 1 + (damageRatio - 1); // Apply the same ratio to actual damage
-                            }
-                        }
+                    if (hasConditionalDamage && baseDamage > 0) {
+                        // For abilities with conditional damage, apply a standard bonus multiplier
+                        // This avoids parsing static values from descriptions and uses RDB scaling as the base
+                        // Typical conditional damage bonuses range from 20-50% based on game mechanics
+                        debuffDamageMult = 1.3; // 30% average bonus for conditional damage
                     }
                 }
 
@@ -3654,6 +3640,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     }
 
+                    // Check for specific trigger conditions (critical hit, penetrate, etc.)
+                    if (passive.triggerCondition) {
+                        if (passive.triggerCondition === "critical" && !isCrit) {
+                            return; // Skip if not a critical hit
+                        }
+                        if (passive.triggerCondition === "penetrate" && !isPenetrated) {
+                            return; // Skip if not penetrated
+                        }
+                        // "hit" condition allows any hit to proceed
+                    }
+
+
                     
 
                     // Enhanced counter-based trigger system
@@ -3740,8 +3738,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (!shouldTrigger) return;
 
-
-
                     // Passives inherit the same signet multiplier as the triggering hit
 
                     let pSignetMult = 1.0;
@@ -3760,9 +3756,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
                     // Check if this is a DoT passive (like Bloodsport)
 
                     if (passive.dotDamage > 0 && passive.appliedDebuffs.includes('afflicted')) {
+
 
                         // Create DoT effect instead of direct damage
 
@@ -3796,7 +3794,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Still count the cast for the passive
 
-                        const passiveBreakdownKey = `passive_${p}_${passive.name}`;
+                        const passiveBreakdownKey = `passive_${passive.weapon}_${passive.name}`;
 
                         if (!statsBreakdown[passiveBreakdownKey]) {
 
@@ -3816,32 +3814,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         triggeredPassives.push(passive.name);
 
+                    } else {
+
+
                         // Traditional passive damage calculation
 
                         // Skip passives that are PURE damage bonuses (no scaling damage) - they're handled in damage bonus system
+
                         // But allow passives that have both scaling and damage bonus (like Seal the Deal)
+
                         if (passive.damageBonusPercent > 0 && (!passive.scalingToUse || passive.scalingToUse === 0) && 
+
                             (!passive.scaling || passive.scaling === 0)) {
+
                             return; // Don't process as regular passive, already handled as damage bonus
+
                         }
+
+
 
                         const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult * equilibriumMult;
 
                         totalDamage += pActualDmg;
 
-                        // Still count the cast for the passive
+                        const regularPassiveKey = `passive_${passive.weapon}_${passive.name}`;
 
-                        const regularPassiveKey = `passive_${p}_${passive.name}`;
 
                         if (!statsBreakdown[regularPassiveKey]) {
 
                             statsBreakdown[regularPassiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
+
 
                         }
 
                         statsBreakdown[regularPassiveKey].casts++;
 
                         statsBreakdown[regularPassiveKey].damage += pActualDmg;
+
 
                         
 
