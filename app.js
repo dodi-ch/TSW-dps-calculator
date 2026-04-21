@@ -1557,8 +1557,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let bonusDamageWithDebuffs = false;
 
-        let isBonusDamageOnly = false;
-
         
 
         // Check if ability requires specific debuffs
@@ -1635,6 +1633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check for bonus damage against debuffed targets (e.g., "or X damage to targets that are Weakened")
         // Skip abilities that mention weakened for bonus damage only (not as a requirement)
+        const isBonusDamageOnly = false; // Default to false, abilities can have bonus damage
         if (!isBonusDamageOnly) {
             const bonusDamageMatch = desc.match(/or\s+(\d+)\s*[-]?\s*\d*\s*(?:physical|magical)?\s*damage\s+to\s+targets\s+that\s+are\s+(\w+)/i);
 
@@ -6403,24 +6402,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
                     }
                     // Trigger calculation after augment import
-                    setTimeout(calculate, 300);
+                    setTimeout(calculate, 100);
                 }, 500); // 500ms delay to allow UI to update
             }
 
             // Show results for abilities only (augments will show their own results)
             if (!augmentsText) {
-                // Ensure all dropdowns are properly updated after import
-                setTimeout(() => {
-                    updateAbilityDropdowns();
-                    // Only show results if no augments to import
-                    if (errors.length > 0) {
-                        showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${errors.join('; ')}`, true);
-                    } else {
-                        showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
-                        // Trigger calculation after import
-                        setTimeout(calculate, 200);
-                    }
-                }, 100);
+                // Only show results if no augments to import
+                if (errors.length > 0) {
+                    showImportStatus(`Imported ${importedActives} actives, ${importedPassives} passives, ${importedAugments} augments. Errors: ${errors.join('; ')}`, true);
+                } else {
+                    showImportStatus(`Successfully imported ${importedActives} active abilities, ${importedPassives} passive abilities, and ${importedAugments} augments!`);
+                    // Trigger calculation after import
+                    setTimeout(calculate, 100);
+                }
             }
 
         } catch (error) {
