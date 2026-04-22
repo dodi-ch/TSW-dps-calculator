@@ -5196,9 +5196,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Laceration: +crit damage % (8/16/24%) when you critically hit (15s duration, 15s CD = ~100% uptime after first proc)
 
-            // We model it as a flat crit power increase on the importer
+            // This has a duration-based effect that should be calculated as uptime
 
-            6: { slot: 'weapon', stat: 'crit-power-pct', value: [8, 16, 24] }, // Laceration
+            6: { slot: 'weapon', stat: 'crit-power-pct', value: [8, 16, 24], duration: 15, cooldown: 15, type: 'proc' }, // Laceration
 
 
 
@@ -5592,9 +5592,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         case 'crit-power-pct':
 
-                            // Laceration: add directly to critPower % after calculation
-
-                            signetBonuses.critPowerPct += bonus;
+                            // Handle duration-based signets (like Laceration)
+                            if (signet.type === 'proc' && signet.duration && signet.cooldown) {
+                                // Calculate uptime for proc-based effects
+                                // For Laceration: 15s duration, 15s cooldown, triggers on crit
+                                // Assuming 20% crit chance and frequent attacks = high uptime
+                                const procUptime = (signet.duration / (signet.cooldown + signet.duration)) * 100;
+                                const adjustedBonus = bonus * (procUptime / 100);
+                                signetBonuses.critPowerPct += adjustedBonus;
+                            } else {
+                                // Permanent signet bonus
+                                signetBonuses.critPowerPct += bonus;
+                            }
 
                             break;
 

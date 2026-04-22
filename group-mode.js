@@ -2330,15 +2330,28 @@ document.addEventListener('DOMContentLoaded', () => {
             teamCritRating: 0,
             teamHitRating: 0,
             teamDamageBuffFlat: 0,
-            // Shared enemy debuffs (uptime percentages based on ability cooldowns and durations)
-            enemyAfflictedUptime: 0,  // % of time enemy is Afflicted
-            enemyWeakenedUptime: 0,   // % of time enemy is Weakened
-            enemyHinderedUptime: 0,   // % of time enemy is Hindered
-            enemyImpairedUptime: 0,   // % of time enemy is Impaired
-            // Player buff uptimes (time-based effects from active abilities)
-            shortFuseUptime: 0,       // % uptime for Short Fuse (20% damage buff)
-            amorFatiUptime: 0,        // % uptime for Amor Fati (10% damage buff)
-            doOrDieUptime: 0          // % uptime for Do or Die (25% damage buff)
+            // Shared enemy debuffs (real-time duration tracking)
+            enemyDebuffs: {
+                afflicted: false,
+                weakened: false,
+                hindered: false,
+                impaired: false,
+                // Debuffs with durations
+                afflictedDuration: 0,
+                weakenedDuration: 0,
+                hinderedDuration: 0,
+                impairedDuration: 0
+            },
+            // Player buff tracking (real-time duration tracking)
+            playerBuffs: {
+                // Active ability buffs
+                shortFuse: { active: false, endTime: 0, damageBonusPercent: 0 },
+                amorFati: { active: false, endTime: 0, damageBonusPercent: 0 },
+                doOrDie: { active: false, endTime: 0, damageBonusPercent: 0 },
+                // Cooldown effects
+                uncalibrated: { active: false, endTime: 0 }, // Deadly Aim cooldown
+                depleted: { active: false, endTime: 0 } // Breaching Shot cooldown
+            }
         };
 
         // Collect effects from all players
@@ -2350,69 +2363,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...player.abilities.auxiliaries
             ];
             
+            // Initialize debuff durations based on player abilities (shared across group)
+            const currentTime = Date.now() / 1000; // Current time in seconds
+            
             allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
                 const ability = tswData[abilityIndex];
                 if (!ability || !ability.description) return;
                 
                 const desc = ability.description.toLowerCase();
                 
-                // Extract duration from description
+                // Extract duration from description for debuffs
                 let duration = 8; // Default duration
                 const durationMatch = desc.match(/for (\d+) seconds?/);
                 if (durationMatch) {
                     duration = parseInt(durationMatch[1]);
                 }
                 
-                // Calculate uptime: duration / (cooldown + duration)
-                const uptime = (duration / (ability.cooldown + duration)) * 100;
-                
-                // Apply to appropriate debuff type based on description
+                // Apply debuffs with duration (simplified - assume they're active at calculation time)
                 if (desc.includes('afflicted') && desc.includes('damage over time')) {
-                    groupEffects.enemyAfflictedUptime = Math.max(groupEffects.enemyAfflictedUptime, uptime);
+                    groupEffects.enemyDebuffs.afflicted = true;
+                    groupEffects.enemyDebuffs.afflictedDuration = duration;
                 }
                 if (desc.includes('weakened') && (desc.includes('damage dealt') || desc.includes('debilitate') || desc.includes('damage received'))) {
-                    groupEffects.enemyWeakenedUptime = Math.max(groupEffects.enemyWeakenedUptime, uptime);
+                    groupEffects.enemyDebuffs.weakened = true;
+                    groupEffects.enemyDebuffs.weakenedDuration = duration;
                 }
                 if (desc.includes('hindered') && desc.includes('movement speed')) {
-                    groupEffects.enemyHinderedUptime = Math.max(groupEffects.enemyHinderedUptime, uptime);
+                    groupEffects.enemyDebuffs.hindered = true;
+                    groupEffects.enemyDebuffs.hinderedDuration = duration;
                 }
                 if (desc.includes('impaired') && (desc.includes('unable to act') || desc.includes('unable to activate'))) {
-                    groupEffects.enemyImpairedUptime = Math.max(groupEffects.enemyImpairedUptime, uptime);
+                    groupEffects.enemyDebuffs.impaired = true;
+                    groupEffects.enemyDebuffs.impairedDuration = duration;
                 }
             });
             
-            // Check for active abilities that give buffs and calculate their uptime
+            // Apply active ability buffs with duration (real-time tracking)
             allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
                 const ability = tswData[abilityIndex];
                 if (!ability || !ability.description) return;
                 
                 const desc = ability.description.toLowerCase();
                 
-                // Extract duration from description
+                // Extract duration from description for buffs
                 let duration = 10; // Default duration for buffs
                 const durationMatch = desc.match(/for (\d+) seconds?/);
                 if (durationMatch) {
                     duration = parseInt(durationMatch[1]);
                 }
                 
-                // Calculate uptime: duration / (cooldown + duration)
-                const uptime = (duration / (ability.cooldown + duration)) * 100;
-                
                 // Apply to appropriate buff type based on ability name and description
                 switch (ability.name) {
                     case 'Short Fuse':
                         if (desc.includes('increases all damage by 20%')) {
-                            groupEffects.shortFuseUptime = Math.max(groupEffects.shortFuseUptime, uptime);
+                            groupEffects.playerBuffs.shortFuse.active = true;
+                            groupEffects.playerBuffs.shortFuse.endTime = currentTime + duration;
+                            groupEffects.playerBuffs.shortFuse.damageBonusPercent = 20;
                         }
                         break;
                     case 'Amor Fati':
                         if (desc.includes('increases all damage dealt by 10%')) {
-                            groupEffects.amorFatiUptime = Math.max(groupEffects.amorFatiUptime, uptime);
+                            groupEffects.playerBuffs.amorFati.active = true;
+                            groupEffects.playerBuffs.amorFati.endTime = currentTime + duration;
+                            groupEffects.playerBuffs.amorFati.damageBonusPercent = 10;
                         }
                         break;
                     case 'Do or Die':
                         if (desc.includes('increases the direct damage you deal by 25%')) {
-                            groupEffects.doOrDieUptime = Math.max(groupEffects.doOrDieUptime, uptime);
+                            groupEffects.playerBuffs.doOrDie.active = true;
+                            groupEffects.playerBuffs.doOrDie.endTime = currentTime + duration;
+                            groupEffects.playerBuffs.doOrDie.damageBonusPercent = 25;
                         }
                         break;
                 }
@@ -2479,32 +2499,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         break;
                     case 'Critical Control':
                         // "Whenever you hit a Hindered target, all group members gain a single stack of the Critical Rating effect, which increases Critical Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times."
-                        // Effectiveness scales with Hindered uptime
-                        if (groupEffects.enemyHinderedUptime > 0) {
+                        // Only works if enemy is currently Hindered (real-time system)
+                        if (groupEffects.enemyDebuffs.hindered) {
                             // Realistic calculation: 40% of attacks hit Hindered targets in group content
                             // With 8s duration and typical attack frequency, maintain ~2 stacks on average
-                            // Scale by uptime percentage
-                            const criticalControlStacks = 2.0 * (groupEffects.enemyHinderedUptime / 100);
-                            groupEffects.teamCritRating += criticalControlStacks * 40; // Scaled crit rating bonus
+                            const criticalControlStacks = 2.0;
+                            groupEffects.teamCritRating += criticalControlStacks * 40; // 80 crit rating bonus
                         }
                         break;
                     case 'Short Fuse':
                         // "Gives all group members the Short Fuse effect, which increases all damage by 20% for 10 seconds"
-                        // Scale by uptime percentage
-                        const shortFuseBonus = 20 * (groupEffects.shortFuseUptime / 100);
-                        groupEffects.teamDamageBuffFlat += shortFuseBonus;
+                        // Check if buff is currently active
+                        if (groupEffects.playerBuffs.shortFuse.active) {
+                            groupEffects.teamDamageBuffFlat += groupEffects.playerBuffs.shortFuse.damageBonusPercent;
+                        }
                         break;
                     case 'Amor Fati':
                         // "Gives you a beneficial effect that increases all damage dealt by 10% for 10 seconds"
-                        // Individual player buff, scale by uptime
-                        const amorFatiBonus = 10 * (groupEffects.amorFatiUptime / 100);
-                        groupEffects.teamDamageBuffFlat += amorFatiBonus;
+                        // Individual player buff, check if currently active
+                        if (groupEffects.playerBuffs.amorFati.active) {
+                            groupEffects.teamDamageBuffFlat += groupEffects.playerBuffs.amorFati.damageBonusPercent;
+                        }
                         break;
                     case 'Do or Die':
                         // "Increases the direct damage you deal by 25% for 10 seconds"
-                        // Individual player buff, scale by uptime
-                        const doOrDieBonus = 25 * (groupEffects.doOrDieUptime / 100);
-                        groupEffects.teamDamageBuffFlat += doOrDieBonus;
+                        // Individual player buff, check if currently active
+                        if (groupEffects.playerBuffs.doOrDie.active) {
+                            groupEffects.teamDamageBuffFlat += groupEffects.playerBuffs.doOrDie.damageBonusPercent;
+                        }
                         break;
                     case 'Pack Leader':
                         // "Gives all group members a beneficial effect that reduces the chance of performing glancing hits by 80% for 10 seconds"
@@ -2512,49 +2534,42 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Convert to effective hit rating increase (simplified: ~80% reduction in glancing = ~400 hit rating equivalent)
                         groupEffects.teamHitRating += 400;
                         break;
-                    // Conditional abilities that benefit from shared enemy debuffs (scaled by uptime)
+                    // Conditional abilities that benefit from shared enemy debuffs (real-time system)
                     case 'Third Degree':
                         // "Whenever you penetrate a target that is Afflicted, you gain the Minor Penetration Chance effect, which increases Penetration Chance by 15% for 8 seconds."
-                        if (groupEffects.enemyAfflictedUptime > 0) {
+                        if (groupEffects.enemyDebuffs.afflicted) {
                             // Estimate 30% penetration rate, 8s duration, maintain ~1.5 stacks
-                            // Scale by Afflicted uptime
-                            const thirdDegreeStacks = 1.5 * (groupEffects.enemyAfflictedUptime / 100);
-                            groupEffects.teamCritRating += thirdDegreeStacks * 40; // Scaled crit rating equivalent
+                            const thirdDegreeStacks = 1.5;
+                            groupEffects.teamCritRating += thirdDegreeStacks * 40; // 60 crit rating equivalent
                         }
                         break;
                     case 'Fever Pitch':
                         // "Whenever you hit a Weakened target, you have a 15% chance to gain the Major Hit Chance effect, which reduces the chance of glancing by 25% for 5 seconds."
-                        if (groupEffects.enemyWeakenedUptime > 0) {
+                        if (groupEffects.enemyDebuffs.weakened) {
                             // 15% chance per hit, 5s duration, assume frequent hits = ~25% uptime
-                            // Scale by Weakened uptime
-                            const feverPitchBonus = 100 * (groupEffects.enemyWeakenedUptime / 100);
-                            groupEffects.teamHitRating += feverPitchBonus; // Scaled glancing reduction
+                            const feverPitchBonus = 100; // ~25% glancing reduction equivalent
+                            groupEffects.teamHitRating += feverPitchBonus;
                         }
                         break;
                     case 'Seal the Deal':
                         // "Whenever you hit a Weakened target, you have a 50% chance to gain a single stack of the Hit Rating effect, which increases Hit Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times."
-                        if (groupEffects.enemyWeakenedUptime > 0) {
+                        if (groupEffects.enemyDebuffs.weakened) {
                             // 50% chance per hit, maintain ~2 stacks on average
-                            // Scale by Weakened uptime
-                            const sealTheDealBonus = 80 * (groupEffects.enemyWeakenedUptime / 100);
-                            groupEffects.teamHitRating += sealTheDealBonus; // Scaled hit rating
+                            const sealTheDealBonus = 80; // 2 * 40 hit rating
+                            groupEffects.teamHitRating += sealTheDealBonus;
                         }
                         break;
                     case 'Wheel of Knives':
                         // "\"Wheel of Knives\" performs an additional hit to Weakened and Impaired targets, dealing 6 magical damage."
-                        const combinedDebuffUptime = Math.max(groupEffects.enemyWeakenedUptime, groupEffects.enemyImpairedUptime);
-                        if (combinedDebuffUptime > 0) {
-                            // Additional hit = ~5% damage increase, scaled by uptime
-                            const wheelOfKnivesBonus = 5 * (combinedDebuffUptime / 100);
-                            groupEffects.teamDamageBuffFlat += wheelOfKnivesBonus;
+                        if (groupEffects.enemyDebuffs.weakened || groupEffects.enemyDebuffs.impaired) {
+                            // Additional hit = ~5% damage increase
+                            groupEffects.teamDamageBuffFlat += 5;
                         }
                         break;
                     case 'Pulling the Strings':
                         // "Consumes all Chaos Resources. A single target attack with a 7 metre range that deals 87 - 176 magical damage, based on the number of resources consumed. If the target is Weakened, you gain the Minor Hit Chance effect, which reduces the chance of glancing by 10% for 8 seconds."
-                        if (groupEffects.enemyWeakenedUptime > 0) {
-                            // Scale by Weakened uptime
-                            const pullingTheStringsBonus = 40 * (groupEffects.enemyWeakenedUptime / 100);
-                            groupEffects.teamHitRating += pullingTheStringsBonus; // Scaled glancing reduction
+                        if (groupEffects.enemyDebuffs.weakened) {
+                            groupEffects.teamHitRating += 40; // 10% glancing reduction equivalent
                         }
                         break;
                     // Passive cooldown reduction abilities (individual effects, not team-wide)
