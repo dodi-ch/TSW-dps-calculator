@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
             68: { slot: 'wrist', stat: 'attack-rating', value: [38, 78, 117] }, // Repulsor Technology
             // --- Weapon signets (% bonus) ---
             // Laceration: +crit damage % (8/16/24%) when you critically hit (15s duration, 15s CD = ~100% uptime after first proc)
-            // We model it as a flat crit power increase on the importer
-            6: { slot: 'weapon', stat: 'crit-power-pct', value: [8, 16, 24] }, // Laceration
+            // This has a duration-based effect that should be calculated as uptime
+            6: { slot: 'weapon', stat: 'crit-power-pct', value: [8, 16, 24], duration: 15, cooldown: 15, type: 'proc' }, // Laceration
             // --- Head signets (% damage by type - applied via signetDamageMult in simulation) ---
             // These are passive % boosts active all the time
             16: { slot: 'head', stat: 'affliction-dmg-pct', value: [7, 14, 21] }, // Corruption (affliction)
@@ -431,20 +431,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update augment UI after ability selection
             const playerId = slotId.split('-')[1];
             updateAugmentsForPlayer(playerId);
-            calculatePlayerDps(playerId);
+            // Recalculate all players since ability changes can affect group-wide augments
+            calculateAllPlayers();
         });
         
         if (priorityInput) {
             priorityInput.addEventListener('input', () => {
                 const playerId = slotId.split('-')[1];
-                calculatePlayerDps(playerId);
+                calculateAllPlayers();
             });
         }
         
         if (minResInput) {
             minResInput.addEventListener('input', () => {
                 const playerId = slotId.split('-')[1];
-                calculatePlayerDps(playerId);
+                calculateAllPlayers();
             });
         }
         
@@ -692,7 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             augmentSelect.addEventListener('change', () => {
                 player.augments[ability.name] = augmentSelect.value;
-                calculatePlayerDps(playerId);
+                // Recalculate all players since group-wide augments affect everyone
+                calculateAllPlayers();
             });
             
             wrapper.appendChild(nameLabel);
@@ -801,7 +803,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById(`player-${playerId}-combat-power`).value = player.stats.combatPower;
                     }
                     
-                    calculatePlayerDps(playerId);
+                    // Recalculate all players since stat changes affect group-wide bonus calculations
+                    calculateAllPlayers();
                 });
             }
         });
@@ -825,7 +828,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Update ability dropdowns for this player
                     updateAllAbilityDropdownsForPlayer(playerId);
-                    calculatePlayerDps(playerId);
+                    // Recalculate all players since weapon changes affect group-wide bonus calculations
+                    calculateAllPlayers();
                 });
             }
         });
@@ -1012,7 +1016,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             attackRating += bonus;
                             break;
                         case 'crit-power-pct':
-                            signetBonuses.critPowerPct += bonus;
+                            // Handle duration-based signets (like Laceration)
+                            if (signet.type === 'proc' && signet.duration && signet.cooldown) {
+                                // Calculate uptime for proc-based effects
+                                // For Laceration: 15s duration, 15s cooldown, triggers on crit
+                                // Assuming 20% crit chance and frequent attacks = high uptime
+                                const procUptime = (signet.duration / (signet.cooldown + signet.duration)) * 100;
+                                const adjustedBonus = bonus * (procUptime / 100);
+                                signetBonuses.critPowerPct += adjustedBonus;
+                            } else {
+                                // Permanent signet bonus
+                                signetBonuses.critPowerPct += bonus;
+                            }
                             break;
                         case 'dmg-pct':
                             signetBonuses.globalDmgPct += bonus;
@@ -2212,11 +2227,64 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // This would use the same calculation logic as the original app
-        // For now, we'll create a placeholder calculation
+        // Collect all group-wide effects from all players
+        const groupEffects = collectGroupWideEffects();
+        
+        // Calculate base DPS and individual augment bonuses
         const baseDps = calculateBaseDps(player);
         const augmentBonus = calculateAugmentBonus(player);
-        const totalDps = baseDps + augmentBonus;
+        
+        // Apply group-wide effects to this player
+        let groupWideBonus = 0;
+        
+        // Team damage buffs from all players' support augments
+        if (groupEffects.teamDamageBuff > 0) {
+            groupWideBonus += baseDps * (groupEffects.teamDamageBuff / 100);
+        }
+        
+        // Team cooldown reduction affects ability uptime (simplified as DPS increase)
+        if (groupEffects.teamCooldownReduction > 0) {
+            // Simplified: assume cooldown reduction translates to more ability casts
+            groupWideBonus += baseDps * (groupEffects.teamCooldownReduction / 100) * 0.5; // Conservative estimate
+        }
+        
+        // Individual cooldown reduction from this player's own augments
+        if (groupEffects.cooldownReduction > 0) {
+            groupWideBonus += baseDps * (groupEffects.cooldownReduction / 100) * 0.3; // More conservative for self-only
+        }
+        
+        // Evade reduction affects hit chance (simplified as DPS increase)
+        if (groupEffects.evadeReduction > 0) {
+            // Simplified: assume evade reduction improves effective hit rate
+            groupWideBonus += baseDps * (groupEffects.evadeReduction / 100) * 0.2; // Conservative estimate
+        }
+        
+        // Ability-based group-wide effects
+        
+        // Team Critical Rating from abilities like Social Dynamo and Critical Control
+        if (groupEffects.teamCritRating > 0) {
+            // Convert Crit Rating to Crit Chance (simplified: ~400 rating = 1% crit chance)
+            const critChanceFromRating = (groupEffects.teamCritRating / 400);
+            groupWideBonus += baseDps * critChanceFromRating * (player.stats.critPower / 100);
+        }
+        
+        // Team Hit Rating from abilities like Pack Leader
+        if (groupEffects.teamHitRating > 0) {
+            // Convert Hit Rating to reduced glancing chance (simplified: ~400 rating = 1% less glancing)
+            // Assume base 10% glancing chance, each 400 hit rating reduces by 1%
+            const glancingReduction = (groupEffects.teamHitRating / 400);
+            // Glancing hits do 70% damage, so reducing glancing chance increases average damage
+            const avgDamageIncrease = glancingReduction * 0.3; // 30% of the damage that would have been glancing
+            groupWideBonus += baseDps * avgDamageIncrease;
+        }
+        
+        // Flat damage buffs from abilities like Short Fuse
+        if (groupEffects.teamDamageBuffFlat > 0) {
+            groupWideBonus += baseDps * (groupEffects.teamDamageBuffFlat / 100);
+        }
+        
+        // Calculate total DPS
+        const totalDps = baseDps + augmentBonus + groupWideBonus;
         
         player.results.totalDps = totalDps;
         
@@ -2248,6 +2316,289 @@ document.addEventListener('DOMContentLoaded', () => {
         return baseDamage * avgCritMultiplier * avgPenMultiplier * 0.8; // Base rotation efficiency
     }
     
+    // Collect all group-wide effects from all players
+    function collectGroupWideEffects() {
+        const groupEffects = {
+            teamDamageBuff: 0,
+            teamDamageReduction: 0,
+            teamCriticalHeal: 0,  // Only critical healing matters for Signet of Equilibrium
+            teamHealingBuff: 0,   // Keep augment healing buffs for Signet of Equilibrium
+            teamCooldownReduction: 0,
+            cooldownReduction: 0, // Individual cooldown reduction effects
+            evadeReduction: 0,    // Individual evade reduction effects
+            // Ability-based group-wide effects (damage-related only)
+            teamCritRating: 0,
+            teamHitRating: 0,
+            teamDamageBuffFlat: 0,
+            // Shared enemy debuffs (uptime percentages based on ability cooldowns and durations)
+            enemyAfflictedUptime: 0,  // % of time enemy is Afflicted
+            enemyWeakenedUptime: 0,   // % of time enemy is Weakened
+            enemyHinderedUptime: 0,   // % of time enemy is Hindered
+            enemyImpairedUptime: 0,   // % of time enemy is Impaired
+            // Player buff uptimes (time-based effects from active abilities)
+            shortFuseUptime: 0,       // % uptime for Short Fuse (20% damage buff)
+            amorFatiUptime: 0,        // % uptime for Amor Fati (10% damage buff)
+            doOrDieUptime: 0          // % uptime for Do or Die (25% damage buff)
+        };
+
+        // Collect effects from all players
+        groupState.players.forEach(player => {
+            // Check if this player can apply enemy debuffs (shared across group)
+            const allPlayerAbilitiesForDebuffs = [
+                ...player.abilities.actives,
+                ...player.abilities.elites,
+                ...player.abilities.auxiliaries
+            ];
+            
+            allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
+                const ability = tswData[abilityIndex];
+                if (!ability || !ability.description) return;
+                
+                const desc = ability.description.toLowerCase();
+                
+                // Extract duration from description
+                let duration = 8; // Default duration
+                const durationMatch = desc.match(/for (\d+) seconds?/);
+                if (durationMatch) {
+                    duration = parseInt(durationMatch[1]);
+                }
+                
+                // Calculate uptime: duration / (cooldown + duration)
+                const uptime = (duration / (ability.cooldown + duration)) * 100;
+                
+                // Apply to appropriate debuff type based on description
+                if (desc.includes('afflicted') && desc.includes('damage over time')) {
+                    groupEffects.enemyAfflictedUptime = Math.max(groupEffects.enemyAfflictedUptime, uptime);
+                }
+                if (desc.includes('weakened') && (desc.includes('damage dealt') || desc.includes('debilitate') || desc.includes('damage received'))) {
+                    groupEffects.enemyWeakenedUptime = Math.max(groupEffects.enemyWeakenedUptime, uptime);
+                }
+                if (desc.includes('hindered') && desc.includes('movement speed')) {
+                    groupEffects.enemyHinderedUptime = Math.max(groupEffects.enemyHinderedUptime, uptime);
+                }
+                if (desc.includes('impaired') && (desc.includes('unable to act') || desc.includes('unable to activate'))) {
+                    groupEffects.enemyImpairedUptime = Math.max(groupEffects.enemyImpairedUptime, uptime);
+                }
+            });
+            
+            // Check for active abilities that give buffs and calculate their uptime
+            allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
+                const ability = tswData[abilityIndex];
+                if (!ability || !ability.description) return;
+                
+                const desc = ability.description.toLowerCase();
+                
+                // Extract duration from description
+                let duration = 10; // Default duration for buffs
+                const durationMatch = desc.match(/for (\d+) seconds?/);
+                if (durationMatch) {
+                    duration = parseInt(durationMatch[1]);
+                }
+                
+                // Calculate uptime: duration / (cooldown + duration)
+                const uptime = (duration / (ability.cooldown + duration)) * 100;
+                
+                // Apply to appropriate buff type based on ability name and description
+                switch (ability.name) {
+                    case 'Short Fuse':
+                        if (desc.includes('increases all damage by 20%')) {
+                            groupEffects.shortFuseUptime = Math.max(groupEffects.shortFuseUptime, uptime);
+                        }
+                        break;
+                    case 'Amor Fati':
+                        if (desc.includes('increases all damage dealt by 10%')) {
+                            groupEffects.amorFatiUptime = Math.max(groupEffects.amorFatiUptime, uptime);
+                        }
+                        break;
+                    case 'Do or Die':
+                        if (desc.includes('increases the direct damage you deal by 25%')) {
+                            groupEffects.doOrDieUptime = Math.max(groupEffects.doOrDieUptime, uptime);
+                        }
+                        break;
+                }
+            });
+            
+            // Collect augment effects
+            Object.values(player.augments).forEach(augmentKey => {
+                const augment = AUGMENTS[augmentKey];
+                if (augment) {
+                    // Team-wide support effects
+                    if (augment.type === 'support') {
+                        if (augment.effect.teamDamageBuff) {
+                            groupEffects.teamDamageBuff += augment.effect.teamDamageBuff;
+                        }
+                        if (augment.effect.teamDamageReduction) {
+                            groupEffects.teamDamageReduction += augment.effect.teamDamageReduction;
+                        }
+                        if (augment.effect.teamHeal) {
+                            // Only critical healing matters for Signet of Equilibrium
+                            // Estimate critical heal chance based on player's crit chance
+                            const critChance = player.stats.critChance / 100;
+                            const expectedCriticalHeals = augment.effect.teamHeal * critChance;
+                            groupEffects.teamCriticalHeal += expectedCriticalHeals;
+                        }
+                        if (augment.effect.teamHealingBuff) {
+                            groupEffects.teamHealingBuff += augment.effect.teamHealingBuff;
+                        }
+                        if (augment.effect.teamCooldownReduction) {
+                            groupEffects.teamCooldownReduction += augment.effect.teamCooldownReduction;
+                        }
+                    }
+                    
+                    // Individual effects that still apply to the player
+                    if (augment.effect.cooldownReduction) {
+                        groupEffects.cooldownReduction += augment.effect.cooldownReduction;
+                    }
+                    if (augment.effect.evadeReduction) {
+                        groupEffects.evadeReduction += augment.effect.evadeReduction;
+                    }
+                }
+            });
+
+            // Collect ability-based group-wide effects
+            const allPlayerAbilities = [
+                ...player.abilities.actives,
+                ...player.abilities.elites,
+                ...player.abilities.auxiliaries,
+                ...player.abilities.passives
+            ];
+
+            allPlayerAbilities.forEach(abilityIndex => {
+                const ability = tswData[abilityIndex];
+                if (!ability) return;
+
+                // Check for specific damage-related group-wide abilities
+                switch (ability.name) {
+                    case 'Social Dynamo':
+                        // "Whenever you critically hit with Strike abilities, all group members gain a single stack of the Critical Rating effect, which increases Critical Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times."
+                        // Realistic calculation: Need Strike abilities and critical hits to trigger
+                        // Estimate: 30% of abilities are Strike subtype, 20% crit chance = 6% trigger rate per ability use
+                        // With 8s duration and typical ability rotation, maintain ~2-3 stacks on average
+                        const socialDynamoStacks = 2.5; // Realistic average stacks maintained
+                        groupEffects.teamCritRating += socialDynamoStacks * 40; // 2.5 * 40 = 100 crit rating average
+                        break;
+                    case 'Critical Control':
+                        // "Whenever you hit a Hindered target, all group members gain a single stack of the Critical Rating effect, which increases Critical Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times."
+                        // Effectiveness scales with Hindered uptime
+                        if (groupEffects.enemyHinderedUptime > 0) {
+                            // Realistic calculation: 40% of attacks hit Hindered targets in group content
+                            // With 8s duration and typical attack frequency, maintain ~2 stacks on average
+                            // Scale by uptime percentage
+                            const criticalControlStacks = 2.0 * (groupEffects.enemyHinderedUptime / 100);
+                            groupEffects.teamCritRating += criticalControlStacks * 40; // Scaled crit rating bonus
+                        }
+                        break;
+                    case 'Short Fuse':
+                        // "Gives all group members the Short Fuse effect, which increases all damage by 20% for 10 seconds"
+                        // Scale by uptime percentage
+                        const shortFuseBonus = 20 * (groupEffects.shortFuseUptime / 100);
+                        groupEffects.teamDamageBuffFlat += shortFuseBonus;
+                        break;
+                    case 'Amor Fati':
+                        // "Gives you a beneficial effect that increases all damage dealt by 10% for 10 seconds"
+                        // Individual player buff, scale by uptime
+                        const amorFatiBonus = 10 * (groupEffects.amorFatiUptime / 100);
+                        groupEffects.teamDamageBuffFlat += amorFatiBonus;
+                        break;
+                    case 'Do or Die':
+                        // "Increases the direct damage you deal by 25% for 10 seconds"
+                        // Individual player buff, scale by uptime
+                        const doOrDieBonus = 25 * (groupEffects.doOrDieUptime / 100);
+                        groupEffects.teamDamageBuffFlat += doOrDieBonus;
+                        break;
+                    case 'Pack Leader':
+                        // "Gives all group members a beneficial effect that reduces the chance of performing glancing hits by 80% for 10 seconds"
+                        // 80% glancing reduction is a significant DPS boost, especially for low-hit rating builds
+                        // Convert to effective hit rating increase (simplified: ~80% reduction in glancing = ~400 hit rating equivalent)
+                        groupEffects.teamHitRating += 400;
+                        break;
+                    // Conditional abilities that benefit from shared enemy debuffs (scaled by uptime)
+                    case 'Third Degree':
+                        // "Whenever you penetrate a target that is Afflicted, you gain the Minor Penetration Chance effect, which increases Penetration Chance by 15% for 8 seconds."
+                        if (groupEffects.enemyAfflictedUptime > 0) {
+                            // Estimate 30% penetration rate, 8s duration, maintain ~1.5 stacks
+                            // Scale by Afflicted uptime
+                            const thirdDegreeStacks = 1.5 * (groupEffects.enemyAfflictedUptime / 100);
+                            groupEffects.teamCritRating += thirdDegreeStacks * 40; // Scaled crit rating equivalent
+                        }
+                        break;
+                    case 'Fever Pitch':
+                        // "Whenever you hit a Weakened target, you have a 15% chance to gain the Major Hit Chance effect, which reduces the chance of glancing by 25% for 5 seconds."
+                        if (groupEffects.enemyWeakenedUptime > 0) {
+                            // 15% chance per hit, 5s duration, assume frequent hits = ~25% uptime
+                            // Scale by Weakened uptime
+                            const feverPitchBonus = 100 * (groupEffects.enemyWeakenedUptime / 100);
+                            groupEffects.teamHitRating += feverPitchBonus; // Scaled glancing reduction
+                        }
+                        break;
+                    case 'Seal the Deal':
+                        // "Whenever you hit a Weakened target, you have a 50% chance to gain a single stack of the Hit Rating effect, which increases Hit Rating by 40 per stack for 8 seconds. This effect can stack up to 5 times."
+                        if (groupEffects.enemyWeakenedUptime > 0) {
+                            // 50% chance per hit, maintain ~2 stacks on average
+                            // Scale by Weakened uptime
+                            const sealTheDealBonus = 80 * (groupEffects.enemyWeakenedUptime / 100);
+                            groupEffects.teamHitRating += sealTheDealBonus; // Scaled hit rating
+                        }
+                        break;
+                    case 'Wheel of Knives':
+                        // "\"Wheel of Knives\" performs an additional hit to Weakened and Impaired targets, dealing 6 magical damage."
+                        const combinedDebuffUptime = Math.max(groupEffects.enemyWeakenedUptime, groupEffects.enemyImpairedUptime);
+                        if (combinedDebuffUptime > 0) {
+                            // Additional hit = ~5% damage increase, scaled by uptime
+                            const wheelOfKnivesBonus = 5 * (combinedDebuffUptime / 100);
+                            groupEffects.teamDamageBuffFlat += wheelOfKnivesBonus;
+                        }
+                        break;
+                    case 'Pulling the Strings':
+                        // "Consumes all Chaos Resources. A single target attack with a 7 metre range that deals 87 - 176 magical damage, based on the number of resources consumed. If the target is Weakened, you gain the Minor Hit Chance effect, which reduces the chance of glancing by 10% for 8 seconds."
+                        if (groupEffects.enemyWeakenedUptime > 0) {
+                            // Scale by Weakened uptime
+                            const pullingTheStringsBonus = 40 * (groupEffects.enemyWeakenedUptime / 100);
+                            groupEffects.teamHitRating += pullingTheStringsBonus; // Scaled glancing reduction
+                        }
+                        break;
+                    // Passive cooldown reduction abilities (individual effects, not team-wide)
+                    case 'Calling the Shots':
+                        // "Reduces the recharge time of \"Deadly Aim\" by 30 seconds and reduces the duration of \"Uncalibrated\" effect by 30 seconds."
+                        // Deadly Aim: 90s cooldown, 10s buff, 90s Uncalibrated debuff
+                        // With Calling the Shots: 60s cooldown, 10s buff, 60s Uncalibrated debuff
+                        // This effectively increases Deadly Aim uptime from ~10% to ~14.3% (10s every 100s vs 10s every 70s)
+                        // Combined effect: 43% increase in Deadly Aim effectiveness
+                        groupEffects.cooldownReduction += 43;
+                        break;
+                    case 'Breach Party':
+                        // "Reduces the recharge time of \"Breaching Shot\" by 30 seconds and reduces the duration of \"Depleted\" effect by 30 seconds."
+                        // Breaching Shot: 90s cooldown, 8s buff, 90s Depleted debuff
+                        // With Breach Party: 60s cooldown, 8s buff, 60s Depleted debuff
+                        // This effectively increases Breaching Shot uptime from ~8% to ~11.4% (8s every 98s vs 8s every 68s)
+                        // Combined effect: 42.5% increase in Breaching Shot effectiveness
+                        groupEffects.cooldownReduction += 42.5;
+                        break;
+                    case 'Double Dash':
+                        // "Reduces the recharge time of all dash abilities by 50%."
+                        groupEffects.cooldownReduction += 50;
+                        break;
+                    case 'Stone Cold':
+                        // "Reduces the recharge time of Stonewalled by 15 seconds."
+                        // Assuming Stonewalled has similar cooldown to other defensive abilities
+                        groupEffects.cooldownReduction += 20; // Conservative estimate
+                        break;
+                    case 'Alpha Wolf':
+                        // "Reduces the recharge time of \"Pack Leader\" by 30 seconds."
+                        // Assuming Pack Leader has similar cooldown to other elite abilities
+                        groupEffects.cooldownReduction += 25; // Conservative estimate
+                        break;
+                    // Remove healing/leech abilities as they don't affect DPS:
+                    // - Outbreak Alert (healing)
+                    // - Reap and Sew (leech)
+                    // - Cold Blooded (healing)
+                }
+            });
+        });
+
+        return groupEffects;
+    }
+
     // Calculate augment bonus
     function calculateAugmentBonus(player) {
         let bonus = 0;
