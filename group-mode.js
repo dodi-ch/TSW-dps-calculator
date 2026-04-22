@@ -844,7 +844,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusElement = document.getElementById(`player-${playerId}-import-status`);
         
         if (!urlInput || !statusElement) {
-            console.error(`Missing tswcalc URL input or status element for player ${playerId}`);
             return;
         }
         
@@ -1103,8 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showImportStatus(playerId, 'Gear stats imported successfully!', 'success');
 
         } catch (err) {
-            console.error(`Failed to parse tswcalc URL for player ${playerId}:`, err);
-            showImportStatus(playerId, 'An error occurred while parsing the tswcalc URL. Check the console for details.', 'error');
+            showImportStatus(playerId, 'An error occurred while parsing the tswcalc URL.', 'error');
         }
     }
 
@@ -1149,7 +1147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function importPlayerBuild(playerId) {
         // Prevent recursive imports
         if (isImporting) {
-            console.log(`Import already in progress, skipping recursive call for player ${playerId}`);
             return;
         }
         
@@ -1180,7 +1177,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             
         } catch (error) {
-            console.error(`Player ${playerId} import error:`, error);
             showImportStatus(playerId, `Error importing build: ${error.message}`, 'error');
         } finally {
             // Reset import flag
@@ -2437,7 +2433,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the application
     function init() {
         if (typeof tswData === 'undefined') {
-            console.error('TSW data not loaded');
             return;
         }
         
