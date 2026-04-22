@@ -3,6 +3,11 @@
   Supports 5-player team calculations with independent builds
   Each player has separate stats, abilities, and equipment
 -->
+<!-- 
+  TSW DPS Calculator - Group Mode (New Compact Design)
+  Ultra-compact 5-player layout with all features visible
+  Each player shows: stats, actives, passives, augments, import/export
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +23,7 @@
     <!-- Main application container -->
     <div class="app-container">
         
-        <!-- Header with title and mode toggle -->
+        <!-- Header -->
         <header>
             <h1>TSW DPS Calculator - Group Mode</h1>
             <p class="subtitle">5-Party Team Damage Calculator</p>
@@ -29,211 +34,709 @@
             </div>
         </header>
 
+        <!-- Setup Instructions -->
+        <section class="panel setup-guide">
+            <h2>How to Setup Each Player</h2>
+            <div class="setup-steps">
+                <div class="step">
+                    <strong>1. Configure Stats:</strong> Enter Attack Power, Weapon Power, Hit Rating, Crit Chance (0-100%), Crit Power (25+%), Pen Rating, and Pen Chance (0-100%).
+                </div>
+                <div class="step">
+                    <strong>2. Select Weapons:</strong> Choose Primary, Secondary, and Auxiliary weapons from the dropdowns.
+                </div>
+                <div class="step">
+                    <strong>3. Add Abilities:</strong> Click on ability slots to select 7 active abilities (including 1 elite) and 8 passive abilities (including 1 elite).
+                </div>
+                <div class="step">
+                    <strong>4. Configure Augments:</strong> Select augments for your abilities from the augment dropdowns.
+                </div>
+                <div class="step">
+                    <strong>5. Import/Export:</strong> Use the Import/Export section to save/load builds. You can import individual player builds or use Team Import/Export for all players.
+                </div>
+            </div>
+            <div class="tip">
+                <strong>Tip:</strong> Use the individual import/export for each player to quickly load pre-configured builds, or use the Team Import/Export to manage all 5 players at once.
+            </div>
+        </section>
+
         <main>
             
-            <!-- ==================== -->
-            <!-- SHARED ENCOUNTER SETTINGS -->
-            <!-- ==================== -->
-            <!-- These settings apply to all 5 players -->
-            <section class="panel glass-panel" id="encounter-panel" style="grid-column: 1 / -1;">
+            <!-- Encounter Settings -->
+            <section class="panel encounter-panel">
                 <h2>Encounter Settings</h2>
-                
-                <!-- Target enemy selection -->
-                <div class="form-group">
-                    <label for="target-enemy">Target Enemy</label>
-                    <select id="target-enemy">
-                        <option value="training-puppet">Training Puppet</option>
-                    </select>
+                <div class="encounter-controls">
+                    <div class="control-group">
+                        <label for="target-enemy">Target Enemy</label>
+                        <select id="target-enemy">
+                            <option value="training-puppet">Training Puppet</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="simulation-time">Sim Time (min)</label>
+                        <input type="number" id="simulation-time" value="3" min="1" max="15">
+                    </div>
                 </div>
-                
-                <!-- Enemy stats display -->
-                <div id="enemy-stats-display" 
-                     style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
+                <div id="enemy-stats-display" class="enemy-stats">
                     Block: 0 | Evade: 0 | Defense: 0
-                </div>
-                
-                <!-- Simulation duration -->
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label for="simulation-time" 
-                           title="Duration to simulate the rotation for (in minutes).">
-                        Simulation Timeframe (Minutes)
-                    </label>
-                    <input type="number" id="simulation-time" value="3" min="1" max="15">
                 </div>
             </section>
 
-            
-            <!-- ==================== -->
-            <!-- TEAM RESULTS SUMMARY -->
-            <!-- ==================== -->
-            <section class="panel highlight-panel" id="team-results-panel" style="grid-column: 1 / -1;">
-                <h2>Team Damage Summary</h2>
-                <div class="result-card">
-                    
-                    <!-- Team metrics display -->
-                    <div class="metrics" style="grid-template-columns: 1fr 1fr;">
-                        
-                        <!-- Total team DPS -->
-                        <div class="metric total-dps-metric">
-                            <span class="metric-label">Total Team DPS</span>
-                            <span class="metric-value highlight" id="team-total-dps">0</span>
-                        </div>
-                        
-                        <!-- Average DPS per player -->
-                        <div class="metric">
-                            <span class="metric-label">Average DPS per Player</span>
-                            <span class="metric-value" id="team-average-dps">0</span>
-                        </div>
-                        </div>
+            <!-- Team Results -->
+            <section class="panel team-results-panel">
+                <h2>Team Results</h2>
+                <div class="team-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Total Team DPS</span>
+                        <span class="metric-value highlight" id="team-total-dps">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Average DPS</span>
+                        <span class="metric-value" id="team-average-dps">0</span>
                     </div>
                 </div>
             </section>
 
-            <!-- Individual Player Panels -->
-            <div id="players-container">
-                <!-- Player 1 -->
-                <div class="player-panel" data-player="1">
-                    <section class="panel glass-panel player-stats-panel">
-                        <h3>Player 1 - Character Stats</h3>
-                        <div class="player-name-input">
-                            <input type="text" id="player-1-name" placeholder="Enter player name..." value="Player 1">
+            <!-- Players Grid -->
+            <div class="players-grid">
+                
+                <!-- Player 1 Card -->
+                <div class="player-card" data-player="1">
+                    <div class="player-header">
+                        <input type="text" class="player-name" id="player-1-name" value="Player 1" placeholder="Player name">
+                        <div class="player-dps">
+                            <span class="dps-label">DPS:</span>
+                            <span class="dps-value" id="player-1-total-dps">0</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="form-group">
-                                <label for="player-1-attack-rating">Attack Rating</label>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="player-section">
+                        <h3>Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-input">
+                                <label>Attack Power</label>
                                 <input type="number" id="player-1-attack-rating" value="0" min="0">
                             </div>
-                            <div class="form-group">
-                                <label for="player-1-weapon-power">Weapon Power</label>
+                            <div class="stat-input">
+                                <label>Weapon Power</label>
                                 <input type="number" id="player-1-weapon-power" value="528" min="0">
                             </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="player-1-combat-power">Combat Power</label>
-                            <input type="number" id="player-1-combat-power" value="1000" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="player-1-hit-rating">Hit Rating</label>
-                            <input type="number" id="player-1-hit-rating" value="0" min="0">
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="form-group">
-                                <label for="player-1-crit-chance">Crit Chance (%)</label>
+                            <div class="stat-input">
+                                <label>Combat Power</label>
+                                <input type="number" id="player-1-combat-power" value="528" min="0" readonly>
+                            </div>
+                            <div class="stat-input">
+                                <label>Hit Rating</label>
+                                <input type="number" id="player-1-hit-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Chance</label>
                                 <input type="number" id="player-1-crit-chance" value="10" min="0" max="100">
                             </div>
-                            <div class="form-group">
-                                <label for="player-1-crit-power">Crit Power (%)</label>
+                            <div class="stat-input">
+                                <label>Crit Power</label>
                                 <input type="number" id="player-1-crit-power" value="25" min="25">
                             </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <div class="form-group">
-                                <label for="player-1-pen-rating">Penetration Rating</label>
+                            <div class="stat-input">
+                                <label>Pen Rating</label>
                                 <input type="number" id="player-1-pen-rating" value="0" min="0">
                             </div>
-                            <div class="form-group">
-                                <label for="player-1-pen-chance">Penetration Chance (%)</label>
+                            <div class="stat-input">
+                                <label>Pen Chance</label>
                                 <input type="number" id="player-1-pen-chance" value="0" min="0" max="100">
                             </div>
                         </div>
-                    </section>
+                    </div>
 
-                    <section class="panel glass-panel player-build-panel">
-                        <h3>Player 1 - Build Configuration</h3>
-                        <div class="form-group">
-                            <label for="player-1-weapon-type">Primary Weapon</label>
+                    <!-- Weapons Section -->
+                    <div class="player-section">
+                        <h3>Weapons</h3>
+                        <div class="weapons-grid">
                             <select id="player-1-weapon-type">
                                 <option value="All">All Weapons</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="player-1-secondary-weapon-type">Secondary Weapon</label>
                             <select id="player-1-secondary-weapon-type">
                                 <option value="None">None</option>
                             </select>
+                            <select id="player-1-auxiliary-weapon-type">
+                                <option value="">None</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="player-1-auxiliary-weapon-type">Auxiliary Weapon</label>
-                            <select id="player-1-auxiliary-weapon-type"></select>
+                    </div>
+
+                    <!-- Actives Section -->
+                    <div class="player-section">
+                        <h3>Actives</h3>
+                        <div class="actives-grid" id="player-1-actives-container">
+                            <!-- 7 active slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Passives Section -->
+                    <div class="player-section">
+                        <h3>Passives</h3>
+                        <div class="passives-grid" id="player-1-passives-container">
+                            <!-- 8 passive slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Augments Section -->
+                    <div class="player-section">
+                        <h3>Augments</h3>
+                        <div class="augments-container" id="player-1-augments-container">
+                            <!-- Augments will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Import/Export Section -->
+                    <div class="player-section import-section">
+                        <h3>Import/Export</h3>
+                        
+                        <!-- tswcalc Import -->
+                        <div class="tswcalc-import-section">
+                            <label for="player-1-tswcalc-url">
+                                tswcalc URL
+                                <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                                   style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--accent); text-decoration: underline;">
+                                    Open tswcalc
+                                </a>
+                            </label>
+                            <div class="tswcalc-import-controls">
+                                <input type="text" id="player-1-tswcalc-url" 
+                                       placeholder="https://joakibj.github.io/tswcalc/#weapon=..."
+                                       class="tswcalc-url-input">
+                                <button id="player-1-tswcalc-import-btn" class="btn-primary btn-small">Import Gear</button>
+                            </div>
                         </div>
                         
-                        <div class="abilities-compact">
-                            <h4>Active Abilities</h4>
-                            <div id="player-1-active-abilities-container">
-                                <!-- 7 selectors will be added via JS -->
+                        <!-- Build Import/Export -->
+                        <div class="build-import-section">
+                            <textarea id="player-1-import-textarea" rows="3" 
+                                      placeholder="Paste build data here..."
+                                      class="import-textarea"></textarea>
+                            <div class="import-buttons">
+                                <button id="player-1-import-btn" class="btn-primary btn-small">Import Build</button>
+                                <button id="player-1-export-btn" class="btn-secondary btn-small">Export Build</button>
+                                <button id="player-1-clear-btn" class="btn-secondary btn-small">Clear</button>
                             </div>
                         </div>
-
-                        <div class="abilities-compact">
-                            <h4>Passive Abilities</h4>
-                            <div id="player-1-passive-abilities-container">
-                                <!-- 8 selectors will be added via JS -->
-                            </div>
-                        </div>
-
-                        <div class="abilities-compact">
-                            <h4>Augments</h4>
-                            <div id="player-1-augments-container">
-                                <!-- Augment selections will be populated dynamically -->
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="panel highlight-panel player-results-panel">
-                        <h3>Player 1 - Damage Summary</h3>
-                        <div class="result-card">
-                            <div class="metrics">
-                                <div class="metric">
-                                    <span class="metric-label">Total DPS</span>
-                                    <span class="metric-value" id="player-1-total-dps">0</span>
-                                </div>
-                            </div>
-                            <div id="player-1-slot-breakdown" class="slot-breakdown">
-                                <!-- Slot breakdown will be populated here -->
-                            </div>
-                        </div>
-                    </section>
+                        <div id="player-1-import-status" class="import-status"></div>
+                    </div>
                 </div>
 
-                <!-- Players 2-5 will be cloned from Player 1 template -->
+                <!-- Player 2 Card -->
+                <div class="player-card" data-player="2">
+                    <div class="player-header">
+                        <input type="text" class="player-name" id="player-2-name" value="Player 2" placeholder="Player name">
+                        <div class="player-dps">
+                            <span class="dps-label">DPS:</span>
+                            <span class="dps-value" id="player-2-total-dps">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="player-section">
+                        <h3>Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-input">
+                                <label>Attack Power</label>
+                                <input type="number" id="player-2-attack-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Weapon Power</label>
+                                <input type="number" id="player-2-weapon-power" value="528" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Combat Power</label>
+                                <input type="number" id="player-2-combat-power" value="528" min="0" readonly>
+                            </div>
+                            <div class="stat-input">
+                                <label>Hit Rating</label>
+                                <input type="number" id="player-2-hit-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Chance</label>
+                                <input type="number" id="player-2-crit-chance" value="10" min="0" max="100">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Power</label>
+                                <input type="number" id="player-2-crit-power" value="25" min="25">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Rating</label>
+                                <input type="number" id="player-2-pen-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Chance</label>
+                                <input type="number" id="player-2-pen-chance" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weapons Section -->
+                    <div class="player-section">
+                        <h3>Weapons</h3>
+                        <div class="weapons-grid">
+                            <select id="player-2-weapon-type">
+                                <option value="All">All Weapons</option>
+                            </select>
+                            <select id="player-2-secondary-weapon-type">
+                                <option value="None">None</option>
+                            </select>
+                            <select id="player-2-auxiliary-weapon-type">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Actives Section -->
+                    <div class="player-section">
+                        <h3>Actives</h3>
+                        <div class="actives-grid" id="player-2-actives-container">
+                            <!-- 7 active slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Passives Section -->
+                    <div class="player-section">
+                        <h3>Passives</h3>
+                        <div class="passives-grid" id="player-2-passives-container">
+                            <!-- 8 passive slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Augments Section -->
+                    <div class="player-section">
+                        <h3>Augments</h3>
+                        <div class="augments-container" id="player-2-augments-container">
+                            <!-- Augments will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Import/Export Section -->
+                    <div class="player-section import-section">
+                        <h3>Import/Export</h3>
+                        
+                        <!-- tswcalc Import -->
+                        <div class="tswcalc-import-section">
+                            <label for="player-2-tswcalc-url">
+                                tswcalc URL
+                                <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                                   style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--accent); text-decoration: underline;">
+                                    Open tswcalc
+                                </a>
+                            </label>
+                            <div class="tswcalc-import-controls">
+                                <input type="text" id="player-2-tswcalc-url" 
+                                       placeholder="https://joakibj.github.io/tswcalc/#weapon=..."
+                                       class="tswcalc-url-input">
+                                <button id="player-2-tswcalc-import-btn" class="btn-primary btn-small">Import Gear</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Build Import/Export -->
+                        <div class="build-import-section">
+                            <textarea id="player-2-import-textarea" rows="3" 
+                                      placeholder="Paste build data here..."
+                                      class="import-textarea"></textarea>
+                            <div class="import-buttons">
+                                <button id="player-2-import-btn" class="btn-primary btn-small">Import Build</button>
+                                <button id="player-2-export-btn" class="btn-secondary btn-small">Export Build</button>
+                                <button id="player-2-clear-btn" class="btn-secondary btn-small">Clear</button>
+                            </div>
+                        </div>
+                        <div id="player-2-import-status" class="import-status"></div>
+                    </div>
+                </div>
+
+                <!-- Player 3 Card -->
+                <div class="player-card" data-player="3">
+                    <div class="player-header">
+                        <input type="text" class="player-name" id="player-3-name" value="Player 3" placeholder="Player name">
+                        <div class="player-dps">
+                            <span class="dps-label">DPS:</span>
+                            <span class="dps-value" id="player-3-total-dps">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="player-section">
+                        <h3>Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-input">
+                                <label>Attack Power</label>
+                                <input type="number" id="player-3-attack-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Weapon Power</label>
+                                <input type="number" id="player-3-weapon-power" value="528" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Combat Power</label>
+                                <input type="number" id="player-3-combat-power" value="528" min="0" readonly>
+                            </div>
+                            <div class="stat-input">
+                                <label>Hit Rating</label>
+                                <input type="number" id="player-3-hit-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Chance</label>
+                                <input type="number" id="player-3-crit-chance" value="10" min="0" max="100">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Power</label>
+                                <input type="number" id="player-3-crit-power" value="25" min="25">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Rating</label>
+                                <input type="number" id="player-3-pen-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Chance</label>
+                                <input type="number" id="player-3-pen-chance" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weapons Section -->
+                    <div class="player-section">
+                        <h3>Weapons</h3>
+                        <div class="weapons-grid">
+                            <select id="player-3-weapon-type">
+                                <option value="All">All Weapons</option>
+                            </select>
+                            <select id="player-3-secondary-weapon-type">
+                                <option value="None">None</option>
+                            </select>
+                            <select id="player-3-auxiliary-weapon-type">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Actives Section -->
+                    <div class="player-section">
+                        <h3>Actives</h3>
+                        <div class="actives-grid" id="player-3-actives-container">
+                            <!-- 7 active slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Passives Section -->
+                    <div class="player-section">
+                        <h3>Passives</h3>
+                        <div class="passives-grid" id="player-3-passives-container">
+                            <!-- 8 passive slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Augments Section -->
+                    <div class="player-section">
+                        <h3>Augments</h3>
+                        <div class="augments-container" id="player-3-augments-container">
+                            <!-- Augments will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Import/Export Section -->
+                    <div class="player-section import-section">
+                        <h3>Import/Export</h3>
+                        
+                        <!-- tswcalc Import -->
+                        <div class="tswcalc-import-section">
+                            <label for="player-3-tswcalc-url">
+                                tswcalc URL
+                                <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                                   style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--accent); text-decoration: underline;">
+                                    Open tswcalc
+                                </a>
+                            </label>
+                            <div class="tswcalc-import-controls">
+                                <input type="text" id="player-3-tswcalc-url" 
+                                       placeholder="https://joakibj.github.io/tswcalc/#weapon=..."
+                                       class="tswcalc-url-input">
+                                <button id="player-3-tswcalc-import-btn" class="btn-primary btn-small">Import Gear</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Build Import/Export -->
+                        <div class="build-import-section">
+                            <textarea id="player-3-import-textarea" rows="3" 
+                                      placeholder="Paste build data here..."
+                                      class="import-textarea"></textarea>
+                            <div class="import-buttons">
+                                <button id="player-3-import-btn" class="btn-primary btn-small">Import Build</button>
+                                <button id="player-3-export-btn" class="btn-secondary btn-small">Export Build</button>
+                                <button id="player-3-clear-btn" class="btn-secondary btn-small">Clear</button>
+                            </div>
+                        </div>
+                        <div id="player-3-import-status" class="import-status"></div>
+                    </div>
+                </div>
+
+                <!-- Player 4 Card -->
+                <div class="player-card" data-player="4">
+                    <div class="player-header">
+                        <input type="text" class="player-name" id="player-4-name" value="Player 4" placeholder="Player name">
+                        <div class="player-dps">
+                            <span class="dps-label">DPS:</span>
+                            <span class="dps-value" id="player-4-total-dps">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="player-section">
+                        <h3>Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-input">
+                                <label>Attack Power</label>
+                                <input type="number" id="player-4-attack-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Weapon Power</label>
+                                <input type="number" id="player-4-weapon-power" value="528" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Combat Power</label>
+                                <input type="number" id="player-4-combat-power" value="528" min="0" readonly>
+                            </div>
+                            <div class="stat-input">
+                                <label>Hit Rating</label>
+                                <input type="number" id="player-4-hit-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Chance</label>
+                                <input type="number" id="player-4-crit-chance" value="10" min="0" max="100">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Power</label>
+                                <input type="number" id="player-4-crit-power" value="25" min="25">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Rating</label>
+                                <input type="number" id="player-4-pen-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Chance</label>
+                                <input type="number" id="player-4-pen-chance" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weapons Section -->
+                    <div class="player-section">
+                        <h3>Weapons</h3>
+                        <div class="weapons-grid">
+                            <select id="player-4-weapon-type">
+                                <option value="All">All Weapons</option>
+                            </select>
+                            <select id="player-4-secondary-weapon-type">
+                                <option value="None">None</option>
+                            </select>
+                            <select id="player-4-auxiliary-weapon-type">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Actives Section -->
+                    <div class="player-section">
+                        <h3>Actives</h3>
+                        <div class="actives-grid" id="player-4-actives-container">
+                            <!-- 7 active slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Passives Section -->
+                    <div class="player-section">
+                        <h3>Passives</h3>
+                        <div class="passives-grid" id="player-4-passives-container">
+                            <!-- 8 passive slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Augments Section -->
+                    <div class="player-section">
+                        <h3>Augments</h3>
+                        <div class="augments-container" id="player-4-augments-container">
+                            <!-- Augments will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Import/Export Section -->
+                    <div class="player-section import-section">
+                        <h3>Import/Export</h3>
+                        
+                        <!-- tswcalc Import -->
+                        <div class="tswcalc-import-section">
+                            <label for="player-4-tswcalc-url">
+                                tswcalc URL
+                                <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                                   style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--accent); text-decoration: underline;">
+                                    Open tswcalc
+                                </a>
+                            </label>
+                            <div class="tswcalc-import-controls">
+                                <input type="text" id="player-4-tswcalc-url" 
+                                       placeholder="https://joakibj.github.io/tswcalc/#weapon=..."
+                                       class="tswcalc-url-input">
+                                <button id="player-4-tswcalc-import-btn" class="btn-primary btn-small">Import Gear</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Build Import/Export -->
+                        <div class="build-import-section">
+                            <textarea id="player-4-import-textarea" rows="3" 
+                                      placeholder="Paste build data here..."
+                                      class="import-textarea"></textarea>
+                            <div class="import-buttons">
+                                <button id="player-4-import-btn" class="btn-primary btn-small">Import Build</button>
+                                <button id="player-4-export-btn" class="btn-secondary btn-small">Export Build</button>
+                                <button id="player-4-clear-btn" class="btn-secondary btn-small">Clear</button>
+                            </div>
+                        </div>
+                        <div id="player-4-import-status" class="import-status"></div>
+                    </div>
+                </div>
+
+                <!-- Player 5 Card -->
+                <div class="player-card" data-player="5">
+                    <div class="player-header">
+                        <input type="text" class="player-name" id="player-5-name" value="Player 5" placeholder="Player name">
+                        <div class="player-dps">
+                            <span class="dps-label">DPS:</span>
+                            <span class="dps-value" id="player-5-total-dps">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="player-section">
+                        <h3>Stats</h3>
+                        <div class="stats-grid">
+                            <div class="stat-input">
+                                <label>Attack Power</label>
+                                <input type="number" id="player-5-attack-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Weapon Power</label>
+                                <input type="number" id="player-5-weapon-power" value="528" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Combat Power</label>
+                                <input type="number" id="player-5-combat-power" value="528" min="0" readonly>
+                            </div>
+                            <div class="stat-input">
+                                <label>Hit Rating</label>
+                                <input type="number" id="player-5-hit-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Chance</label>
+                                <input type="number" id="player-5-crit-chance" value="10" min="0" max="100">
+                            </div>
+                            <div class="stat-input">
+                                <label>Crit Power</label>
+                                <input type="number" id="player-5-crit-power" value="25" min="25">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Rating</label>
+                                <input type="number" id="player-5-pen-rating" value="0" min="0">
+                            </div>
+                            <div class="stat-input">
+                                <label>Pen Chance</label>
+                                <input type="number" id="player-5-pen-chance" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weapons Section -->
+                    <div class="player-section">
+                        <h3>Weapons</h3>
+                        <div class="weapons-grid">
+                            <select id="player-5-weapon-type">
+                                <option value="All">All Weapons</option>
+                            </select>
+                            <select id="player-5-secondary-weapon-type">
+                                <option value="None">None</option>
+                            </select>
+                            <select id="player-5-auxiliary-weapon-type">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Actives Section -->
+                    <div class="player-section">
+                        <h3>Actives</h3>
+                        <div class="actives-grid" id="player-5-actives-container">
+                            <!-- 7 active slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Passives Section -->
+                    <div class="player-section">
+                        <h3>Passives</h3>
+                        <div class="passives-grid" id="player-5-passives-container">
+                            <!-- 8 passive slots will be created by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Augments Section -->
+                    <div class="player-section">
+                        <h3>Augments</h3>
+                        <div class="augments-container" id="player-5-augments-container">
+                            <!-- Augments will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Import/Export Section -->
+                    <div class="player-section import-section">
+                        <h3>Import/Export</h3>
+                        
+                        <!-- tswcalc Import -->
+                        <div class="tswcalc-import-section">
+                            <label for="player-5-tswcalc-url">
+                                tswcalc URL
+                                <a href="https://joakibj.github.io/tswcalc/#" target="_blank" rel="noopener noreferrer"
+                                   style="margin-left: 0.5rem; font-size: 0.8rem; color: var(--accent); text-decoration: underline;">
+                                    Open tswcalc
+                                </a>
+                            </label>
+                            <div class="tswcalc-import-controls">
+                                <input type="text" id="player-5-tswcalc-url" 
+                                       placeholder="https://joakibj.github.io/tswcalc/#weapon=..."
+                                       class="tswcalc-url-input">
+                                <button id="player-5-tswcalc-import-btn" class="btn-primary btn-small">Import Gear</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Build Import/Export -->
+                        <div class="build-import-section">
+                            <textarea id="player-5-import-textarea" rows="3" 
+                                      placeholder="Paste build data here..."
+                                      class="import-textarea"></textarea>
+                            <div class="import-buttons">
+                                <button id="player-5-import-btn" class="btn-primary btn-small">Import Build</button>
+                                <button id="player-5-export-btn" class="btn-secondary btn-small">Export Build</button>
+                                <button id="player-5-clear-btn" class="btn-secondary btn-small">Clear</button>
+                            </div>
+                        </div>
+                        <div id="player-5-import-status" class="import-status"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Team Import/Export Panel -->
-            <section class="panel glass-panel" id="team-import-panel" style="grid-column: 1 / -1;">
+            <!-- Team Import/Export -->
+            <section class="panel team-import-panel">
                 <h2>Team Import/Export</h2>
-                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                    Import or export entire team builds. Each player's data is separated by === PLAYER X === headers.
-                </div>
-                
-                <div class="form-group">
-                    <label for="team-import-textarea">
-                        Team Build Data
-                        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem;">
-                            Paste exported team data or click Export to copy current team setup
-                        </span>
-                    </label>
-                    <textarea id="team-import-textarea" rows="15" 
-                        style="width: 100%; resize: vertical; font-size: 0.8rem; font-family: monospace;"
-                        placeholder="=== PLAYER 1 ===
-Player 1 Name
-[Player 1 build data...]
-
-=== PLAYER 2 ===
-Player 2 Name
-[Player 2 build data...]
-
-..."></textarea>
-                </div>
-
-                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <textarea id="team-import-textarea" rows="6" 
+                          placeholder="Paste team build data here..."
+                          class="team-import-textarea"></textarea>
+                <div class="team-import-buttons">
                     <button id="import-team-btn" class="btn-primary">Import Team</button>
                     <button id="export-team-btn" class="btn-secondary">Export Team</button>
-                    <button id="clear-team-btn" class="btn-secondary">Clear All Players</button>
+                    <button id="clear-team-btn" class="btn-secondary">Clear All</button>
                 </div>
-
-                <div id="team-import-status" style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); display: none;">
-                    <!-- Import status messages will appear here -->
-                </div>
+                <div id="team-import-status" class="import-status"></div>
             </section>
         </main>
     </div>
