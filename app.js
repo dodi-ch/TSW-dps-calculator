@@ -6583,5 +6583,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calculate();
 
+    // Add group mode toggle functionality
+    const groupModeBtn = document.getElementById('group-mode-btn');
+    if (groupModeBtn) {
+        groupModeBtn.addEventListener('click', () => {
+            window.location.href = 'group-mode.html';
+        });
+    }
+
 });
 
