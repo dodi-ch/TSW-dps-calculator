@@ -658,15 +658,18 @@ document.addEventListener('DOMContentLoaded', () => {
         augmentContainer.innerHTML = '';
         
         // Get all selected abilities for this player
-        const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"] select`);
-        const eliteSelects = document.querySelectorAll(`[id^="player-${playerId}-elite-"] select`);
-        const auxSelects = document.querySelectorAll(`[id^="player-${playerId}-aux-"] select`);
+        const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"]`);
+        const eliteSelects = document.querySelectorAll(`#player-${playerId}-active-7`); // Elite active is player-X-active-7
+        const auxSelects = document.querySelectorAll(`#player-${playerId}-aux-1`); // Aux active is player-X-aux-1
         
         const allSelects = [...activeSelects, ...eliteSelects, ...auxSelects];
         
+                
         allSelects.forEach(select => {
             const ability = tswData[select.value];
-            if (!ability) return;
+            if (!ability) {
+                return;
+            }
             
             const wrapper = document.createElement('div');
             wrapper.className = 'augment-wrapper';
@@ -1445,17 +1448,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function detectAndSetWeaponsFromImport(playerId, buildData) {
         // Prevent recursive calls during import
         if (!isImporting) {
-            console.log(`detectAndSetWeaponsFromImport called outside of import, skipping`);
             return;
         }
         
         // Prevent multiple weapon detection during the same import
         if (isDetectingWeapons) {
-            console.log(`detectAndSetWeaponsFromImport already in progress, skipping`);
             return;
         }
         
-        console.log(`Detecting weapons from imported build for player ${playerId}`);
         isDetectingWeapons = true;
         
         const player = groupState.players[playerId - 1];
@@ -1753,33 +1753,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Import augments using single player logic (with delay)
         if (buildData.augments && Object.keys(buildData.augments).length > 0) {
-            // Wait a bit for the augment UI to be created from the ability change events
+            // Wait longer for abilities to be fully imported and DOM updated before creating augment UI
             setTimeout(() => {
-                let augmentImportErrors = [];
+                // Now ensure the augment UI is created by calling updateAugmentsForPlayer
+                updateAugmentsForPlayer(playerId);
+                
+                // Wait a bit more for the augment UI to be created and rendered
+                setTimeout(() => {
+                    let augmentImportErrors = [];
                 
                 Object.entries(buildData.augments).forEach(([abilityName, augmentName]) => {
-                    // Find the augment wrapper by ability name
+                    // Find the augment wrapper by ability name with improved matching
                     const augmentWrappers = Array.from(document.querySelectorAll(`#player-${playerId}-augments-container .augment-wrapper`));
                     const augmentWrapper = augmentWrappers.find(wrapper => {
                         const label = wrapper.querySelector('.augment-ability-name');
-                        return label && label.textContent.toLowerCase().includes(abilityName.toLowerCase());
+                        if (!label) return false;
+                        
+                        const labelName = label.textContent.trim();
+                        const searchName = abilityName.trim();
+                        
+                        // Try exact match first
+                        if (labelName === searchName) {
+                            return true;
+                        }
+                        
+                        // Try case-insensitive exact match
+                        if (labelName.toLowerCase() === searchName.toLowerCase()) {
+                            return true;
+                        }
+                        
+                        // Try partial match (ability name contains search or vice versa)
+                        if (labelName.toLowerCase().includes(searchName.toLowerCase()) || 
+                            searchName.toLowerCase().includes(labelName.toLowerCase())) {
+                            return true;
+                        }
+                        
+                        return false;
                     });
 
                     if (!augmentWrapper) {
-                        augmentImportErrors.push(`Ability not found for augment: ${abilityName}`);
+                        // Debug: Show available abilities vs what we're looking for
+                        const availableAbilities = augmentWrappers.map(wrapper => {
+                            const label = wrapper.querySelector('.augment-ability-name');
+                            return label ? label.textContent.trim() : 'No label';
+                        }).join(', ');
+                        
+                        augmentImportErrors.push(`Ability not found for augment: ${abilityName}. Available: [${availableAbilities}]`);
                         return;
                     }
 
                     const augmentSelect = augmentWrapper.querySelector('.augment-select');
                     if (augmentSelect) {
                         // Find the augment option that matches the augment name
-                        const augmentOption = findAbilityByName(augmentSelect, augmentName);
+                        const augmentOption = findAugmentOptionByName(augmentSelect, augmentName);
                         
                         if (augmentOption) {
                             augmentSelect.value = augmentOption.value;
-                            // Only dispatch change event if not importing
-                            if (!isImporting) {
-                                augmentSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            // Store the augment in player state
+                            const player = groupState.players[playerId - 1];
+                            if (player) {
+                                player.augments[abilityName] = augmentOption.value;
                             }
                             importedAugments++;
                         } else {
@@ -1797,7 +1830,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Trigger calculation after augment import
                 setTimeout(() => calculatePlayerDps(playerId), 100);
-            }, 500); // 500ms delay to allow UI to update
+                }, 200); // Reduced delay since we explicitly create the UI
+            }, 300); // Wait for abilities to be imported first
         }
 
         // Show results for abilities only (augments will show their own results)
@@ -1936,6 +1970,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         return null;
+    }
+    
+    /**
+     * Finds augment option by name in a select element
+     * @param {HTMLSelectElement} select - The augment select element to search in
+     * @param {string} augmentName - The augment name to find
+     * @returns {HTMLOptionElement|null} The found option or null
+     */
+    function findAugmentOptionByName(select, augmentName) {
+        // First try exact match on option text
+        const exactOption = Array.from(select.options).find(opt => 
+            opt.textContent.trim() === augmentName.trim()
+        );
+        
+        if (exactOption) {
+            return exactOption;
+        }
+        
+        // Try matching on the augment name part (before " - " if present)
+        const partialOption = Array.from(select.options).find(opt => {
+            const optionText = opt.textContent.trim();
+            const augmentPart = optionText.split(' - ')[0].trim();
+            return augmentPart === augmentName.trim() || 
+                   optionText.toLowerCase().includes(augmentName.toLowerCase()) ||
+                   augmentName.toLowerCase().includes(optionText.toLowerCase());
+        });
+        
+        return partialOption;
     }
     
     /**
@@ -2127,6 +2189,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calculate DPS for a single player
     function calculatePlayerDps(playerId) {
         const player = groupState.players[playerId - 1];
+        
+        // Check if player has any active abilities selected (same validation as original app)
+        const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"] select`);
+        const eliteSelects = document.querySelectorAll(`[id^="player-${playerId}-elite-"] select`);
+        const auxSelects = document.querySelectorAll(`[id^="player-${playerId}-aux-"] select`);
+        
+        const selectedActives = [...activeSelects, ...eliteSelects, ...auxSelects].filter(select => select.value);
+        
+        if (selectedActives.length === 0) {
+            // No active abilities selected - set DPS to 0
+            player.results.totalDps = 0;
+            
+            // Update UI
+            const dpsElement = document.getElementById(`player-${playerId}-total-dps`);
+            if (dpsElement) {
+                dpsElement.textContent = "0";
+            }
+            
+            // Update team totals
+            calculateTeamTotals();
+            return;
+        }
         
         // This would use the same calculation logic as the original app
         // For now, we'll create a placeholder calculation
