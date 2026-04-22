@@ -192,6 +192,21 @@ document.addEventListener('DOMContentLoaded', () => {
             results: {
                 totalDps: 0,
                 slotBreakdown: []
+            },
+            // Per-player buff tracking for Live Wire and Power Line
+            buffs: {
+                liveWire: {
+                    active: false,
+                    endTime: 0,
+                    damageBonus: 84 // Fixed additional damage from Live Wire
+                },
+                powerLineStacks: {
+                    stacks: 0,
+                    maxStacks: 10, // 10 seconds of tether = max stacks
+                    duration: 10, // Total duration of tether
+                    stackValues: [], // Track when each stack was gained
+                    damageBonusPercent: 0 // Current damage bonus percent (up to 200%)
+                }
             }
         };
     }
@@ -2283,8 +2298,62 @@ document.addEventListener('DOMContentLoaded', () => {
             groupWideBonus += baseDps * (groupEffects.teamDamageBuffFlat / 100);
         }
         
+        // Add Live Wire and Power Line mechanics for this player using comprehensive buff system
+        let playerSpecificBonus = 0;
+        const currentTime = 0; // Simplified time for group mode
+        
+        // Update player buffs
+        updateAllPlayerBuffs(currentTime);
+        
+        // Check if player has Live Wire passive and apply mechanics
+        if (playerHasLiveWire(player)) {
+            // Simulate critical hit trigger (simplified for group mode)
+            const critRate = (player.stats.critChance || 10) / 100;
+            if (Math.random() < critRate) {
+                activateLiveWireForPlayer(player, currentTime);
+            }
+            
+            // Check if Live Wire is active and consume it
+            const liveWireDamage = consumeLiveWireForPlayer(player, currentTime);
+            if (liveWireDamage > 0) {
+                // Apply crit power scaling
+                const critPower = (player.stats.critPower || 25) / 100;
+                const liveWireFinalDamage = liveWireDamage * (1 + critPower);
+                // Convert to DPS (simplified: assume 1 attack per 10 seconds)
+                playerSpecificBonus += liveWireFinalDamage * 0.1;
+            }
+        }
+        
+        // Check if player has Power Line ability and apply mechanics
+        if (playerHasPowerLine(player)) {
+            // Simulate Power Line tether effect (builds stacks over 10 seconds)
+            // For group mode, we assume optimal play with max stacks
+            const cp = player.stats.combatPower || 1000;
+            
+            // Tether damage: 0.18365 * CP per second for 10 seconds
+            const tetherDamagePerSecond = 0.18365 * cp;
+            const tetherDps = tetherDamagePerSecond; // Already per second
+            
+            // Simulate stack building (max 10 stacks = 200% bonus)
+            for (let i = 0; i < 10; i++) {
+                addPowerLineStackForPlayer(player, currentTime + i);
+            }
+            
+            // Voltaic Detonation with max stacks bonus
+            const detonationBase = 2.99004 * cp;
+            const powerLineBonus = 1 + (getPowerLineDamageBonusForPlayer(player) / 100);
+            const detonationDamage = detonationBase * powerLineBonus;
+            
+            // Clear stacks after detonation
+            clearPowerLineStacksForPlayer(player);
+            
+            // Convert to DPS (20 second cooldown cycle)
+            const powerLineDps = (tetherDamagePerSecond * 10 + detonationDamage) / 20;
+            playerSpecificBonus += powerLineDps;
+        }
+        
         // Calculate total DPS
-        const totalDps = baseDps + augmentBonus + groupWideBonus;
+        const totalDps = baseDps + augmentBonus + groupWideBonus + playerSpecificBonus;
         
         player.results.totalDps = totalDps;
         
@@ -2314,6 +2383,112 @@ document.addEventListener('DOMContentLoaded', () => {
         const avgPenMultiplier = 1 + (penChance * 0.5); // Penetration does 50% more damage
         
         return baseDamage * avgCritMultiplier * avgPenMultiplier * 0.8; // Base rotation efficiency
+    }
+    
+    // ====================
+    // LIVE WIRE & POWER LINE BUFF MANAGEMENT
+    // ====================
+    
+    // Function to activate Live Wire effect for a player
+    function activateLiveWireForPlayer(player, currentTime) {
+        if (!player.buffs) return;
+        
+        player.buffs.liveWire.active = true;
+        player.buffs.liveWire.endTime = currentTime + 10; // 10 second duration for next hit
+    }
+    
+    // Function to check if Live Wire is active and consume it for a player
+    function consumeLiveWireForPlayer(player, currentTime) {
+        if (!player.buffs || !player.buffs.liveWire.active || currentTime > player.buffs.liveWire.endTime) {
+            return 0;
+        }
+        
+        player.buffs.liveWire.active = false;
+        player.buffs.liveWire.endTime = 0;
+        return player.buffs.liveWire.damageBonus;
+    }
+    
+    // Function to add Power Line stack for a player
+    function addPowerLineStackForPlayer(player, currentTime) {
+        if (!player.buffs) return;
+        
+        const powerLineBuff = player.buffs.powerLineStacks;
+        powerLineBuff.stackValues.push(currentTime);
+        
+        // Keep only stacks from last 10 seconds
+        powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => currentTime - stackTime < 10);
+        powerLineBuff.stacks = powerLineBuff.stackValues.length;
+        
+        // Update damage bonus percent (20% per stack, max 200%)
+        powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
+    }
+    
+    // Function to clear Power Line stacks for a player
+    function clearPowerLineStacksForPlayer(player) {
+        if (!player.buffs) return;
+        
+        const powerLineBuff = player.buffs.powerLineStacks;
+        powerLineBuff.stacks = 0;
+        powerLineBuff.stackValues = [];
+        powerLineBuff.damageBonusPercent = 0;
+    }
+    
+    // Function to get current Power Line damage bonus for a player
+    function getPowerLineDamageBonusForPlayer(player) {
+        if (!player.buffs || !player.buffs.powerLineStacks) {
+            return 0;
+        }
+        return player.buffs.powerLineStacks.damageBonusPercent || 0;
+    }
+    
+    // Function to update all player buffs
+    function updateAllPlayerBuffs(currentTime) {
+        groupState.players.forEach(player => {
+            if (!player.buffs) return;
+            
+            // Update Live Wire effect
+            if (player.buffs.liveWire.active && currentTime >= player.buffs.liveWire.endTime) {
+                player.buffs.liveWire.active = false;
+                player.buffs.liveWire.endTime = 0;
+            }
+            
+            // Update Power Line stacks
+            const powerLineBuff = player.buffs.powerLineStacks;
+            if (powerLineBuff.stacks > 0) {
+                // Remove expired stacks (older than 10 seconds)
+                powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => currentTime - stackTime < 10);
+                powerLineBuff.stacks = powerLineBuff.stackValues.length;
+                // Update damage bonus percent (20% per stack, max 200%)
+                powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
+            }
+        });
+    }
+    
+    // Function to check if player has Live Wire passive
+    function playerHasLiveWire(player) {
+        if (!player.abilities.passives) return false;
+        
+        return player.abilities.passives.some(passiveName => {
+            const passive = findAbilityInTswData(passiveName);
+            return passive && passive.name === "Live Wire";
+        });
+    }
+    
+    // Function to check if player has Power Line ability
+    function playerHasPowerLine(player) {
+        if (!player.abilities.actives && !player.abilities.elites) return false;
+        
+        const hasInActives = player.abilities.actives && player.abilities.actives.some(abilityName => {
+            const ability = findAbilityInTswData(abilityName);
+            return ability && ability.name === "Power Line-Voltaic Detonation";
+        });
+        
+        const hasInElites = player.abilities.elites && player.abilities.elites.some(abilityName => {
+            const ability = findAbilityInTswData(abilityName);
+            return ability && ability.name === "Power Line-Voltaic Detonation";
+        });
+        
+        return hasInActives || hasInElites;
     }
     
     // Collect all group-wide effects from all players

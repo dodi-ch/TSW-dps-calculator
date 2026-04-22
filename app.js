@@ -1952,13 +1952,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            const totalCritRating = (base.critRating || 0) + (w1.critRating || 0) + (w2.critRating || 0);
+            // Add stacking buff ratings to base ratings
 
-            const totalCritPowerRating = (base.critPowerRating || 0) + (w1.critPowerRating || 0) + (w2.critPowerRating || 0);
+            const critRatingBuff = getBuffRating('critRatingStacks');
 
-            const totalPenRating = (base.penRating || 0) + (w1.penRating || 0) + (w2.penRating || 0);
+            const critPowerRatingBuff = getBuffRating('critPowerRatingStacks');
 
-            const totalHitRating = (base.hitRating || 0) + (w1.hitRating || 0) + (w2.hitRating || 0);
+            const penRatingBuff = getBuffRating('penRatingStacks');
+
+            const hitRatingBuff = getBuffRating('hitRatingStacks');
+
+
+
+            const totalCritRating = (base.critRating || 0) + (w1.critRating || 0) + (w2.critRating || 0) + critRatingBuff;
+
+            const totalCritPowerRating = (base.critPowerRating || 0) + (w1.critPowerRating || 0) + (w2.critPowerRating || 0) + critPowerRatingBuff;
+
+            const totalPenRating = (base.penRating || 0) + (w1.penRating || 0) + (w2.penRating || 0) + penRatingBuff;
+
+            const totalHitRating = (base.hitRating || 0) + (w1.hitRating || 0) + (w2.hitRating || 0) + hitRatingBuff;
 
 
 
@@ -2190,6 +2202,301 @@ document.addEventListener('DOMContentLoaded', () => {
         
         
 
+        // Function to update buff stacks
+
+        function updateBuffStacks(buffType, currentTime) {
+
+            try {
+
+                const buff = playerBuffs[buffType];
+
+                if (!buff) return;
+
+                
+
+                // Remove expired stacks
+
+                buff.stackValues = buff.stackValues.filter(expireTime => expireTime > currentTime);
+
+                buff.stacks = buff.stackValues.length;
+
+            } catch (e) {
+
+                // playerBuffs is not yet initialized
+
+                return;
+
+            }
+
+        }
+
+        
+
+        // Function to add a buff stack
+
+        function addBuffStack(buffType, currentTime) {
+
+            try {
+
+                const buff = playerBuffs[buffType];
+
+                if (!buff) return;
+
+                
+
+                // Add new stack with expiration time
+
+                const expireTime = currentTime + buff.duration;
+
+                buff.stackValues.push(expireTime);
+
+                
+
+                // Enforce max stacks limit
+
+                if (buff.stackValues.length > buff.maxStacks) {
+
+                    buff.stackValues.shift(); // Remove oldest stack
+
+                }
+
+                
+
+                buff.stacks = buff.stackValues.length;
+
+            } catch (e) {
+
+                // playerBuffs is not yet initialized
+
+                return;
+
+            }
+
+        }
+
+        
+
+        // Function to get current rating from buff
+
+        function getBuffRating(buffType) {
+
+            try {
+
+                const buff = playerBuffs[buffType];
+
+                if (!buff) return 0;
+
+                
+
+                return buff.stacks * buff.ratingPerStack;
+
+            } catch (e) {
+
+                // playerBuffs is not yet initialized
+
+                return 0;
+
+            }
+
+        }
+
+        
+
+        // Function to update all stacking buffs (call each simulation step)
+
+        function updateAllStackingBuffs(currentTime) {
+
+            updateBuffStacks('critRatingStacks', currentTime);
+
+            updateBuffStacks('critPowerRatingStacks', currentTime);
+
+            updateBuffStacks('hitRatingStacks', currentTime);
+
+            updateBuffStacks('penRatingStacks', currentTime);
+
+            updateBuffStacks('defenceRatingStacks', currentTime);
+
+            updateBuffStacks('evadeRatingStacks', currentTime);
+
+            updateBuffStacks('blockRatingStacks', currentTime);
+
+            
+
+            // Update Live Wire effect
+
+            try {
+
+                if (playerBuffs.liveWire.active && currentTime >= playerBuffs.liveWire.endTime) {
+
+                    playerBuffs.liveWire.active = false;
+
+                    playerBuffs.liveWire.endTime = 0;
+
+                }
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+            
+
+            // Update Power Line stacks
+
+            try {
+
+                const powerLineBuff = playerBuffs.powerLineStacks;
+
+                if (powerLineBuff.stacks > 0) {
+
+                    // Remove expired stacks (older than 10 seconds)
+
+                    powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => currentTime - stackTime < 10);
+
+                    powerLineBuff.stacks = powerLineBuff.stackValues.length;
+
+                    // Update damage bonus percent (20% per stack, max 200%)
+
+                    powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
+
+                }
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+        }
+
+        
+
+        // Function to activate Live Wire effect
+
+        function activateLiveWire(currentTime) {
+
+            try {
+
+                playerBuffs.liveWire.active = true;
+
+                playerBuffs.liveWire.endTime = currentTime + 10; // 10 second duration for next hit
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+        }
+
+        
+
+        // Function to add Power Line stack
+
+        function addPowerLineStack(currentTime) {
+
+            try {
+
+                const powerLineBuff = playerBuffs.powerLineStacks;
+
+                powerLineBuff.stackValues.push(currentTime);
+
+                // Keep only stacks from last 10 seconds
+
+                powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => currentTime - stackTime < 10);
+
+                powerLineBuff.stacks = powerLineBuff.stackValues.length;
+
+                // Update damage bonus percent (20% per stack, max 200%)
+
+                powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+        }
+
+        
+
+        // Function to clear Power Line stacks (when Voltaic Detonation is used)
+
+        function clearPowerLineStacks() {
+
+            try {
+
+                const powerLineBuff = playerBuffs.powerLineStacks;
+
+                powerLineBuff.stacks = 0;
+
+                powerLineBuff.stackValues = [];
+
+                powerLineBuff.damageBonusPercent = 0;
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+        }
+
+        
+
+        // Function to check if Live Wire is active and consume it
+
+        function consumeLiveWire(currentTime) {
+
+            try {
+
+                if (playerBuffs.liveWire.active && currentTime <= playerBuffs.liveWire.endTime) {
+
+                    playerBuffs.liveWire.active = false;
+
+                    playerBuffs.liveWire.endTime = 0;
+
+                    return playerBuffs.liveWire.damageBonus;
+
+                }
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+            }
+
+            return 0;
+
+        }
+
+        
+
+        // Function to get current Power Line damage bonus
+
+        function getPowerLineDamageBonus() {
+
+            try {
+
+                return playerBuffs.powerLineStacks.damageBonusPercent || 0;
+
+            } catch (e) {
+
+                // playerBuffs not yet initialized
+
+                return 0;
+
+            }
+
+        }
+
+        
+
+        
+        
+
         // Function to check if ability would affect player instead of enemy
 
         function wouldAffectPlayer(ability) {
@@ -2307,7 +2614,74 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Cooldown effects
             uncalibrated: { active: false, endTime: 0 }, // Deadly Aim cooldown
-            depleted: { active: false, endTime: 0 } // Breaching Shot cooldown
+            depleted: { active: false, endTime: 0 }, // Breaching Shot cooldown
+            
+            // Stacking rating buffs (for abilities that grant rating stacks with duration)
+            critRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [], // track when each stack expires
+                ratingPerStack: 40
+            },
+            critPowerRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 10, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            hitRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            penRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            defenceRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            evadeRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            blockRatingStacks: {
+                stacks: 0,
+                maxStacks: 5,
+                duration: 8, // seconds per stack
+                stackValues: [],
+                ratingPerStack: 40
+            },
+            
+            // Live Wire effect tracking
+            liveWire: {
+                active: false,
+                endTime: 0,
+                damageBonus: 84 // Fixed additional damage from Live Wire
+            },
+            
+            // Power Line stacking effect tracking
+            powerLineStacks: {
+                stacks: 0,
+                maxStacks: 10, // 10 seconds of tether = max stacks
+                duration: 10, // Total duration of tether
+                stackValues: [], // Track when each stack was gained
+                damageBonusPercent: 0 // Current damage bonus percent (up to 200%)
+            }
         };
         
         // Clear buffs for abilities that are not equipped (moved here after playerBuffs is defined)
@@ -3391,48 +3765,234 @@ document.addEventListener('DOMContentLoaded', () => {
 
             totalDamage += finalDamage;
 
-            // Special handling for Power Line - separate tether and detonation damage recording
-            if (ability.name === POWER_LINE_NAME) {
-                // Use the same calculations as above for consistency
-                const tetherDamage = 0.18365 * cp * 10;
-                const detonationBase = 2.99004 * cp * 3.0; // Maximum 200% bonus
+            
+
+            // Apply Live Wire damage if active
+
+            const liveWireDamage = consumeLiveWire(time);
+
+            if (liveWireDamage > 0) {
+
+                const liveWireFinalDamage = liveWireDamage * (1 + (critPower - 150) / 100); // Apply crit power scaling
+
+                totalDamage += liveWireFinalDamage;
+
                 
-                // Apply damage multipliers to both components
-                const tetherFinalDamage = tetherDamage * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
-                const detonationFinalDamage = detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
-                
-                // Record tether damage
-                statsBreakdown[POWER_LINE_TETHER_NAME].damage += tetherFinalDamage;
-                statsBreakdown[POWER_LINE_TETHER_NAME].casts++;
-                if (isCrit) statsBreakdown[POWER_LINE_TETHER_NAME].crits++;
-                if (isPenetrated) statsBreakdown[POWER_LINE_TETHER_NAME].penetrations++;
-                
-                // Record detonation damage
-                statsBreakdown[VOLTAIC_DETONATION_NAME].damage += detonationFinalDamage;
-                statsBreakdown[VOLTAIC_DETONATION_NAME].casts++;
-                // Detonation always crits if the original hit was a crit (game mechanic)
-                if (isCrit) statsBreakdown[VOLTAIC_DETONATION_NAME].crits++;
-                // Detonation always penetrates if the original hit penetrated (game mechanic)  
-                if (isPenetrated) statsBreakdown[VOLTAIC_DETONATION_NAME].penetrations++;
-                
-                // Dust of the Black Pharaoh proc check for Voltaic Detonation
-                // Check if detonation critically hits (has crit damage multiplier applied)
-                const isDetonationCrit = detonationFinalDamage > (detonationBase * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
-                if (dustActive && isDetonationCrit) {
-                    if (Math.random() < 0.20) {
-                        const dustDetonationDmg = detonationFinalDamage;
-                        totalDamage += dustDetonationDmg;
-                        
-                        if (!statsBreakdown[DUST_NAME]) {
-                            statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
-                        }
-                        statsBreakdown[DUST_NAME].casts++;
-                        statsBreakdown[DUST_NAME].damage += dustDetonationDmg;
-                        // Dust procs inherit the crit and penetration status of the triggering hit
-                        statsBreakdown[DUST_NAME].crits++;
-                        if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
-                    }
+
+                // Record Live Wire damage in breakdown
+
+                const LIVE_WIRE_NAME = 'Live Wire (Proc)';
+
+                if (!statsBreakdown[LIVE_WIRE_NAME]) {
+
+                    statsBreakdown[LIVE_WIRE_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Live Wire' };
+
                 }
+
+                statsBreakdown[LIVE_WIRE_NAME].casts++;
+
+                statsBreakdown[LIVE_WIRE_NAME].damage += liveWireFinalDamage;
+
+                // Live Wire inherits crit status from triggering hit
+
+                if (isCrit) statsBreakdown[LIVE_WIRE_NAME].crits++;
+
+            }
+
+            
+
+            // Handle stacking buff triggers from ability hits
+
+            if (isCrit) {
+
+                // Check for abilities that grant Critical Rating stacks on critical hits
+
+                const desc = ability.description || ability.originalAbility?.description || "";
+
+                if (desc.includes("Whenever you critically hit") && desc.includes("Critical Rating")) {
+
+                    addBuffStack('critRatingStacks', time);
+
+                }
+
+                // Check for abilities that grant Critical Power Rating stacks on critical hits
+
+                if (desc.includes("Whenever you critically hit") && desc.includes("Critical Power Rating")) {
+
+                    addBuffStack('critPowerRatingStacks', time);
+
+                }
+
+                
+
+                // Check for Live Wire passive trigger
+
+                allPassives.forEach(passive => {
+
+                    if (passive.name === "Live Wire") {
+
+                        activateLiveWire(time);
+
+                    }
+
+                });
+
+            }
+
+            
+
+            if (isPenetrated) {
+
+                // Check for abilities that grant rating stacks on penetration
+
+                const desc = ability.description || ability.originalAbility?.description || "";
+
+                if (desc.includes("Whenever you penetrate") && desc.includes("Rating")) {
+
+                    // Determine which rating based on description
+
+                    if (desc.includes("Penetration Rating")) {
+
+                        addBuffStack('penRatingStacks', time);
+
+                    } else if (desc.includes("Hit Rating")) {
+
+                        addBuffStack('hitRatingStacks', time);
+
+                    }
+
+                }
+
+            }
+
+            
+
+            // Check for abilities that grant stacks on any hit
+
+            const desc = ability.description || ability.originalAbility?.description || "";
+
+            if (desc.includes("Whenever you hit") && desc.includes("Rating")) {
+
+                // Determine which rating based on description
+
+                if (desc.includes("Critical Rating")) {
+
+                    addBuffStack('critRatingStacks', time);
+
+                } else if (desc.includes("Hit Rating")) {
+
+                    addBuffStack('hitRatingStacks', time);
+
+                } else if (desc.includes("Penetration Rating")) {
+
+                    addBuffStack('penRatingStacks', time);
+
+                } else if (desc.includes("Evade Rating")) {
+
+                    addBuffStack('evadeRatingStacks', time);
+
+                } else if (desc.includes("Block Rating")) {
+
+                    addBuffStack('blockRatingStacks', time);
+
+                } else if (desc.includes("Defence Rating")) {
+
+                    addBuffStack('defenceRatingStacks', time);
+
+                }
+
+            }
+
+            
+
+            // Special handling for Power Line - optimized for max stacks
+
+            if (ability.name === POWER_LINE_NAME) {
+
+                // Power Line creates a 10-second tether that builds stacks
+
+                // For DPS optimization, we assume players wait for max stacks (10 stacks = 200% bonus)
+
+                // before using Voltaic Detonation
+
+                
+
+                // Power Line tether damage over 10 seconds
+
+                const tetherDamage = 0.18365 * cp * 10; // 10 seconds of damage
+
+                const tetherFinalDamage = tetherDamage * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
+
+                
+
+                // Record tether damage
+
+                statsBreakdown[POWER_LINE_TETHER_NAME].damage += tetherFinalDamage;
+
+                statsBreakdown[POWER_LINE_TETHER_NAME].casts++;
+
+                if (isCrit) statsBreakdown[POWER_LINE_TETHER_NAME].crits++;
+
+                if (isPenetrated) statsBreakdown[POWER_LINE_TETHER_NAME].penetrations++;
+
+                
+
+                // Voltaic Detonation with maximum stacks (200% bonus)
+
+                const detonationBase = 2.99004 * cp * 3.0; // Maximum 200% bonus
+
+                const detonationFinalDamage = detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
+
+                
+
+                // Record detonation damage
+
+                statsBreakdown[VOLTAIC_DETONATION_NAME].damage += detonationFinalDamage;
+
+                statsBreakdown[VOLTAIC_DETONATION_NAME].casts++;
+
+                // Detonation always crits if the original hit was a crit (game mechanic)
+
+                if (isCrit) statsBreakdown[VOLTAIC_DETONATION_NAME].crits++;
+
+                // Detonation always penetrates if the original hit penetrated (game mechanic)  
+
+                if (isPenetrated) statsBreakdown[VOLTAIC_DETONATION_NAME].penetrations++;
+
+                
+
+                // Dust of the Black Pharaoh proc check for Voltaic Detonation
+
+                const isDetonationCrit = detonationFinalDamage > (detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
+
+                if (dustActive && isDetonationCrit) {
+
+                    if (Math.random() < 0.20) {
+
+                        const dustDetonationDmg = detonationFinalDamage;
+
+                        totalDamage += dustDetonationDmg;
+
+                        
+
+                        if (!statsBreakdown[DUST_NAME]) {
+
+                            statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
+
+                        }
+
+                        statsBreakdown[DUST_NAME].casts++;
+
+                        statsBreakdown[DUST_NAME].damage += dustDetonationDmg;
+
+                        statsBreakdown[DUST_NAME].crits++;
+
+                        if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
+
+                    }
+
+                }
+
             } else if (ability.name !== POWER_LINE_NAME) {
                 // Standard damage recording for other abilities (excluding Power Line which is handled above)
                 // Check if this is a summoning ability (like Shotgun Turret, Area Drone) - don't record initial damage
@@ -3546,6 +4106,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (time - lastPassiveTriggerTime[p] < 1.0) {
 
                     return; // Skip if less than 1 second since last trigger
+
+                }
+
+                
+
+                // Skip passives that have their own custom buff/proc systems to prevent duplicate entries
+
+                // These passives handle their own damage tracking and shouldn't be processed as regular passives
+
+                const customProcPassives = ['Live Wire']; // Add other passives here if they have similar systems
+
+                if (customProcPassives.includes(passive.name)) {
+
+                    return; // Skip passive processing for passives with custom systems
 
                 }
 
@@ -4600,6 +5174,78 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
+                    // Handle passive abilities that grant stacking rating buffs
+                    allPassives.forEach(passive => {
+                        const passiveDesc = passive.originalAbility && passive.originalAbility.description || "";
+                        
+                        // Check for passive abilities that grant rating stacks on critical hits
+                        if (passiveDesc.includes("Whenever you critically hit") && passiveDesc.includes("Critical Rating")) {
+                            // Check if this passive applies to the current ability
+                            const shouldApply = !passive.weapon || passive.weapon === action.weapon || 
+                                              (passiveDesc.includes("abilities") && !passiveDesc.includes(action.weapon + " abilities"));
+                            
+                            if (shouldApply && Math.random() * 100 < effectivePenChanceForPassives) {
+                                // Simulate a critical hit and grant the stack
+                                addBuffStack('critRatingStacks', time);
+                            }
+                        }
+                        
+                        // Check for passive abilities that grant rating stacks on penetration
+                        if (passiveDesc.includes("Whenever you penetrate") && passiveDesc.includes("Rating")) {
+                            if (isPenetrated) {
+                                // Determine which rating based on description
+                                if (passiveDesc.includes("Penetration Rating")) {
+                                    addBuffStack('penRatingStacks', time);
+                                } else if (passiveDesc.includes("Hit Rating")) {
+                                    addBuffStack('hitRatingStacks', time);
+                                } else if (passiveDesc.includes("Critical Rating")) {
+                                    addBuffStack('critRatingStacks', time);
+                                }
+                            }
+                        }
+                        
+                        // Check for passive abilities that grant rating stacks on any hit
+                        if (passiveDesc.includes("Whenever you hit") && passiveDesc.includes("Rating")) {
+                            if (!isEvadedForPassives) {
+                                // Determine which rating based on description
+                                if (passiveDesc.includes("Critical Rating")) {
+                                    addBuffStack('critRatingStacks', time);
+                                } else if (passiveDesc.includes("Hit Rating")) {
+                                    addBuffStack('hitRatingStacks', time);
+                                } else if (passiveDesc.includes("Penetration Rating")) {
+                                    addBuffStack('penRatingStacks', time);
+                                } else if (passiveDesc.includes("Evade Rating")) {
+                                    addBuffStack('evadeRatingStacks', time);
+                                } else if (passiveDesc.includes("Block Rating")) {
+                                    addBuffStack('blockRatingStacks', time);
+                                } else if (passiveDesc.includes("Defence Rating")) {
+                                    addBuffStack('defenceRatingStacks', time);
+                                }
+                            }
+                        }
+                        
+                        // Check for conditional passive abilities (e.g., on impaired, weakened targets)
+                        if (passiveDesc.includes("impaired") && enemyDebuffs.impaired) {
+                            if (passiveDesc.includes("Critical Rating")) {
+                                addBuffStack('critRatingStacks', time);
+                            } else if (passiveDesc.includes("Defence Rating")) {
+                                addBuffStack('defenceRatingStacks', time);
+                            }
+                        }
+                        
+                        if (passiveDesc.includes("weakened") && enemyDebuffs.weakened) {
+                            if (passiveDesc.includes("Critical Power Rating")) {
+                                addBuffStack('critPowerRatingStacks', time);
+                            }
+                        }
+                        
+                        if (passiveDesc.includes("hindered") && enemyDebuffs.hindered) {
+                            if (passiveDesc.includes("Critical Rating")) {
+                                addBuffStack('critRatingStacks', time);
+                            }
+                        }
+                    });
+                    
                     // Remove Lethality stacks on glance
                     if (isGlanced) {
                         playerBuffs.lethality.stacks = 0;
@@ -4701,7 +5347,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         while (eff.nextTick <= 0 && eff.duration >= 0) {
 
-                            
+                            // Special handling for Power Line effect - build stacks on each tick
+                            if (eff.name === "Power Line") {
+                                addPowerLineStack(time);
+                            }
+
                             performAttack({
 
                                 name: eff.name,
@@ -4842,7 +5492,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 enemyDebuffs.impaired = enemyDebuffs.impairedDuration > 0;
 
-                
+                // Update all stacking buffs
+
+                updateAllStackingBuffs(time);
 
                 // Process DoT ticks during time advancement
 
