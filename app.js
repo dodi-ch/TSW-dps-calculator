@@ -4096,21 +4096,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 statsBreakdown[VOLTAIC_DETONATION_NAME].casts++;
 
-                // Detonation always crits if the original hit was a crit (game mechanic)
+                // Voltaic Detonation uses independent crit chance calculation
+                const detonationCritChance = effectiveCritChance / 100;
+                const isDetonationCrit = Math.random() < detonationCritChance;
+                if (isDetonationCrit) statsBreakdown[VOLTAIC_DETONATION_NAME].crits++;
 
-                if (isCrit) statsBreakdown[VOLTAIC_DETONATION_NAME].crits++;
+                // Voltaic Detonation uses independent penetration chance calculation  
+                let currentPenRatingForDetonation = penRating;
+                if (talismanEffects.lycanthropeBonePowder.enabled && time <= talismanEffects.lycanthropeBonePowder.endTime) {
+                    currentPenRatingForDetonation += talismanEffects.lycanthropeBonePowder.penetrationBonus;
+                }
 
-                // Detonation always penetrates if the original hit penetrated (game mechanic)  
+                const detonationPenChance = penChance + passivePenetrationBonus + augmentPenChanceBonus;
+                
+                // Apply all penetration buffs
+                let finalDetonationPenChance = detonationPenChance;
+                if (playerBuffs.breachingShot.active) {
+                    finalDetonationPenChance += playerBuffs.breachingShot.penChanceBonus;
+                }
+                if (playerBuffs.outForAKill.active) {
+                    finalDetonationPenChance += playerBuffs.outForAKill.penChanceBonus;
+                }
+                if (playerBuffs.minorPenetration.active) {
+                    finalDetonationPenChance += playerBuffs.minorPenetration.penChanceBonus;
+                }
 
-                if (isPenetrated) statsBreakdown[VOLTAIC_DETONATION_NAME].penetrations++;
+                const isDetonationPenetrated = Math.random() < (finalDetonationPenChance / 100);
+                if (isDetonationPenetrated) statsBreakdown[VOLTAIC_DETONATION_NAME].penetrations++;
 
                 
 
                 // Dust of the Black Pharaoh proc check for Voltaic Detonation
 
-                const isDetonationCrit = detonationFinalDamage > (detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
+                const isDetonationCritForDust = detonationFinalDamage > (detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
 
-                if (dustActive && isDetonationCrit) {
+                if (dustActive && isDetonationCritForDust) {
 
                     if (Math.random() < 0.20) {
 
