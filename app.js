@@ -1296,11 +1296,27 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Use specific resource scaling if available
             const resourceKey = `scaling_${effectiveResources}`;
-            if (ability[resourceKey] !== undefined) {
+            if (ability[resourceKey] !== undefined && ability[resourceKey] !== null) {
                 scalingToUse = ability[resourceKey];
             } else {
-                // Fallback to linear interpolation if specific value not available
-                scalingToUse = ability.scaling_1 + ((effectiveResources - 1) / 4) * (ability.scaling_5 - ability.scaling_1);
+                // Improved fallback to linear interpolation with better precision
+                // Ensure effectiveResources is within valid range (1-5)
+                const clampedResources = Math.max(1, Math.min(5, effectiveResources));
+                
+                if (clampedResources === 1) {
+                    scalingToUse = ability.scaling_1;
+                } else if (clampedResources === 5) {
+                    scalingToUse = ability.scaling_5;
+                } else {
+                    // More precise linear interpolation for resources 2-4
+                    const progress = (clampedResources - 1) / 4; // 0.25, 0.5, 0.75 for resources 2, 3, 4
+                    scalingToUse = ability.scaling_1 + progress * (ability.scaling_5 - ability.scaling_1);
+                    
+                    // Add logging for debugging scaling calculations (disabled in production)
+                    // if (TEST_MODE && ability.name.includes('Test')) {
+                    //     console.log(`Scaling interpolation for ${ability.name}: resources=${effectiveResources}, scaling=${scalingToUse.toFixed(6)}`);
+                    // }
+                }
             }
             
         } else if (ability.scaling_5 > 0 && effectiveResources === 5 && canScaleWithResources) {
@@ -1308,11 +1324,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (resourceConsumption > 0 && !canScaleWithResources) {
             // For fixed resource abilities, use the scaling value that matches their fixed consumption
             const fixedResourceKey = `scaling_${resourceConsumption}`;
-            if (ability[fixedResourceKey] !== undefined) {
+            if (ability[fixedResourceKey] !== undefined && ability[fixedResourceKey] !== null) {
                 scalingToUse = ability[fixedResourceKey];
             } else {
                 // Fallback to the main scaling value
                 scalingToUse = ability.scaling || 0;
+                
+                // Add warning for missing fixed resource scaling data (disabled in production)
+                // if (TEST_MODE && resourceConsumption > 0) {
+                //     console.warn(`Missing scaling_${resourceConsumption} for fixed resource ability: ${ability.name}`);
+                // }
             }
         }
 
@@ -1345,30 +1366,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-        // Extraction of subtypes from description
-
+        // Extraction of subtypes from description with improved pattern matching
         let subtype = "";
 
         const subtypes = ["Strike", "Blast", "Focus", "Frenzy", "Burst", "Chain"];
 
+        // Improved subtype detection with more flexible patterns
         for (const s of subtypes) {
-
-            if (desc.includes(s + " attack") || desc.includes(s + " ability")) {
-
-                subtype = s;
-
-                break;
-
+            // Multiple patterns to catch different text formats
+            const patterns = [
+                new RegExp(`\\b${s}\\s+attack\\b`, 'i'),
+                new RegExp(`\\b${s}\\s+ability\\b`, 'i'),
+                new RegExp(`\\b${s}\\s+damage\\b`, 'i'),
+                new RegExp(`\\b${s}s\\s+attack\\b`, 'i'), // Plural form
+                new RegExp(`\\b${s}s\\s+ability\\b`, 'i')  // Plural form
+            ];
+            
+            for (const pattern of patterns) {
+                if (pattern.test(desc)) {
+                    subtype = s;
+                    break;
+                }
             }
-
+            
+            if (subtype) break;
         }
 
 
 
-        // Check for ability-specific dependencies (e.g., Sawed Off requires Pump Action)
+        // Check for ability-specific dependencies using improved pattern matching
         let requiresSpecificAbility = "";
-        if (desc.includes("will also cause") && desc.includes("Pump Action")) {
-            requiresSpecificAbility = "Pump Action";
+        
+        // Define dependency patterns for better maintainability
+        const dependencyPatterns = [
+            {
+                // Sawed Off requires Pump Action
+                requiredAbility: "Pump Action",
+                patterns: [
+                    /will also cause.*pump action/i,
+                    /pump action.*will also cause/i,
+                    /requires.*pump action/i,
+                    /only works with.*pump action/i
+                ]
+            }
+            // Add more dependency patterns here as needed
+            // Example: Two Cuts requires blade weapon (handled separately in requiresBlade)
+        ];
+        
+        // Check each dependency pattern
+        for (const dependency of dependencyPatterns) {
+            // Ensure dependency has patterns property before iterating
+            if (dependency.patterns && Array.isArray(dependency.patterns)) {
+                for (const pattern of dependency.patterns) {
+                    if (pattern.test(desc)) {
+                        requiresSpecificAbility = dependency.requiredAbility;
+                        break;
+                    }
+                }
+            }
+            if (requiresSpecificAbility) break;
         }
 
         // Parse active ability self-buffs that provide damage bonuses
@@ -2378,13 +2434,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
 
-                playerBuffs.liveWire.active = true;
-
-                playerBuffs.liveWire.endTime = currentTime + 10; // 10 second duration for next hit
+                // Only activate if not already active to prevent race conditions
+                if (!playerBuffs.liveWire.active) {
+                    playerBuffs.liveWire.active = true;
+                    playerBuffs.liveWire.endTime = currentTime + 10; // 10 second duration for next hit
+                    playerBuffs.liveWire.activatedTime = currentTime; // Track when it was activated
+                }
 
             } catch (e) {
 
-                // playerBuffs not yet initialized
+                // playerBuffs not yet initialized - initialize it safely
+                if (!playerBuffs) {
+                    playerBuffs = {};
+                }
+                if (!playerBuffs.liveWire) {
+                    playerBuffs.liveWire = {
+                        active: false,
+                        endTime: 0,
+                        activatedTime: 0
+                    };
+                }
+                // Retry activation after initialization
+                if (!playerBuffs.liveWire.active) {
+                    playerBuffs.liveWire.active = true;
+                    playerBuffs.liveWire.endTime = currentTime + 10;
+                    playerBuffs.liveWire.activatedTime = currentTime;
+                }
 
             }
 
@@ -2398,23 +2473,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
 
+                // Ensure powerLineStacks is properly initialized
+                if (!playerBuffs.powerLineStacks) {
+                    playerBuffs.powerLineStacks = {
+                        stacks: 0,
+                        maxStacks: 10,
+                        duration: 10,
+                        stackValues: [],
+                        damageBonusPercent: 0
+                    };
+                }
+
                 const powerLineBuff = playerBuffs.powerLineStacks;
 
+                // Add current time as a new stack
                 powerLineBuff.stackValues.push(currentTime);
 
-                // Keep only stacks from last 10 seconds
+                // Clean up expired stacks (older than 10 seconds)
+                const cutoffTime = currentTime - 10;
+                powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => stackTime > cutoffTime);
 
-                powerLineBuff.stackValues = powerLineBuff.stackValues.filter(stackTime => currentTime - stackTime < 10);
-
+                // Update stack count
                 powerLineBuff.stacks = powerLineBuff.stackValues.length;
 
                 // Update damage bonus percent (20% per stack, max 200%)
-
                 powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
+
+                // Debug logging for Power Line stacks (disabled in production)
+                // if (TEST_MODE && powerLineBuff.stacks > 0) {
+                //     console.log(`Power Line stacks: ${powerLineBuff.stacks}, damage bonus: ${powerLineBuff.damageBonusPercent}%`);
+                // }
 
             } catch (e) {
 
-                // playerBuffs not yet initialized
+                console.error('Error in addPowerLineStack:', e);
+
+                // Initialize with safe defaults if error occurs
+                if (!playerBuffs.powerLineStacks) {
+                    playerBuffs.powerLineStacks = {
+                        stacks: 0,
+                        maxStacks: 10,
+                        duration: 10,
+                        stackValues: [],
+                        damageBonusPercent: 0
+                    };
+                }
 
             }
 
@@ -2452,19 +2555,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
 
+                // Ensure playerBuffs and liveWire are properly initialized
+                if (!playerBuffs || !playerBuffs.liveWire) {
+                    return 0;
+                }
+
+                // Check if Live Wire is active and within duration
                 if (playerBuffs.liveWire.active && currentTime <= playerBuffs.liveWire.endTime) {
-
+                    
+                    // Deactivate Live Wire to prevent multiple consumptions
                     playerBuffs.liveWire.active = false;
-
                     playerBuffs.liveWire.endTime = 0;
+                    playerBuffs.liveWire.activatedTime = 0;
+                    
+                    // Return 1 to indicate Live Wire was consumed (damage will be calculated using RDB scaling)
+                    return 1;
 
-                    return playerBuffs.liveWire.damageBonus;
-
+                } else if (playerBuffs.liveWire.active && currentTime > playerBuffs.liveWire.endTime) {
+                    // Expired Live Wire - clean it up
+                    playerBuffs.liveWire.active = false;
+                    playerBuffs.liveWire.endTime = 0;
+                    playerBuffs.liveWire.activatedTime = 0;
                 }
 
             } catch (e) {
 
-                // playerBuffs not yet initialized
+                // Handle any unexpected errors gracefully
+                console.error('Error in consumeLiveWire:', e);
 
             }
 
@@ -2671,7 +2788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             liveWire: {
                 active: false,
                 endTime: 0,
-                damageBonus: 84 // Fixed additional damage from Live Wire
+                activatedTime: 0 // Track when it was activated to prevent race conditions
             },
             
             // Power Line stacking effect tracking
@@ -3080,6 +3197,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Molten Steel: 30% additional chance to critically hit
             if (ability.name === "Molten Steel") {
                 effectiveCritChance += 30;
+                
+                // Metal Worker Passive: Increases Critical Chance of Molten Steel by 10%
+                const metalWorkerPassive = allPassives.find(p => p.name === "Metal Worker");
+                if (metalWorkerPassive) {
+                    effectiveCritChance += 10;
+                }
             }
             
             const isCrit = ability.name === "Full Momentum" ? false : Math.random() < (effectiveCritChance / 100);
@@ -3722,11 +3845,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Elemental Overload Proc
 
-            // "Your Elemental abilities have a 33% chance to deal 105 magical damage to 6 enemies around the target."
+            // "Your Elemental abilities have a 33% chance to deal magical damage to 6 enemies around the target."
 
             // "Requires an equipped Elementalism Focus."
 
-            // Note: Single target DPS calc, so we only apply the damage once. Base 105 damage loosely scaled to 1000 CP.
+            // Note: Single target DPS calc, so we only apply the damage once. Using RDB scaling data.
 
             if (hasElementalWeapon && ability.weapon === 'Elementalism') {
 
@@ -3740,7 +3863,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     }
 
-                    const eleBaseDmg = 105 * (cp / 1000);
+                    // Use RDB scaling for Elemental Overload - find the ability in allPassives
+                    const elementalOverloadPassive = allPassives.find(p => p.name === "Elemental Overload");
+                    let eleBaseDmg;
+                    
+                    if (elementalOverloadPassive && elementalOverloadPassive.scaling > 0) {
+                        // Use RDB scaling calculation
+                        eleBaseDmg = elementalOverloadPassive.scaling * cp;
+                    } else {
+                        // Fallback to original calculation if RDB data not available
+                        eleBaseDmg = 105 * (cp / 1000);
+                    }
 
                     // Procs inherit the triggering hit's finalMult (crit/pen/glance)
 
@@ -3767,38 +3900,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             
 
-            // Apply Live Wire damage if active
-
-            const liveWireDamage = consumeLiveWire(time);
-
-            if (liveWireDamage > 0) {
-
-                const liveWireFinalDamage = liveWireDamage * (1 + (critPower - 150) / 100); // Apply crit power scaling
-
-                totalDamage += liveWireFinalDamage;
-
-                
-
-                // Record Live Wire damage in breakdown
-
-                const LIVE_WIRE_NAME = 'Live Wire (Proc)';
-
-                if (!statsBreakdown[LIVE_WIRE_NAME]) {
-
-                    statsBreakdown[LIVE_WIRE_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Live Wire' };
-
-                }
-
-                statsBreakdown[LIVE_WIRE_NAME].casts++;
-
-                statsBreakdown[LIVE_WIRE_NAME].damage += liveWireFinalDamage;
-
-                // Live Wire inherits crit status from triggering hit
-
-                if (isCrit) statsBreakdown[LIVE_WIRE_NAME].crits++;
-
-            }
-
+            
             
 
             // Handle stacking buff triggers from ability hits
@@ -3825,16 +3927,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 
 
-                // Check for Live Wire passive trigger
-
+                // Check for Live Wire passive trigger and apply damage immediately
                 allPassives.forEach(passive => {
-
                     if (passive.name === "Live Wire") {
+                        // Apply Live Wire damage immediately on critical hit
+                        const liveWireAbility = passive;
+                        let liveWireFinalDamage;
+                        
+                        // Calculate Live Wire damage with its own crit/pen rolls
+                        const wStats = getStatsForWeapon(ability.weapon);
+                        const critChance = wStats?.critChance || 0;
+                        const penChance = wStats?.penChance || 0;
+                        const liveWireCritRoll = Math.random() < (critChance / 100);
+                        const liveWirePenRoll = Math.random() < (penChance / 100);
+                        
+                        // Use RDB scaling for Live Wire with safety checks
+                        const liveWireScaling = liveWireAbility?.scaling || 1.10389301;
+                        const liveWireBaseDamage = liveWireScaling * cp;
+                        // Apply Live Wire's own crit/pen multipliers with safety checks
+                        const critPower = wStats?.critPower || 25;
+                        const liveWireCritMultiplier = liveWireCritRoll ? (1 + critPower / 100) : 1;
+                        const liveWirePenMultiplier = liveWirePenRoll ? 1.15 : 1; // 15% pen bonus
+                        liveWireFinalDamage = liveWireBaseDamage * liveWireCritMultiplier * liveWirePenMultiplier;
 
-                        activateLiveWire(time);
+                        totalDamage += liveWireFinalDamage;
 
+                        // Record Live Wire damage in breakdown
+                        const LIVE_WIRE_NAME = 'Live Wire (Proc)';
+                        if (!statsBreakdown[LIVE_WIRE_NAME]) {
+                            statsBreakdown[LIVE_WIRE_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Live Wire' };
+                        }
+
+                        statsBreakdown[LIVE_WIRE_NAME].casts++;
+                        statsBreakdown[LIVE_WIRE_NAME].damage += liveWireFinalDamage;
+                        
+                        if (liveWireCritRoll) statsBreakdown[LIVE_WIRE_NAME].crits++;
+                        if (liveWirePenRoll) statsBreakdown[LIVE_WIRE_NAME].penetrations++;
                     }
-
                 });
 
             }
@@ -3917,9 +4046,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 
 
-                // Power Line tether damage over 10 seconds
-
-                const tetherDamage = 0.18365 * cp * 10; // 10 seconds of damage
+                // Power Line tether damage over 10 seconds - use RDB scaling
+                const powerLineAbility = allActives.find(a => a.name === POWER_LINE_NAME);
+                let tetherDamage;
+                
+                if (powerLineAbility && powerLineAbility.scaling > 0) {
+                    // Use RDB scaling calculation (per second damage)
+                    tetherDamage = powerLineAbility.scaling * cp * 10; // 10 seconds of damage
+                } else {
+                    // Fallback to original calculation if RDB data not available
+                    tetherDamage = 0.18365 * cp * 10; // 10 seconds of damage
+                }
 
                 const tetherFinalDamage = tetherDamage * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
 
@@ -3937,9 +4074,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 
 
-                // Voltaic Detonation with maximum stacks (200% bonus)
-
-                const detonationBase = 2.99004 * cp * 3.0; // Maximum 200% bonus
+                // Voltaic Detonation with maximum stacks (200% bonus) - use RDB scaling
+                const voltaicDetonationAbility = allActives.find(a => a.name === "Voltaic Detonation");
+                let detonationBase;
+                
+                if (voltaicDetonationAbility && voltaicDetonationAbility.scaling > 0) {
+                    // Use RDB scaling calculation with maximum 200% bonus (3.0 multiplier)
+                    detonationBase = voltaicDetonationAbility.scaling * cp * 3.0;
+                } else {
+                    // Fallback to original calculation if RDB data not available
+                    detonationBase = 2.99004 * cp * 3.0; // Maximum 200% bonus
+                }
 
                 const detonationFinalDamage = detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult;
 
@@ -4065,32 +4210,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
 
-            // Metal Worker Passive: Add additional hit for Molten Steel
+            // Metal Worker Passive: Increases Critical Chance of Molten Steel by 10%
             if (ability.name === "Molten Steel") {
                 // Check if Metal Worker passive is equipped
                 const metalWorkerPassive = allPassives.find(p => p.name === "Metal Worker");
                 if (metalWorkerPassive) {
-                    // Calculate additional damage based on resources consumed
-                    // The description says "4 - 119 damage based on the resources consumed"
-                    // We'll scale this based on the resources actually consumed
-                    const resourcesConsumed = ability.resourceConsumption || 5;
-                    const additionalDamage = 4 + (119 - 4) * (resourcesConsumed / 5); // Scale based on resources
+                    // Metal Worker increases crit chance by 10% for Molten Steel
+                    // This is handled by modifying the crit chance calculation for this specific ability
+                    // The actual crit chance increase is applied in the crit calculation logic
+                    // We don't add additional damage here - it's handled through increased crit rate
                     
-                    // Apply the same damage multipliers as the main hit
-                    const metalWorkerDamage = additionalDamage * finalMult;
-                    
-                    totalDamage += metalWorkerDamage;
-                    
-                    // Add to stats breakdown as separate entry
-                    const METAL_WORKER_NAME = "Metal Worker (Additional Hit)";
-                    if (!statsBreakdown[METAL_WORKER_NAME]) {
-                        statsBreakdown[METAL_WORKER_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Metal Worker" };
-                    }
-                    statsBreakdown[METAL_WORKER_NAME].casts++;
-                    statsBreakdown[METAL_WORKER_NAME].damage += metalWorkerDamage;
-                    // Metal Worker additional hit inherits the crit and penetration status of the main hit
-                    if (isCrit) statsBreakdown[METAL_WORKER_NAME].crits++;
-                    if (isPenetrated) statsBreakdown[METAL_WORKER_NAME].penetrations++;
+                    // Note: The 10% crit chance bonus is applied in the crit calculation section
+                    // This is just a placeholder comment to indicate Metal Worker is active
                 }
             }
 
@@ -4407,24 +4538,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-                        const pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult * equilibriumMult;
+                        // Special handling for passives that can both crit and penetrate independently
+                        let pActualDmg;
+                        const passiveName = passive.name;
+                        const regularPassiveKey = `passive_${passive.weapon}_${passive.name}`;
+                        
+                        // Initialize stats breakdown if not exists
+                        if (!statsBreakdown[regularPassiveKey]) {
+                            statsBreakdown[regularPassiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
+                        }
+                        
+                        if (passiveName === "One in the Chamber" || passiveName === "Sudden Return") {
+                            // These passives can both critically hit and penetrate independently
+                            // Calculate base damage with RDB scaling
+                            const baseDamage = (passive.scalingToUse || 0) * cp * pSignetMult * equilibriumMult;
+                            
+                            // Calculate independent crit chance and penetration chance based on user's actual stats
+                            const passiveCritChance = critChance / 100; // Convert percentage to decimal for Math.random()
+                            const passivePenChance = penChance / 100; // Convert percentage to decimal for Math.random()
+                            
+                                                        
+                            const isPassiveCrit = Math.random() < passiveCritChance;
+                            const isPassivePen = Math.random() < passivePenChance;
+                            
+                            // Apply crit and penetration multipliers independently
+                            const critMultiplier = isPassiveCrit ? (1 + critPower / 100) : 1.0;
+                            const penMultiplier = isPassivePen ? 1.5 : 1.0; // 50% penetration bonus
+                            
+                            pActualDmg = baseDamage * critMultiplier * penMultiplier;
+                            
+                            // Track crits and penetrations for statistics
+                            if (isPassiveCrit) {
+                                statsBreakdown[regularPassiveKey].crits++;
+                            }
+                            if (isPassivePen) {
+                                statsBreakdown[regularPassiveKey].penetrations++;
+                            }
+                        } else {
+                            // Regular passive damage calculation (inherits from triggering hit)
+                            pActualDmg = (passive.scalingToUse || 0) * cp * finalMult * pSignetMult * equilibriumMult;
+                        }
 
                         totalDamage += pActualDmg;
-
-                        const regularPassiveKey = `passive_${passive.weapon}_${passive.name}`;
-
-
-                        if (!statsBreakdown[regularPassiveKey]) {
-
-                            statsBreakdown[regularPassiveKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: passive.name };
-
-
-                        }
 
                         statsBreakdown[regularPassiveKey].casts++;
 
                         statsBreakdown[regularPassiveKey].damage += pActualDmg;
-
+                        
+                        
 
                         
 
@@ -5627,19 +5788,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             div.style.gap = '0.75rem';
 
-
-
             // Icon element (loads async below)
-
             const iconEl = document.createElement('img');
-
             iconEl.className = 'breakdown-icon';
-
             iconEl.alt = '';
-
             iconEl.style.display = 'none'; // hidden until loaded
-
-
 
             const nameSpan = document.createElement('span');
 
@@ -5647,8 +5800,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nameSpan.style.minWidth = '0';
 
-            const critChance = stat.casts > 0 ? ((stat.crits / stat.casts) * 100).toFixed(1) : 0;
-            const penChance = stat.casts > 0 ? ((stat.penetrations / stat.casts) * 100).toFixed(1) : 0;
+            // Calculate crit and pen percentages for all abilities
+            let critChance = stat.casts > 0 ? ((stat.crits / stat.casts) * 100).toFixed(1) : 0;
+            let penChance = stat.penetrations && stat.casts > 0 ? ((stat.penetrations / stat.casts) * 100).toFixed(1) : 0;
             
             nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span><br><span style="color:var(--text-secondary);font-size:0.7rem;">Crit: ${critChance}% (${stat.crits}) | Pen: ${penChance}% (${stat.penetrations})</span>`;
 
@@ -6610,12 +6764,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nameSpan.style.minWidth = '0';
 
-            const critChance = stat.crits && stat.casts > 0 ? ((stat.crits / stat.casts) * 100).toFixed(1) : 0;
-            const penChance = stat.penetrations && stat.casts > 0 ? ((stat.penetrations / stat.casts) * 100).toFixed(1) : 0;
-            
-            nameSpan.innerHTML = `<strong>${stat.name}</strong> <span style="color:var(--text-secondary);font-size:0.8rem;">(${stat.casts} casts)</span><br><span style="color:var(--text-secondary);font-size:0.7rem;">Crit: ${critChance}% (${stat.crits || 0}) | Pen: ${penChance}% (${stat.penetrations || 0})</span>`;
-
-
+            // Exclude special passives from regular crit/pen percentage calculation
 
             const dpsSpan = document.createElement('span');
 
