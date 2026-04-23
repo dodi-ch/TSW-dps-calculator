@@ -2506,8 +2506,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (e) {
 
-                console.error('Error in addPowerLineStack:', e);
-
                 // Initialize with safe defaults if error occurs
                 if (!playerBuffs.powerLineStacks) {
                     playerBuffs.powerLineStacks = {
@@ -2581,7 +2579,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {
 
                 // Handle any unexpected errors gracefully
-                console.error('Error in consumeLiveWire:', e);
 
             }
 
@@ -6597,9 +6594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
 
-            console.error('Failed to parse tswcalc URL:', err);
-
-            alert('An error occurred while parsing the tswcalc URL. Check the console for details.');
+            alert('An error occurred while parsing the tswcalc URL.');
 
         }
 

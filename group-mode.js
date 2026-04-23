@@ -390,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateWeaponSelects();   // Fill weapon dropdowns
         setupEventListeners();      // Set up all event handlers
         initializeAbilitySlots();   // Create ability selection slots
+        initializeAbilityDropdowns(); // Populate ability dropdowns with initial data
         updateEnemyDisplay();       // Show current enemy stats
     }
     
@@ -403,7 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function populateWeaponSelects() {
         if (typeof tswData === 'undefined') {
-            console.error('TSW data not loaded');
             return;
         }
         
@@ -485,6 +485,57 @@ document.addEventListener('DOMContentLoaded', () => {
             const auxPassiveSlot = createAbilitySlot(`player-${i}-aux-passive-1`, 'aux-passive', 9);
             passiveContainer.appendChild(auxPassiveSlot);
         }
+    }
+    
+    // Initialize all ability dropdowns with data
+    function initializeAbilityDropdowns() {
+        // Check if tswData is available
+        if (typeof tswData === 'undefined') {
+            return;
+        }
+        
+        
+        for (let i = 1; i <= 5; i++) {
+            // Initialize active ability dropdowns
+            for (let j = 1; j <= 7; j++) {
+                const slotType = j === 1 ? 'builder' : (j === 7 ? 'elite' : 'active');
+                const slotId = `player-${i}-active-${j}`;
+                const select = document.getElementById(slotId);
+                if (select) {
+                    updateAbilityDropdown(i, select, slotType, '');
+                }
+            }
+            
+            // Initialize auxiliary active dropdown
+            const auxSelect = document.getElementById(`player-${i}-aux-1`);
+            if (auxSelect) {
+                updateAbilityDropdown(i, auxSelect, 'auxiliary', '');
+            } else {
+            }
+            
+            // Initialize passive ability dropdowns
+            const elitePassiveSelect = document.getElementById(`player-${i}-elite-passive-1`);
+            if (elitePassiveSelect) {
+                updateAbilityDropdown(i, elitePassiveSelect, 'elite-passive', '');
+            } else {
+            }
+            
+            for (let j = 1; j <= 6; j++) {
+                const slotId = `player-${i}-passive-${j}`;
+                const select = document.getElementById(slotId);
+                if (select) {
+                    updateAbilityDropdown(i, select, 'passive', '');
+                }
+            }
+            
+            // Initialize auxiliary passive dropdown
+            const auxPassiveSelect = document.getElementById(`player-${i}-aux-passive-1`);
+            if (auxPassiveSelect) {
+                updateAbilityDropdown(i, auxPassiveSelect, 'aux-passive', '');
+            } else {
+            }
+        }
+        
     }
     
     // Create a single ability slot with custom dropdown (like single player)
@@ -648,9 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 filterFn = a => getType(a).includes("Elite Passive") || (getType(a).includes("Elite") && getType(a).includes("Passive"));
                 break;
             case 'passive':
-                filterFn = a => getType(a).includes("Passive") && 
-                    !getType(a).includes("Elite") && 
-                    !AUX_WEAPONS.includes(a.weapon);
+                // Passives are available regardless of weapon selection
+                filterFn = a => getType(a).includes("Passive") && !getType(a).includes("Elite");
                 break;
             case 'aux-passive':
                 filterFn = a => AUX_WEAPONS.includes(a.weapon) &&
@@ -683,11 +733,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentVal = select.value;
         const currentAbility = tswData[currentVal];
-        display.textContent = currentAbility ? currentAbility.name : emptyLabel;
+        
+        // Use updateSlotDisplay to properly render icon and name
+        updateSlotDisplay(select, display);
+
+        // Ensure currently selected ability is included in the data, even if filtered out
+        let displayData = [...filteredData];
+        if (currentAbility && !displayData.includes(currentAbility)) {
+            displayData.unshift(currentAbility); // Add current selection at the beginning
+        }
 
         // Populate the hidden select with options (needed for import functionality)
         select.innerHTML = `<option value="">${emptyLabel}</option>`;
-        filteredData.forEach(ability => {
+        displayData.forEach(ability => {
             const globalIndex = tswData.indexOf(ability);
             const option = document.createElement('option');
             option.value = String(globalIndex);
@@ -702,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         list.innerHTML = '';
 
-        filteredData.forEach(ability => {
+        displayData.forEach(ability => {
             const globalIndex = tswData.indexOf(ability);
             const item = document.createElement('div');
             item.className = 'ability-dropdown-item';
@@ -727,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.addEventListener('click', () => {
                 select.value = String(globalIndex);
                 select.dispatchEvent(new Event('change'));
-                display.textContent = ability.name;
+                updateSlotDisplay(select, display);
                 list.style.display = 'none';
             });
 
@@ -802,10 +860,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get all selected abilities for this player
         const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"]`);
-        const eliteSelects = document.querySelectorAll(`#player-${playerId}-active-7`); // Elite active is player-X-active-7
         const auxSelects = document.querySelectorAll(`#player-${playerId}-aux-1`); // Aux active is player-X-aux-1
         
-        const allSelects = [...activeSelects, ...eliteSelects, ...auxSelects];
+        const allSelects = [...activeSelects, ...auxSelects];
         
                 
         allSelects.forEach(select => {
@@ -1522,11 +1579,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function parsePassiveSection(section) {
         const lines = section.split('\n').slice(1); // Skip header
         const passives = [];
+        const seen = new Set();
         
         lines.forEach(line => {
             const trimmedLine = line.trim();
-            if (trimmedLine) {
+            if (trimmedLine && !seen.has(trimmedLine)) {
                 passives.push(trimmedLine);
+                seen.add(trimmedLine);
             }
         });
         
@@ -1676,9 +1735,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllAbilityDropdownsForPlayer(playerId);
         isImporting = wasImporting;
         
-        // Apply the parsed build data to the player's UI
-        applyPlayerBuildData(playerId, buildData);
-        
         // Reset weapon detection flag
         isDetectingWeapons = false;
     }
@@ -1707,6 +1763,27 @@ document.addEventListener('DOMContentLoaded', () => {
         let importedPassives = 0;
         let importedAugments = 0;
         const errors = [];
+        
+        // Ensure all ability dropdowns are properly populated before importing
+        const eliteSelect = document.getElementById(`player-${playerId}-elite-passive-1`);
+        const allPassiveSelectors = document.querySelectorAll(`#player-${playerId}-passives-container .slot-wrapper`);
+        const normalSelectors = Array.from(allPassiveSelectors).filter(wrapper => {
+            const select = wrapper.querySelector('select');
+            return select && select.id.includes('passive-') && !select.id.includes('elite-passive') && !select.id.includes('aux-passive');
+        });
+        
+        // Populate elite passive dropdown
+        if (eliteSelect) {
+            updateAbilityDropdown(playerId, eliteSelect, 'elite-passive', '');
+        }
+        
+        // Populate all normal passive dropdowns
+        normalSelectors.forEach((selector, index) => {
+            const select = selector.querySelector('select');
+            if (select) {
+                updateAbilityDropdown(playerId, select, 'passive', '');
+            }
+        });
         
         // Detect and set weapons from imported abilities before importing
         detectAndSetWeaponsFromImport(playerId, buildData);
@@ -1813,99 +1890,112 @@ document.addEventListener('DOMContentLoaded', () => {
             const auxPassiveSelect = document.getElementById(`player-${playerId}-aux-passive-1`);
             
             let elitePassiveFound = false;
+            let elitePassiveIndex = -1;
+            let normalPassiveIndex = 0;
             
-            // Try to find if any passive is an elite passive
+            // First pass: identify elite passive and its index
             for (let i = 0; i < buildData.passives.length; i++) {
                 const passiveName = buildData.passives[i];
-                if (eliteSelect) {
+                
+                // Check if this passive is an elite passive by looking it up in tswData directly
+                const passiveAbility = findAbilityInTswData(passiveName);
+                const isElitePassive = passiveAbility && (
+                    (passiveAbility.type && passiveAbility.type.includes("Elite Passive")) ||
+                    (passiveAbility.type && passiveAbility.type.includes("Elite") && passiveAbility.type.includes("Passive"))
+                );
+                
+                
+                if (eliteSelect && isElitePassive) {
+                    elitePassiveFound = true;
+                    elitePassiveIndex = i;
+                    break;
+                }
+            }
+            
+            // Second pass: import all passives
+            buildData.passives.forEach((passiveName, index) => {
+                // Skip if this is the elite passive we already handled
+                if (index === elitePassiveIndex) {
+                    // Import elite passive
+                    const passiveAbility = findAbilityInTswData(passiveName);
+                    
+                    
+                    // Ensure elite passive dropdown is populated
+                    updateAbilityDropdown(playerId, eliteSelect, 'elite-passive', '');
+                    
                     const option = findAbilityByName(eliteSelect, passiveName);
                     if (option) {
-                            // This is an elite passive
-                            eliteSelect.value = option.value;
-                            // Only dispatch change event if not importing
+                        eliteSelect.value = option.value;
+                        if (!isImporting) {
+                            eliteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        importedPassives++;
+                    } else {
+                        // Elite passive detected but option not found - create option manually
+                        const globalIndex = tswData.indexOf(passiveAbility);
+                        if (globalIndex >= 0) {
+                            const newOption = document.createElement('option');
+                            newOption.value = String(globalIndex);
+                            newOption.textContent = passiveName;
+                            eliteSelect.appendChild(newOption);
+                            eliteSelect.value = newOption.value;
+                            
                             if (!isImporting) {
                                 eliteSelect.dispatchEvent(new Event('change', { bubbles: true }));
                             }
                             importedPassives++;
-                            elitePassiveFound = true;
-                            
-                            // Force update the custom dropdown display
-                            forceUpdateDropdownDisplay(playerId, eliteSelect.id);
-                        
-                        // Import remaining passives as normal passives (skip the elite one)
-                        const remainingPassives = buildData.passives.slice(i + 1);
-                        remainingPassives.forEach((passiveName, normalIndex) => {
-                            if (normalIndex < normalSelectors.length) {
-                                const selector = normalSelectors[normalIndex];
-                                const select = selector.querySelector('select');
-                                
-                                if (select) {
-                                    const option = findAbilityByName(select, passiveName);
-                                    if (option) {
-                                        select.value = option.value;
-                                        // Only dispatch change event if not importing
-                                        if (!isImporting) {
-                                            select.dispatchEvent(new Event('change', { bubbles: true }));
-                                        }
-                                        importedPassives++;
-                                        
-                                        // Force update the custom dropdown display
-                                        forceUpdateDropdownDisplay(playerId, select.id);
-                                    } else {
-                                        errors.push(`Passive not found: ${passiveName}`);
-                                    }
-                                }
-                            } else {
-                                errors.push(`Too many normal passives. Only ${normalSelectors.length} slots available.`);
-                            }
-                        });
-                        break; // Done processing passives
-                    }
-                }
-            }
-            
-            // If no elite passive was found, treat all passives as normal passives
-            if (!elitePassiveFound) {
-                buildData.passives.forEach((passiveName, index) => {
-                    // Check if this might be an auxiliary passive
-                    if (passiveName.toLowerCase().includes('aux') && auxPassiveSelect) {
-                        const option = findAbilityByName(auxPassiveSelect, passiveName);
-                        if (option) {
-                            auxPassiveSelect.value = option.value;
-                            // Only dispatch change event if not importing
-                            if (!isImporting) {
-                                auxPassiveSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
-                            importedPassives++;
-                            
-                            // Force update the custom dropdown display
-                            forceUpdateDropdownDisplay(playerId, auxPassiveSelect.id);
-                            return;
+                        } else {
                         }
                     }
                     
-                    if (index < normalSelectors.length) {
-                        const selector = normalSelectors[index];
-                        const select = selector.querySelector('select');
-                        
-                        if (select) {
-                            const option = findAbilityByName(select, passiveName);
-                            if (option) {
-                                select.value = option.value;
-                                select.dispatchEvent(new Event('change', { bubbles: true }));
-                                importedPassives++;
-                                
-                                // Force update the custom dropdown display
-                                forceUpdateDropdownDisplay(playerId, select.id);
-                            } else {
-                                errors.push(`Passive not found: ${passiveName}`);
-                            }
+                    // Force update the custom dropdown display
+                    forceUpdateDropdownDisplay(playerId, eliteSelect.id);
+                    return;
+                }
+                
+                // Handle normal passives
+                // Check if this might be an auxiliary passive
+                if (passiveName.toLowerCase().includes('aux') && auxPassiveSelect) {
+                    const option = findAbilityByName(auxPassiveSelect, passiveName);
+                    if (option) {
+                        auxPassiveSelect.value = option.value;
+                        if (!isImporting) {
+                            auxPassiveSelect.dispatchEvent(new Event('change', { bubbles: true }));
                         }
-                    } else {
-                        errors.push(`Too many normal passives. Only ${normalSelectors.length} slots available.`);
+                        importedPassives++;
+                        forceUpdateDropdownDisplay(playerId, auxPassiveSelect.id);
+                        return;
                     }
-                });
-            }
+                }
+                
+                // Import as normal passive
+                if (normalPassiveIndex < normalSelectors.length) {
+                    const selector = normalSelectors[normalPassiveIndex];
+                    const select = selector.querySelector('select');
+                    
+                    // Ensure normal passive dropdown is populated
+                    if (select && select.options.length <= 1) {
+                        updateAbilityDropdown(playerId, select, 'passive', '');
+                    }
+                    
+                    if (select) {
+                        const option = findAbilityByName(select, passiveName);
+                        if (option) {
+                            select.value = option.value;
+                            if (!isImporting) {
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                            importedPassives++;
+                            forceUpdateDropdownDisplay(playerId, select.id);
+                        } else {
+                            errors.push(`Passive not found: ${passiveName}`);
+                        }
+                    }
+                    normalPassiveIndex++;
+                } else {
+                    errors.push(`Too many normal passives. Only ${normalSelectors.length} slots available.`);
+                }
+            });
         }
 
         // Import augments using single player logic (with delay)
@@ -2084,21 +2174,28 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns {HTMLOptionElement|null} The found option or null
      */
     function findAbilityByName(select, abilityName) {
-        const option = Array.from(select.options).find(opt => 
-            opt.textContent.toLowerCase().includes(abilityName.toLowerCase())
+        // First try exact match (case-insensitive)
+        const exactOption = Array.from(select.options).find(opt => 
+            opt.textContent.toLowerCase() === abilityName.toLowerCase()
         );
         
-        // If exact match not found, try more flexible matching
-        if (!option) {
-            const fallbackOption = Array.from(select.options).find(opt => {
-                const optText = opt.textContent.toLowerCase();
-                const searchText = abilityName.toLowerCase();
-                return optText.includes(searchText) || searchText.includes(optText);
-            });
-            return fallbackOption;
+        if (exactOption) {
+            return exactOption;
         }
         
-        return option;
+        // If no exact match, try partial match (but be more careful)
+        const partialOption = Array.from(select.options).find(opt => {
+            const optText = opt.textContent.toLowerCase();
+            const searchText = abilityName.toLowerCase();
+            
+            // Only match if the search text is contained in the option text
+            // AND the option text is not much longer than search text
+            // This prevents matching "Live Wire" to "Something with Live Wire in it"
+            return optText.includes(searchText) && 
+                   (optText.length - searchText.length) <= 10; // Allow some tolerance for extra text
+        });
+        
+        return partialOption || null;
     }
     
     /**
@@ -2280,7 +2377,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return exportText.trim();
 
         } catch (error) {
-            console.error('Export failed:', error);
             return 'Export failed: ' + error.message;
         }
     }
@@ -3123,7 +3219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Copy to clipboard
         navigator.clipboard.writeText(teamData).catch(err => {
-            console.error('Failed to copy to clipboard:', err);
         });
     }
     
@@ -3166,8 +3261,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(`player-${playerId}-name`).value = playerData.name;
         }
         
-        // Parse and load build data (this would need to be implemented)
-        // For now, this is a placeholder
+        // Parse and load build data using existing functions
+        if (playerData.buildData && playerData.buildData.trim()) {
+            try {
+                const parsedBuild = parsePlayerBuildData(playerData.buildData);
+                applyPlayerBuildData(playerId, parsedBuild);
+            } catch (error) {
+            }
+        }
     }
     
     // Export team data
@@ -3191,13 +3292,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         initializePlayers();
         initializeUI();
-        
-        // Initialize ability dropdowns for all players
-        for (let i = 1; i <= 5; i++) {
-            updateAllAbilityDropdownsForPlayer(i);
-            // Setup dropdown event listeners for each player's ability slots
-            setupDropdownEventListenersForPlayer(i);
-        }
         
         // Setup combat breakdown functionality
         setupCombatBreakdownListeners();
