@@ -2194,7 +2194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
 
-        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
+        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Dust of the Black Pharaoh' };
 
         const ELE_OVERLOAD_NAME = 'Elemental Overload (Proc)';
 
@@ -2957,6 +2957,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         };
 
+        // Debug: Check initial maxCooldown value
+
+
         
 
         // ========================================
@@ -2973,25 +2976,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const importedGear = window._importedGear || {};
 
-        
 
-        // Woodcutter's Wrath is typically a high-level neck talisman, let's check for common IDs
-
-        // The exact ID would need to be determined from TSWCalc data
-
-        if (importedGear.neck && (
-
-            importedGear.neck.talismanId === 82 ||  // Common elite neck ID
-
-            importedGear.neck.talismanId === 84 ||  // Another elite neck ID  
-
-            importedGear.neck.talismanId === 86 ||  // Another elite neck ID
-
-            importedGear.neck.talismanId >= 200     // High-level neck talismans
-
-        )) {
+        if (importedGear.neck && importedGear.neck.talismanId === 92) {
 
             talismanEffects.mothersWrath.enabled = true;
+
 
             
 
@@ -3007,23 +2996,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             talismanEffects.mothersWrath.enabled = false;
 
+
         }
 
         
 
         // Check for Dust of the Black Pharaoh head talisman and auto-activate
 
-        if (importedGear.head && (
-
-            importedGear.head.talismanId === 81 ||  // Common elite head ID
-
-            importedGear.head.talismanId === 83 ||  // Another elite head ID
-
-            importedGear.head.talismanId === 85 ||  // Another elite head ID
-
-            importedGear.head.talismanId >= 200      // High-level head talismans
-
-        )) {
+        if (importedGear.head && importedGear.head.talismanId === 201) {
 
             window._dustSignetActive = true;
 
@@ -3245,53 +3225,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Process talisman effects based on hit results
 
-            // Mother's Wrath: Count non-penetrating hits
+            // Mother's Wrath: Count non-penetrating hits (only when not on cooldown)
 
-            if (!isEvaded && !isPenetrated && talismanEffects.mothersWrath.enabled) {
+            if (talismanEffects.mothersWrath.enabled) {
 
-                // This is a non-penetrating hit (normal hit or glance)
+    
+                if (talismanEffects.mothersWrath.cooldown <= 0) {
 
-                talismanEffects.mothersWrath.nonPenHits++;
+                    if (!isEvaded && !isPenetrated) {
 
-                
+                        // This is a non-penetrating hit (normal hit or glance)
 
-                // Check if Mother's Wrath should trigger
+                        talismanEffects.mothersWrath.nonPenHits++;
 
-                if (talismanEffects.mothersWrath.nonPenHits >= talismanEffects.mothersWrath.requiredHits && 
+        
+                        // Check if Mother's Wrath should trigger
 
-                    talismanEffects.mothersWrath.cooldown <= 0) {
+                        if (talismanEffects.mothersWrath.nonPenHits >= talismanEffects.mothersWrath.requiredHits) {
 
-                    
+        
+                            // Trigger Mother's Wrath effect
 
-                    // Trigger Mother's Wrath effect
+                            const wrathDamage = talismanEffects.mothersWrath.damage;
 
-                    const wrathDamage = talismanEffects.mothersWrath.damage;
-
-                    totalDamage += wrathDamage;
+                            totalDamage += wrathDamage;
 
                     
 
                     // Add to stats breakdown
 
-                    const wrathKey = 'Mother\'s Wrath (Talisman)';
+                            const wrathKey = "Mother's Wrath (Talisman)";
 
-                    if (!statsBreakdown[wrathKey]) {
+                            if (!statsBreakdown[wrathKey]) {
 
-                        statsBreakdown[wrathKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Mother\'s Wrath' };
+                                statsBreakdown[wrathKey] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: "Mother's Wrath" };
+
+                            }
+
+                            statsBreakdown[wrathKey].casts++;
+
+                            statsBreakdown[wrathKey].damage += wrathDamage;
+
+                            
+
+                            // Reset counter and set cooldown
+
+                            talismanEffects.mothersWrath.nonPenHits = 0;
+
+                            talismanEffects.mothersWrath.cooldown = talismanEffects.mothersWrath.maxCooldown;
+
+                
+                        }
 
                     }
-
-                    statsBreakdown[wrathKey].casts++;
-
-                    statsBreakdown[wrathKey].damage += wrathDamage;
-
-                    
-
-                    // Reset counter and set cooldown
-
-                    talismanEffects.mothersWrath.nonPenHits = 0;
-
-                    talismanEffects.mothersWrath.cooldown = talismanEffects.mothersWrath.maxCooldown;
 
                 }
 
@@ -3814,8 +3800,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const dustActive = !!window._dustSignetActive;
 
-            const DUST_NAME = 'Dust of the Black Pharaoh (Proc)';
-
             if (dustActive && isCrit) {
 
                 if (Math.random() < 0.20) {
@@ -3824,18 +3808,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Track the extra hit as its own breakdown entry
 
-                    if (!statsBreakdown[DUST_NAME]) {
+                    const dustName = 'Dust of the Black Pharaoh (Proc)';
 
-                        statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
+                    if (!statsBreakdown[dustName]) {
+
+                        statsBreakdown[dustName] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Dust of the Black Pharaoh' };
 
                     }
 
-                    statsBreakdown[DUST_NAME].casts++;
+                    statsBreakdown[dustName].casts++;
 
-                    statsBreakdown[DUST_NAME].damage += actualDmg;
+                    statsBreakdown[dustName].damage += actualDmg;
                     // Dust procs inherit the crit and penetration status of the triggering hit
-                    if (isCrit) statsBreakdown[DUST_NAME].crits++;
-                    if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
+                    if (isCrit) statsBreakdown[dustName].crits++;
+                    if (isPenetrated) statsBreakdown[dustName].penetrations++;
 
                 }
 
@@ -4140,19 +4126,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         
 
-                        if (!statsBreakdown[DUST_NAME]) {
+                        const dustName = 'Dust of the Black Pharaoh (Proc)';
 
-                            statsBreakdown[DUST_NAME] = { damage: 0, casts: 0, crits: 0, penetrations: 0 };
+                        if (!statsBreakdown[dustName]) {
+
+                            statsBreakdown[dustName] = { damage: 0, casts: 0, crits: 0, penetrations: 0, displayName: 'Dust of the Black Pharaoh' };
 
                         }
 
-                        statsBreakdown[DUST_NAME].casts++;
+                        statsBreakdown[dustName].casts++;
 
-                        statsBreakdown[DUST_NAME].damage += dustDetonationDmg;
+                        statsBreakdown[dustName].damage += dustDetonationDmg;
 
-                        statsBreakdown[DUST_NAME].crits++;
+                        statsBreakdown[dustName].crits++;
 
-                        if (isPenetrated) statsBreakdown[DUST_NAME].penetrations++;
+                        if (isPenetrated) statsBreakdown[dustName].penetrations++;
 
                     }
 
@@ -5609,9 +5597,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            if (!castSomething) {
+            // Define minWait for cooldown updates (will be set in if block if needed)
+            let minWait = 1.0;
 
-                let minWait = 1.0;
+            if (!castSomething) {
 
                 for (let c of activeCooldowns) if (c > 0 && c < minWait) minWait = c;
 
@@ -5634,12 +5623,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let j = 0; j < passiveCooldowns.length; j++) passiveCooldowns[j] -= minWait;
 
                 for (let j = 0; j < passiveCounterCooldowns.length; j++) passiveCounterCooldowns[j] -= minWait;
-
-                
-
-                // Update talisman effect cooldowns
-
-                talismanEffects.mothersWrath.cooldown = Math.max(0, talismanEffects.mothersWrath.cooldown - minWait);
 
                 
 
@@ -5734,6 +5717,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             }
+
+            // Update talisman effect cooldowns (every simulation step)
+            const oldCooldown = talismanEffects.mothersWrath.cooldown;
+            talismanEffects.mothersWrath.cooldown = Math.max(0, talismanEffects.mothersWrath.cooldown - minWait);
 
         }
 
