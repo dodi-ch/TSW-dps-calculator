@@ -13,6 +13,133 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auxiliary weapons that have special handling (from original app)
     const AUX_WEAPONS = ["Rocket Launcher", "Chainsaw", "Quantum", "Flamethrower", "Whip"];
     
+    // Augment Data Structure
+    const AUGMENTS = {
+        // Damage Augment Resonators
+        accurate_augment: {
+            name: "Accurate Augment Resonator",
+            type: "damage",
+            effect: { attackRating: 150 },
+            description: "+150 Attack Rating (affects all abilities)"
+        },
+        brutal_augment: {
+            name: "Brutal Augment Resonator",
+            type: "damage",
+            effect: { critChance: 7.5 },
+            description: "+7.5% Critical Hit Chance"
+        },
+        piercing_augment: {
+            name: "Piercing Augment Resonator",
+            type: "damage",
+            effect: { penChance: 7.5 },
+            description: "+7.5% Penetration Chance"
+        },
+        precise_augment: {
+            name: "Precise Augment Resonator",
+            type: "damage",
+            effect: { hitRating: 250 },
+            description: "+250 Hit Rating"
+        },
+        ferocious_augment: {
+            name: "Ferocious Augment Resonator",
+            type: "damage",
+            effect: { critPower: 15 },
+            description: "+15% Critical Power"
+        },
+        inescapable_augment: {
+            name: "Inescapable Augment Resonator",
+            type: "damage",
+            effect: { evadeReduction: 7.5 },
+            description: "-7.5% Target Evade Chance"
+        },
+        fierce_augment: {
+            name: "Fierce Augment Resonator",
+            type: "damage",
+            effect: { penChance: 5, critChance: 5 },
+            description: "+5% Penetration Chance & +5% Critical Hit Chance"
+        },
+        focused_augment: {
+            name: "Focused Augment Resonator",
+            type: "damage",
+            effect: { critChance: 5, critPower: 10 },
+            description: "+5% Critical Hit Chance & +10% Critical Power"
+        },
+        overwhelming_augment: {
+            name: "Overwhelming Augment Resonator",
+            type: "damage",
+            effect: { penChance: 5, evadeReduction: 5 },
+            description: "+5% Penetration Chance & -5% Target Evade Chance"
+        },
+        grievous_augment: {
+            name: "Grievous Augment Resonator",
+            type: "damage",
+            effect: { damageMultiplier: 1.15 },
+            description: "+15% Damage Dealt"
+        },
+        
+        // Support Augment Resonators
+        curing_augment: {
+            name: "Curing Augment Resonator",
+            type: "support",
+            effect: { teamHeal: 75, cooldown: 10 },
+            description: "Heal team for 75 (10s cooldown)"
+        },
+        inspiring_augment: {
+            name: "Inspiring Augment Resonator",
+            type: "support",
+            effect: { teamDamageBuff: 5, duration: 5, cooldown: 30 },
+            description: "Team +5% Damage for 5s (30s cooldown)"
+        },
+        safeguarding_augment: {
+            name: "Safeguarding Augment Resonator",
+            type: "support",
+            effect: { teamDamageReduction: 5, duration: 5, cooldown: 30 },
+            description: "Team -5% Damage Taken for 5s (30s cooldown)"
+        },
+        restorative_augment: {
+            name: "Restorative Augment Resonator",
+            type: "support",
+            effect: { teamHealingBuff: 10, duration: 5, cooldown: 30 },
+            description: "Team +10% Healing for 5s (30s cooldown)"
+        },
+        accelerating_augment: {
+            name: "Accelerating Augment Resonator",
+            type: "support",
+            effect: { cooldownReduction: 5, cooldown: 5 },
+            description: "-5% Recharge Timers (5s cooldown)"
+        },
+        rampant_augment: {
+            name: "Rampant Augment Resonator",
+            type: "support",
+            effect: { additionalTargets: 5 },
+            description: "+5 Targets (no effect on single-target abilities)"
+        },
+        quickening_augment: {
+            name: "Quickening Augment Resonator",
+            type: "support",
+            effect: { teamHeal: 100, teamDamageBuff: 3, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & +3% Damage for 5s (30s cooldown)"
+        },
+        invulnerable_augment: {
+            name: "Invulnerable Augment Resonator",
+            type: "support",
+            effect: { teamHeal: 100, teamDamageReduction: 3, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & -3% Damage Taken for 5s (30s cooldown)"
+        },
+        salubrious_augment: {
+            name: "Salubrious Augment Resonator",
+            type: "support",
+            effect: { teamHeal: 100, teamHealingBuff: 7, duration: 5, cooldown: 30 },
+            description: "Team Heal 100 & +7% Healing for 5s (30s cooldown)"
+        },
+        mercurial_augment: {
+            name: "Mercurial Augment Resonator",
+            type: "support",
+            effect: { teamCooldownReduction: 10, cooldown: 10 },
+            description: "Team -10% Recharge Timers (10s cooldown)"
+        }
+    };
+    
     // Available enemies for targeting
     const ENEMIES = {
         'training-puppet': { 
@@ -1129,8 +1256,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update ability dropdowns for this player
             updateAllAbilityDropdownsForPlayer(playerId);
             
-            // Recalculate player DPS
-            calculatePlayerDps(playerId);
+            // Recalculate all players to update team totals
+            calculateAllPlayers();
             
             showImportStatus(playerId, 'Gear stats imported successfully!', 'success');
 
@@ -1205,8 +1332,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showImportStatus(playerId, 'Build imported successfully!', 'success');
             
-            // Recalculate player DPS
-            calculatePlayerDps(playerId);
+            // Recalculate all players to update team totals
+            calculateAllPlayers();
             
             
         } catch (error) {
@@ -2044,7 +2171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // Export active abilities using single player logic
-            const activeSelectors = document.querySelectorAll(`#player-${playerId}-active-abilities-container .slot-wrapper`);
+            const activeSelectors = document.querySelectorAll(`#player-${playerId}-actives-container .slot-wrapper`);
             
             activeSelectors.forEach((selector, index) => {
                 const select = selector.querySelector('select');
@@ -2093,7 +2220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const normalPassiveSelects = document.querySelectorAll(`#player-${playerId}-passive-abilities-container .slot-wrapper`);
+            const normalPassiveSelects = document.querySelectorAll(`#player-${playerId}-passives-container .slot-wrapper`);
             normalPassiveSelects.forEach((wrapper) => {
                 const select = wrapper.querySelector('select');
                 if (select && select.value) {
@@ -2216,16 +2343,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Collect abilities from UI and store in player data structure
+    function collectAbilitiesFromUI(playerId) {
+        const player = groupState.players[playerId - 1];
+        
+        // Clear existing abilities
+        player.abilities.actives = [];
+        player.abilities.elites = [];
+        player.abilities.auxiliaries = [];
+        player.abilities.passives = [];
+        
+        // Collect active abilities - use container query instead of attribute query
+        const container = document.getElementById(`player-${playerId}-actives-container`);
+        const activeSelects = container ? container.querySelectorAll('select') : [];
+        
+        activeSelects.forEach(select => {
+            if (select.value && select.value !== "") {
+                const ability = tswData[select.value];
+                if (ability) {
+                    if (select.id.includes('active-7')) {
+                        player.abilities.elites.push(ability.name);
+                    } else if (select.id.includes('active-1')) {
+                        // Builder - add to actives
+                        player.abilities.actives.push(ability.name);
+                    } else if (select.id.includes('aux-')) {
+                        player.abilities.auxiliaries.push(ability.name);
+                    } else {
+                        // Regular active
+                        player.abilities.actives.push(ability.name);
+                    }
+                }
+            }
+        });
+        
+        // Collect passive abilities
+        const passiveContainer = document.getElementById(`player-${playerId}-passives-container`);
+        const passiveSelects = passiveContainer ? passiveContainer.querySelectorAll('select') : [];
+        passiveSelects.forEach(select => {
+            if (select.value && select.value !== "") {
+                const ability = tswData[select.value];
+                if (ability) {
+                    player.abilities.passives.push(ability.name);
+                }
+            }
+        });
+    }
+    
     // Calculate DPS for a single player
     function calculatePlayerDps(playerId) {
         const player = groupState.players[playerId - 1];
         
-        // Check if player has any active abilities selected (same validation as original app)
-        const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"] select`);
-        const eliteSelects = document.querySelectorAll(`[id^="player-${playerId}-elite-"] select`);
-        const auxSelects = document.querySelectorAll(`[id^="player-${playerId}-aux-"] select`);
+        // First, collect abilities from UI into player data structure
+        collectAbilitiesFromUI(playerId);
         
-        const selectedActives = [...activeSelects, ...eliteSelects, ...auxSelects].filter(select => select.value);
+        // Check if player has any active abilities selected (same validation as original app)
+        const container = document.getElementById(`player-${playerId}-actives-container`);
+        const allSelects = container ? container.querySelectorAll('select') : [];
+        
+        // Filter by type
+        const activeSelects = Array.from(allSelects).filter(select => select.id.includes('active-'));
+        const eliteSelects = Array.from(allSelects).filter(select => select.id.includes('active-7'));
+        const auxSelects = Array.from(allSelects).filter(select => select.id.includes('aux-'));
+        
+        const selectedActives = [...activeSelects, ...eliteSelects, ...auxSelects].filter(select => select.value && select.value !== "");
         
         if (selectedActives.length === 0) {
             // No active abilities selected - set DPS to 0
@@ -2237,8 +2417,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 dpsElement.textContent = "0";
             }
             
-            // Update team totals
-            calculateTeamTotals();
             return;
         }
         
@@ -2362,27 +2540,91 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dpsElement) {
             dpsElement.textContent = totalDps.toFixed(2);
         }
-        
-        // Update team totals
-        calculateTeamTotals();
     }
     
-    // Calculate base DPS (simplified version)
+    // Calculate base DPS with special talisman effects
     function calculateBaseDps(player) {
-        // This is a placeholder - in reality, this would call the same calculation
-        // logic from the original app.js
         const weaponPower = player.stats.weaponPower;
         const attackRating = player.stats.attackRating;
         const critChance = player.stats.critChance / 100;
-        const critPower = player.stats.critPower / 100;
+        let critPower = player.stats.critPower / 100;
         const penChance = player.stats.penChance / 100;
         
-        // Simplified DPS calculation
+        // Initialize talisman effects for this player
+        const talismanEffects = initializeTalismanEffects(player);
+        
+        // Apply Laceration signet bonus (crit power %)
+        critPower += talismanEffects.lacerationBonus / 100;
+        
+        // Base damage calculation
         const baseDamage = weaponPower + (attackRating * 0.5);
         const avgCritMultiplier = 1 + (critChance * critPower);
         const avgPenMultiplier = 1 + (penChance * 0.5); // Penetration does 50% more damage
         
-        return baseDamage * avgCritMultiplier * avgPenMultiplier * 0.8; // Base rotation efficiency
+        let baseDps = baseDamage * avgCritMultiplier * avgPenMultiplier * 0.8; // Base rotation efficiency
+        
+        // Apply Equilibrium damage bonus (15% when active)
+        if (talismanEffects.equilibrium) {
+            // Simplified: assume equilibrium is active 50% of the time with healing abilities
+            baseDps *= 1.075; // 15% * 50% uptime = 7.5% average increase
+        }
+        
+        // Apply Dust of the Black Pharaoh effect
+        if (talismanEffects.dustOfBlackPharaoh) {
+            // 20% chance on critical hit to deal additional 100% damage
+            const dustProcChance = critChance * 0.20; // 20% of crits
+            const dustBonusMultiplier = 1 + (dustProcChance * 1.0); // 100% extra damage on proc
+            baseDps *= dustBonusMultiplier;
+        }
+        
+        // Apply Woodcutter's Wrath (Mother's Wrath) effect
+        if (talismanEffects.mothersWrath) {
+            // After 5 non-penetrating hits, trigger damage
+            // Simplified: assume this triggers approximately every 5 seconds in rotation
+            const mothersWrathDps = talismanEffects.mothersWrathDamage / 5; // Damage divided by approximate trigger interval
+            baseDps += mothersWrathDps;
+        }
+        
+        return baseDps;
+    }
+    
+    // Initialize talisman effects based on player's imported gear
+    function initializeTalismanEffects(player) {
+        const effects = {
+            dustOfBlackPharaoh: false,
+            mothersWrath: false,
+            mothersWrathDamage: 0,
+            equilibrium: false,
+            lacerationBonus: 0
+        };
+        
+        const importedGear = player.importedGear || {};
+        const signetBonuses = player.signetBonuses || {};
+        
+        // Check for Dust of the Black Pharaoh head talisman (ID 201)
+        if (importedGear.head && importedGear.head.talismanId === 201) {
+            effects.dustOfBlackPharaoh = true;
+        }
+        
+        // Check for Woodcutter's Wrath neck talisman (ID 92)
+        if (importedGear.neck && importedGear.neck.talismanId === 92) {
+            effects.mothersWrath = true;
+            const quality = importedGear.neck.quality || 1; // 1=Normal, 2=Elite, 3=Epic
+            const damageValues = [400, 500, 600]; // Damage values by quality
+            effects.mothersWrathDamage = damageValues[quality - 1] || 500;
+        }
+        
+        // Check for Signet of Equilibrium (ID 70)
+        if (signetBonuses.equilibrium) {
+            effects.equilibrium = true;
+        }
+        
+        // Check for Laceration signet bonus (crit power % from weapon signet)
+        if (signetBonuses.critPowerPct) {
+            effects.lacerationBonus = signetBonuses.critPowerPct;
+        }
+        
+        return effects;
     }
     
     // ====================
@@ -2817,11 +3059,21 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 1; i <= 5; i++) {
             calculatePlayerDps(i);
         }
+        
+        // Calculate team totals once after all players are calculated
+        calculateTeamTotals();
+        
+        // Auto-run combat simulation if breakdown panel is visible
+        if (combatBreakdownState.isVisible && !combatBreakdownState.isSimulating) {
+            runCombatSimulation();
+        }
     }
     
     // Calculate team totals
     function calculateTeamTotals() {
-        const teamTotal = groupState.players.reduce((sum, player) => sum + player.results.totalDps, 0);
+        const teamTotal = groupState.players.reduce((sum, player) => {
+            return sum + (player.results.totalDps || 0);
+        }, 0);
         const teamAverage = teamTotal / 5;
         
         const teamTotalElement = document.getElementById('team-total-dps');
@@ -2925,135 +3177,11 @@ document.addEventListener('DOMContentLoaded', () => {
         groupState.players.forEach((player, index) => {
             data += `=== PLAYER ${index + 1} ===\n`;
             data += `${player.name}\n`;
-            data += `[Build data for ${player.name} would go here]\n\n`;
+            data += generatePlayerExportData(index + 1) + '\n\n';
         });
         
         return data.trim();
     }
-    
-    // Augment data (copied from original)
-    const AUGMENTS = {
-        accurate_augment: {
-            name: "Accurate Augment Resonator",
-            type: "damage",
-            effect: { attackRating: 150 },
-            description: "+150 Attack Rating (affects all abilities)"
-        },
-        brutal_augment: {
-            name: "Brutal Augment Resonator",
-            type: "damage",
-            effect: { critChance: 7.5 },
-            description: "+7.5% Critical Hit Chance"
-        },
-        piercing_augment: {
-            name: "Piercing Augment Resonator",
-            type: "damage",
-            effect: { penChance: 7.5 },
-            description: "+7.5% Penetration Chance"
-        },
-        precise_augment: {
-            name: "Precise Augment Resonator",
-            type: "damage",
-            effect: { hitRating: 250 },
-            description: "+250 Hit Rating"
-        },
-        ferocious_augment: {
-            name: "Ferocious Augment Resonator",
-            type: "damage",
-            effect: { critPower: 15 },
-            description: "+15% Critical Power"
-        },
-        inescapable_augment: {
-            name: "Inescapable Augment Resonator",
-            type: "damage",
-            effect: { evadeReduction: 7.5 },
-            description: "-7.5% Target Evade Chance"
-        },
-        fierce_augment: {
-            name: "Fierce Augment Resonator",
-            type: "damage",
-            effect: { penChance: 5, critChance: 5 },
-            description: "+5% Penetration Chance & +5% Critical Hit Chance"
-        },
-        focused_augment: {
-            name: "Focused Augment Resonator",
-            type: "damage",
-            effect: { critChance: 5, critPower: 10 },
-            description: "+5% Critical Hit Chance & +10% Critical Power"
-        },
-        overwhelming_augment: {
-            name: "Overwhelming Augment Resonator",
-            type: "damage",
-            effect: { penChance: 5, evadeReduction: 5 },
-            description: "+5% Penetration Chance & -5% Target Evade Chance"
-        },
-        grievous_augment: {
-            name: "Grievous Augment Resonator",
-            type: "damage",
-            effect: { damageMultiplier: 1.15 },
-            description: "+15% Damage Dealt"
-        },
-        curing_augment: {
-            name: "Curing Augment Resonator",
-            type: "support",
-            effect: { teamHeal: 75, cooldown: 10 },
-            description: "Heal team for 75 (10s cooldown)"
-        },
-        inspiring_augment: {
-            name: "Inspiring Augment Resonator",
-            type: "support",
-            effect: { teamDamageBuff: 5, duration: 5, cooldown: 30 },
-            description: "Team +5% Damage for 5s (30s cooldown)"
-        },
-        safeguarding_augment: {
-            name: "Safeguarding Augment Resonator",
-            type: "support",
-            effect: { teamDamageReduction: 5, duration: 5, cooldown: 30 },
-            description: "Team -5% Damage Taken for 5s (30s cooldown)"
-        },
-        restorative_augment: {
-            name: "Restorative Augment Resonator",
-            type: "support",
-            effect: { teamHealingBuff: 10, duration: 5, cooldown: 30 },
-            description: "Team +10% Healing for 5s (30s cooldown)"
-        },
-        accelerating_augment: {
-            name: "Accelerating Augment Resonator",
-            type: "support",
-            effect: { cooldownReduction: 5, cooldown: 5 },
-            description: "-5% Recharge Timers (5s cooldown)"
-        },
-        rampant_augment: {
-            name: "Rampant Augment Resonator",
-            type: "support",
-            effect: { additionalTargets: 5 },
-            description: "+5 Targets (no effect on single-target abilities)"
-        },
-        quickening_augment: {
-            name: "Quickening Augment Resonator",
-            type: "support",
-            effect: { teamHeal: 100, teamDamageBuff: 3, duration: 5, cooldown: 30 },
-            description: "Team Heal 100 & +3% Damage for 5s (30s cooldown)"
-        },
-        invulnerable_augment: {
-            name: "Invulnerable Augment Resonator",
-            type: "support",
-            effect: { teamHeal: 100, teamDamageReduction: 3, duration: 5, cooldown: 30 },
-            description: "Team Heal 100 & -3% Damage Taken for 5s (30s cooldown)"
-        },
-        salubrious_augment: {
-            name: "Salubrious Augment Resonator",
-            type: "support",
-            effect: { teamHeal: 100, teamHealingBuff: 7, duration: 5, cooldown: 30 },
-            description: "Team Heal 100 & +7% Healing for 5s (30s cooldown)"
-        },
-        mercurial_augment: {
-            name: "Mercurial Augment Resonator",
-            type: "support",
-            effect: { teamCooldownReduction: 10, cooldown: 10 },
-            description: "Team -10% Recharge Timers (10s cooldown)"
-        }
-    };
     
     // Initialize the application
     function init() {
@@ -3071,7 +3199,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setupDropdownEventListenersForPlayer(i);
         }
         
-        calculateAllPlayers();
+        // Setup combat breakdown functionality
+        setupCombatBreakdownListeners();
+        
+        // Delay initial calculation to ensure DOM is fully ready
+        setTimeout(() => {
+            calculateAllPlayers();
+        }, 100);
     }
     
     // Setup dropdown event listeners for a specific player
@@ -3131,6 +3265,834 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+    }
+    
+    // ====================
+    // COMBAT BREAKDOWN FUNCTIONS
+    // ====================
+    
+    /**
+     * Combat breakdown state for each player
+     * Stores detailed simulation results
+     */
+    const combatBreakdownState = {
+        isVisible: false,
+        simulationResults: {},
+        isSimulating: false
+    };
+    
+    /**
+     * Setup combat breakdown event listeners
+     */
+    function setupCombatBreakdownListeners() {
+        // Toggle combat breakdown panel
+        const toggleBtn = document.getElementById('toggle-combat-breakdown');
+        const breakdownPanel = document.getElementById('combat-breakdown-panel');
+        
+        if (toggleBtn && breakdownPanel) {
+            toggleBtn.addEventListener('click', () => {
+                combatBreakdownState.isVisible = !combatBreakdownState.isVisible;
+                
+                if (combatBreakdownState.isVisible) {
+                    breakdownPanel.style.display = 'block';
+                    toggleBtn.textContent = 'Hide Combat Breakdown';
+                    // Run initial simulation when showing
+                    runCombatSimulation();
+                } else {
+                    breakdownPanel.style.display = 'none';
+                    toggleBtn.textContent = 'Show Combat Breakdown';
+                }
+            });
+            
+            // Set initial state since panel is visible by default
+            combatBreakdownState.isVisible = true;
+            // Run initial simulation after page loads
+            setTimeout(() => {
+                runCombatSimulation();
+            }, 1000); // Wait 1 second for page to fully load
+        }
+        
+        // Run simulation button
+        const runSimulationBtn = document.getElementById('run-combat-simulation');
+        if (runSimulationBtn) {
+            runSimulationBtn.addEventListener('click', runCombatSimulation);
+        }
+        
+        // Simulation time input
+        const simTimeInput = document.getElementById('breakdown-simulation-time');
+        if (simTimeInput) {
+            simTimeInput.addEventListener('change', () => {
+                if (combatBreakdownState.isVisible) {
+                    runCombatSimulation();
+                }
+            });
+        }
+    }
+    
+    /**
+     * Run detailed combat simulation for all players
+     */
+    function runCombatSimulation() {
+        if (combatBreakdownState.isSimulating) return;
+        
+        combatBreakdownState.isSimulating = true;
+        const runBtn = document.getElementById('run-combat-simulation');
+        if (runBtn) {
+            runBtn.textContent = 'Simulating...';
+            runBtn.disabled = true;
+        }
+        
+        // Get simulation time
+        const simTimeInput = document.getElementById('breakdown-simulation-time');
+        const simulationMinutes = parseInt(simTimeInput?.value) || 3;
+        const simulationSeconds = simulationMinutes * 60;
+        
+        // Simulate each player
+        const teamResults = {
+            totalDamage: 0,
+            totalAbilitiesCast: 0,
+            totalDps: 0
+        };
+        
+        for (let playerId = 1; playerId <= 5; playerId++) {
+            const playerResult = simulatePlayerCombat(playerId, simulationSeconds);
+            combatBreakdownState.simulationResults[playerId] = playerResult;
+            
+            teamResults.totalDamage += playerResult.totalDamage;
+            teamResults.totalAbilitiesCast += playerResult.totalCasts;
+            teamResults.totalDps += playerResult.dps;
+            
+            // Update player's totalDps with simulation result for team calculations
+            const player = groupState.players[playerId - 1];
+            player.results.totalDps = playerResult.dps;
+            
+            // Update player breakdown UI
+            updatePlayerBreakdownUI(playerId, playerResult);
+        }
+        
+        // Update team summary UI
+        updateTeamSummaryUI(teamResults, simulationSeconds);
+        
+        // Update main team results (total team DPS and average DPS)
+        calculateTeamTotals();
+        
+        // Re-enable button
+        if (runBtn) {
+            runBtn.textContent = 'Run Simulation';
+            runBtn.disabled = false;
+        }
+        
+        combatBreakdownState.isSimulating = false;
+    }
+    
+    /**
+     * Simulate combat for a single player
+     * @param {number} playerId - Player ID (1-5)
+     * @param {number} simulationSeconds - Duration in seconds
+     * @returns {Object} Simulation results
+     */
+    function simulatePlayerCombat(playerId, simulationSeconds) {
+        const player = groupState.players[playerId - 1];
+        
+        // Get player's abilities
+        const abilities = getPlayerAbilities(playerId);
+        
+        if (abilities.length === 0) {
+            return {
+                totalDamage: 0,
+                dps: 0,
+                totalCasts: 0,
+                abilityBreakdown: {},
+                damageSources: {
+                    'Base Attacks': { damage: 0, percentage: 100, casts: 0 },
+                    'Critical Hits': { damage: 0, percentage: 0, casts: 0 },
+                    'Penetrating Hits': { damage: 0, percentage: 0, casts: 0 }
+                },
+                buffUptime: {},
+                effectUptime: {}
+            };
+        }
+        
+        // Initialize ability tracking
+        const abilityStats = {};
+        abilities.forEach(ability => {
+            abilityStats[ability.name] = {
+                damage: 0,
+                casts: 0,
+                critHits: 0,
+                penHits: 0,
+                cooldown: ability.cooldown || 1,
+                lastUsed: -999
+            };
+        });
+        
+        // Initialize buff and effect tracking
+        const buffTracking = {
+            liveWire: {
+                active: false,
+                endTime: 0,
+                totalUptime: 0,
+                procCount: 0,
+                damageBonus: 84
+            },
+            powerLine: {
+                stacks: 0,
+                maxStacks: 10,
+                totalUptime: 0,
+                procCount: 0,
+                stackHistory: []
+            },
+            shortFuse: {
+                active: false,
+                endTime: 0,
+                totalUptime: 0,
+                procCount: 0,
+                damageBonusPercent: 0.20, // 20% damage increase
+                duration: 10,
+                cooldown: 90
+            },
+            signetProcs: {},
+            augmentProcs: {}
+        };
+        
+        // Check for special abilities and signets
+        const hasLiveWire = abilities.some(a => a.name === "Live Wire");
+        const hasPowerLine = abilities.some(a => a.name === "Power Line-Voltaic Detonation");
+        const hasShortFuse = abilities.some(a => a.name === "Short Fuse");
+        
+        // Initialize signet proc tracking
+        Object.entries(TSWCALC_DATA.signets).forEach(([signetId, signet]) => {
+            if (signet.type === 'proc' && signet.duration && signet.cooldown) {
+                buffTracking.signetProcs[signetId] = {
+                    name: getSignetName(signetId),
+                    active: false,
+                    endTime: 0,
+                    totalUptime: 0,
+                    procCount: 0,
+                    duration: signet.duration,
+                    cooldown: signet.cooldown,
+                    effect: signet.effect || signet.stat
+                };
+            }
+        });
+        
+        // Initialize augment proc tracking
+        Object.entries(player.augments || {}).forEach(([abilityName, augmentKey]) => {
+            const augment = AUGMENTS[augmentKey];
+            if (augment && augment.cooldown) {
+                buffTracking.augmentProcs[augmentKey] = {
+                    name: augment.name,
+                    active: false,
+                    endTime: 0,
+                    totalUptime: 0,
+                    procCount: 0,
+                    duration: augment.duration || 5,
+                    cooldown: augment.cooldown,
+                    effect: augment.effect
+                };
+            }
+        });
+        
+        // Simulate combat second by second
+        let currentTime = 0;
+        let totalDamage = 0;
+        let resources = 5; // Start with max resources
+        
+        while (currentTime < simulationSeconds) {
+            // Resource generation (1 resource per second)
+            resources = Math.min(5, resources + 1);
+            
+            // Update buff states and check for expirations
+            updateBuffStates(buffTracking, currentTime);
+            
+            // Check each ability for use
+            abilities.forEach(ability => {
+                const stats = abilityStats[ability.name];
+                
+                // Check if ability can be cast
+                const canCast = 
+                    currentTime - stats.lastUsed >= stats.cooldown &&
+                    resources >= (ability.cost || 0);
+                
+                if (canCast) {
+                    // Cast ability
+                    stats.casts++;
+                    stats.lastUsed = currentTime;
+                    resources -= (ability.cost || 0);
+                    
+                    // Calculate damage with active buffs
+                    const baseDamage = calculateAbilityDamage(ability, player);
+                    const isCrit = Math.random() < (player.stats.critChance / 100);
+                    const isPen = Math.random() < (player.stats.penChance / 100);
+                    
+                    let damage = baseDamage;
+                    
+                    // Apply buff effects
+                    damage = applyBuffEffects(damage, buffTracking, ability);
+                    
+                    // Apply critical hit and penetration
+                    if (isCrit) {
+                        damage *= (1 + player.stats.critPower / 100);
+                        stats.critHits++;
+                        // Trigger crit-based procs
+                        triggerCritProcs(buffTracking, currentTime);
+                    }
+                    if (isPen) {
+                        damage *= 1.5; // Penetration does 50% more damage
+                        stats.penHits++;
+                    }
+                    
+                    stats.damage += damage;
+                    totalDamage += damage;
+                    
+                    // Trigger ability-specific procs
+                    triggerAbilityProcs(ability, buffTracking, currentTime);
+                }
+            });
+            
+            currentTime++;
+        }
+        
+        // Calculate damage sources
+        const damageSources = {
+            'Base Attacks': { damage: 0, percentage: 0, casts: 0 },
+            'Critical Hits': { damage: 0, percentage: 0, casts: 0 },
+            'Penetrating Hits': { damage: 0, percentage: 0, casts: 0 },
+            'Normal Hits': { damage: 0, percentage: 0, casts: 0 }
+        };
+        
+        let totalCasts = 0;
+        Object.values(abilityStats).forEach(stats => {
+            totalCasts += stats.casts;
+        });
+        
+        // Distribute damage based on player stats (simplified)
+        const critChance = player.stats.critChance / 100;
+        const penChance = player.stats.penChance / 100;
+        const normalChance = 1 - critChance - penChance;
+        
+        damageSources['Critical Hits'].damage = totalDamage * critChance;
+        damageSources['Penetrating Hits'].damage = totalDamage * penChance;
+        damageSources['Normal Hits'].damage = totalDamage * normalChance;
+        damageSources['Base Attacks'].damage = totalDamage * 0.1; // Small portion from base attacks
+        
+        // Calculate percentages
+        Object.values(damageSources).forEach(source => {
+            source.percentage = totalDamage > 0 ? (source.damage / totalDamage) * 100 : 0;
+            source.casts = Math.floor(totalCasts * (source.percentage / 100));
+        });
+        
+        // Sort abilities by damage
+        const sortedAbilities = Object.entries(abilityStats)
+            .filter(([name, stats]) => stats.damage > 0)
+            .sort(([, a], [, b]) => b.damage - a.damage);
+        
+        const abilityBreakdown = {};
+        sortedAbilities.forEach(([name, stats], index) => {
+            abilityBreakdown[name] = {
+                ...stats,
+                percentage: totalDamage > 0 ? (stats.damage / totalDamage) * 100 : 0,
+                dps: stats.damage / simulationSeconds,
+                critPercentage: stats.casts > 0 ? (stats.critHits / stats.casts) * 100 : 0,
+                penPercentage: stats.casts > 0 ? (stats.penHits / stats.casts) * 100 : 0
+            };
+        });
+        
+        // Calculate final buff uptime statistics
+        const buffUptime = calculateBuffUptime(buffTracking, simulationSeconds);
+        const effectUptime = calculateEffectUptime(buffTracking, simulationSeconds);
+        
+        return {
+            totalDamage,
+            dps: totalDamage / simulationSeconds,
+            totalCasts,
+            abilityBreakdown,
+            damageSources,
+            buffUptime,
+            effectUptime
+        };
+    }
+    
+    /**
+     * Get signet name by ID
+     * @param {number} signetId - Signet ID
+     * @returns {string} Signet name
+     */
+    function getSignetName(signetId) {
+        const signetNames = {
+            1: 'Aggression',
+            6: 'Laceration',
+            16: 'Corruption',
+            21: 'Violence',
+            23: 'Amelioration',
+            24: 'Assassination',
+            25: 'Barrage',
+            26: 'Cleaving',
+            27: 'Distortion',
+            28: 'Execution',
+            29: 'Flux',
+            30: 'Liquidation',
+            31: 'Rage',
+            32: 'Recursion',
+            33: 'Serration',
+            34: 'Shards',
+            35: 'Shattering',
+            36: 'Storms',
+            37: 'Swords',
+            38: 'Tomes',
+            56: 'Chernobog',
+            59: 'Venice',
+            62: 'Howling Oni',
+            65: 'Nure-onna\'s Coils',
+            68: 'Repulsor Technology',
+            70: 'Equilibrium'
+        };
+        return signetNames[signetId] || `Signet ${signetId}`;
+    }
+    
+    /**
+     * Update buff states and check for expirations
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {number} currentTime - Current simulation time
+     */
+    function updateBuffStates(buffTracking, currentTime) {
+        // Update Live Wire
+        if (buffTracking.liveWire.active && currentTime >= buffTracking.liveWire.endTime) {
+            buffTracking.liveWire.active = false;
+        }
+        if (buffTracking.liveWire.active) {
+            buffTracking.liveWire.totalUptime++;
+        }
+        
+        // Update Power Line stacks
+        if (buffTracking.powerLine.stacks > 0) {
+            buffTracking.powerLine.totalUptime++;
+            // Power Line stacks decay over time (simplified - lose 1 stack per second after max)
+            if (currentTime > buffTracking.powerLine.maxStackTime) {
+                buffTracking.powerLine.stacks = Math.max(0, buffTracking.powerLine.stacks - 1);
+            }
+        }
+        
+        // Update Short Fuse
+        if (buffTracking.shortFuse.active && currentTime >= buffTracking.shortFuse.endTime) {
+            buffTracking.shortFuse.active = false;
+        }
+        if (buffTracking.shortFuse.active) {
+            buffTracking.shortFuse.totalUptime++;
+        }
+        
+        // Update signet procs
+        Object.values(buffTracking.signetProcs).forEach(proc => {
+            if (proc.active && currentTime >= proc.endTime) {
+                proc.active = false;
+            }
+            if (proc.active) {
+                proc.totalUptime++;
+            }
+        });
+        
+        // Update augment procs
+        Object.values(buffTracking.augmentProcs).forEach(proc => {
+            if (proc.active && currentTime >= proc.endTime) {
+                proc.active = false;
+            }
+            if (proc.active) {
+                proc.totalUptime++;
+            }
+        });
+    }
+    
+    /**
+     * Apply active buff effects to damage
+     * @param {number} baseDamage - Base damage value
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {Object} ability - Current ability
+     * @returns {number} Damage with buff effects applied
+     */
+    function applyBuffEffects(baseDamage, buffTracking, ability) {
+        let damage = baseDamage;
+        
+        // Apply Live Wire damage bonus
+        if (buffTracking.liveWire.active) {
+            damage += buffTracking.liveWire.damageBonus;
+        }
+        
+        // Apply Power Line damage bonus
+        if (buffTracking.powerLine.stacks > 0) {
+            const damageBonusPercent = (buffTracking.powerLine.stacks / buffTracking.powerLine.maxStacks) * 2.0; // Up to 200% damage
+            damage *= (1 + damageBonusPercent);
+        }
+        
+        // Apply Short Fuse damage bonus
+        if (buffTracking.shortFuse.active) {
+            damage *= (1 + buffTracking.shortFuse.damageBonusPercent); // 20% damage increase
+        }
+        
+        // Apply signet effects
+        Object.values(buffTracking.signetProcs).forEach(proc => {
+            if (proc.active) {
+                if (proc.effect === 'crit-power-pct') {
+                    damage *= 1.24; // 24% crit power increase (assuming max level)
+                }
+            }
+        });
+        
+        return damage;
+    }
+    
+    /**
+     * Trigger critical hit based procs
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {number} currentTime - Current simulation time
+     */
+    function triggerCritProcs(buffTracking, currentTime) {
+        // Trigger Laceration signet proc
+        const laceration = buffTracking.signetProcs[6];
+        if (laceration && !laceration.active && currentTime >= laceration.endTime) {
+            laceration.active = true;
+            laceration.endTime = currentTime + laceration.duration;
+            laceration.procCount++;
+        }
+    }
+    
+    /**
+     * Trigger ability-specific procs
+     * @param {Object} ability - The ability that was cast
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {number} currentTime - Current simulation time
+     */
+    function triggerAbilityProcs(ability, buffTracking, currentTime) {
+        // Live Wire proc (when Live Wire ability is cast - it's actually a passive that procs on crit)
+        // This is handled in triggerCritProcs instead
+        
+        // Power Line proc (when Power Line ability is cast)
+        if (ability.name === "Power Line-Voltaic Detonation") {
+            buffTracking.powerLine.stacks = buffTracking.powerLine.maxStacks;
+            buffTracking.powerLine.maxStackTime = currentTime + buffTracking.powerLine.maxStacks; // Track when stacks start decaying
+            buffTracking.powerLine.procCount++;
+            buffTracking.powerLine.stackHistory.push({
+                time: currentTime,
+                stacks: buffTracking.powerLine.maxStacks
+            });
+        }
+        
+        // Short Fuse proc (when Short Fuse ability is cast)
+        if (ability.name === "Short Fuse") {
+            if (!buffTracking.shortFuse.active && currentTime >= buffTracking.shortFuse.endTime) {
+                buffTracking.shortFuse.active = true;
+                buffTracking.shortFuse.endTime = currentTime + buffTracking.shortFuse.duration;
+                buffTracking.shortFuse.procCount++;
+            }
+        }
+        
+        // Trigger augment procs
+        Object.entries(buffTracking.augmentProcs).forEach(([augmentKey, proc]) => {
+            if (!proc.active && currentTime >= proc.endTime) {
+                // Random chance to proc augment (simplified - assume 20% chance per ability cast)
+                if (Math.random() < 0.2) {
+                    proc.active = true;
+                    proc.endTime = currentTime + proc.duration;
+                    proc.procCount++;
+                }
+            }
+        });
+    }
+    
+    /**
+     * Calculate buff uptime statistics
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {number} simulationSeconds - Total simulation time
+     * @returns {Object} Buff uptime statistics
+     */
+    function calculateBuffUptime(buffTracking, simulationSeconds) {
+        const uptime = {};
+        
+        // Live Wire uptime
+        if (buffTracking.liveWire.procCount > 0) {
+            uptime['Live Wire'] = {
+                uptimePercent: (buffTracking.liveWire.totalUptime / simulationSeconds) * 100,
+                procCount: buffTracking.liveWire.procCount,
+                averageDuration: buffTracking.liveWire.totalUptime / buffTracking.liveWire.procCount,
+                description: '84 additional damage per hit'
+            };
+        }
+        
+        // Power Line uptime
+        if (buffTracking.powerLine.procCount > 0) {
+            uptime['Power Line'] = {
+                uptimePercent: (buffTracking.powerLine.totalUptime / simulationSeconds) * 100,
+                procCount: buffTracking.powerLine.procCount,
+                averageStacks: buffTracking.powerLine.totalUptime / simulationSeconds, // Simplified
+                description: 'Up to 200% damage bonus based on stacks'
+            };
+        }
+        
+        // Short Fuse uptime
+        if (buffTracking.shortFuse.procCount > 0) {
+            uptime['Short Fuse'] = {
+                uptimePercent: (buffTracking.shortFuse.totalUptime / simulationSeconds) * 100,
+                procCount: buffTracking.shortFuse.procCount,
+                averageDuration: buffTracking.shortFuse.totalUptime / buffTracking.shortFuse.procCount,
+                description: '20% team damage increase for 10 seconds'
+            };
+        }
+        
+        return uptime;
+    }
+    
+    /**
+     * Calculate special effect uptime statistics
+     * @param {Object} buffTracking - Buff tracking object
+     * @param {number} simulationSeconds - Total simulation time
+     * @returns {Object} Effect uptime statistics
+     */
+    function calculateEffectUptime(buffTracking, simulationSeconds) {
+        const effects = {};
+        
+        // Signet proc uptime
+        Object.entries(buffTracking.signetProcs).forEach(([signetId, proc]) => {
+            if (proc.procCount > 0) {
+                effects[proc.name] = {
+                    uptimePercent: (proc.totalUptime / simulationSeconds) * 100,
+                    procCount: proc.procCount,
+                    averageDuration: proc.totalUptime / proc.procCount,
+                    type: 'Signet Proc',
+                    description: `${proc.effect} bonus`
+                };
+            }
+        });
+        
+        // Augment proc uptime
+        Object.entries(buffTracking.augmentProcs).forEach(([augmentKey, proc]) => {
+            if (proc.procCount > 0) {
+                effects[proc.name] = {
+                    uptimePercent: (proc.totalUptime / simulationSeconds) * 100,
+                    procCount: proc.procCount,
+                    averageDuration: proc.totalUptime / proc.procCount,
+                    type: 'Augment Proc',
+                    description: 'Special augment effect'
+                };
+            }
+        });
+        
+        return effects;
+    }
+    
+    /**
+     * Calculate damage for an ability
+     * @param {Object} ability - Ability object
+     * @param {Object} player - Player object
+     * @returns {number} Damage value
+     */
+    function calculateAbilityDamage(ability, player) {
+        // Base damage calculation using player stats
+        const weaponPower = player.stats.weaponPower || 528;
+        const attackRating = player.stats.attackRating || 0;
+        const combatPower = player.stats.combatPower || 1000;
+        
+        // Use ability damage scaling if available, otherwise use base formula
+        if (ability.damage && typeof ability.damage === 'object') {
+            const scaling = ability.damage;
+            let damage = 0;
+            
+            if (scaling.CP) {
+                damage += scaling.CP * combatPower;
+            }
+            if (scaling.WP) {
+                damage += scaling.WP * weaponPower;
+            }
+            if (scaling.AR) {
+                damage += scaling.AR * attackRating;
+            }
+            if (scaling.base) {
+                damage += scaling.base;
+            }
+            
+            return damage || (weaponPower + attackRating * 0.5);
+        }
+        
+        // Default damage calculation
+        return weaponPower + (attackRating * 0.5) + (Math.random() * 100);
+    }
+    
+    /**
+     * Get all selected abilities for a player
+     * @param {number} playerId - Player ID (1-5)
+     * @returns {Array} Array of ability objects
+     */
+    function getPlayerAbilities(playerId) {
+        const abilities = [];
+        
+        // Get active abilities - the select elements ARE the ability slots
+        const activeSelects = document.querySelectorAll(`[id^="player-${playerId}-active-"]`);
+        const eliteSelects = document.querySelectorAll(`#player-${playerId}-active-7`);
+        const auxSelects = document.querySelectorAll(`#player-${playerId}-aux-1`);
+        
+        const allSelects = [...activeSelects, ...eliteSelects, ...auxSelects];
+        
+        allSelects.forEach(select => {
+            if (select.value) {
+                const ability = tswData[select.value];
+                if (ability) {
+                    // Get priority and cooldown info
+                    const wrapper = select.closest('.slot-wrapper');
+                    const priorityInput = wrapper?.querySelector('.slot-order-input');
+                    const minResInput = wrapper?.querySelector('.slot-min-resources-input');
+                    
+                    abilities.push({
+                        ...ability,
+                        priority: parseInt(priorityInput?.value) || 999,
+                        minResources: parseInt(minResInput?.value) || 0,
+                        cost: ability.cost || 0,
+                        cooldown: ability.cooldown || (ability.type?.includes('Elite') ? 30 : 10)
+                    });
+                }
+            }
+        });
+        
+        // Sort by priority (lower numbers first)
+        return abilities.sort((a, b) => a.priority - b.priority);
+    }
+    
+    /**
+     * Update player breakdown UI with simulation results
+     * @param {number} playerId - Player ID (1-5)
+     * @param {Object} results - Simulation results
+     */
+    function updatePlayerBreakdownUI(playerId, results) {
+        // Update player name
+        const nameElement = document.getElementById(`player-${playerId}-breakdown-name`);
+        const player = groupState.players[playerId - 1];
+        if (nameElement && player) {
+            nameElement.textContent = player.name || `Player ${playerId}`;
+        }
+        
+        // Update summary metrics
+        document.getElementById(`player-${playerId}-total-damage`).textContent = 
+            results.totalDamage.toFixed(0);
+        document.getElementById(`player-${playerId}-breakdown-dps`).textContent = 
+            results.dps.toFixed(2);
+        document.getElementById(`player-${playerId}-abilities-cast`).textContent = 
+            results.totalCasts;
+        
+        // Update ability breakdown
+        const abilityContainer = document.getElementById(`player-${playerId}-ability-breakdown`);
+        if (abilityContainer) {
+            abilityContainer.innerHTML = `
+                <h4>Ability Breakdown</h4>
+                <div class="ability-breakdown-header">
+                    <span class="ability-name-header">Ability</span>
+                    <div class="ability-stats-header">
+                        <span class="damage-header">Damage</span>
+                        <span class="percentage-header">% of Total</span>
+                        <span class="crit-header">Crit%</span>
+                        <span class="pen-header">Pen%</span>
+                        <span class="casts-header">Casts</span>
+                    </div>
+                </div>
+                <div class="ability-breakdown-list"></div>
+            `;
+            const list = abilityContainer.querySelector('.ability-breakdown-list');
+            
+            Object.entries(results.abilityBreakdown).forEach(([name, stats]) => {
+                const item = document.createElement('div');
+                item.className = 'ability-breakdown-item';
+                item.innerHTML = `
+                    <span class="ability-name">${name}</span>
+                    <div class="ability-stats">
+                        <span class="damage-value" title="Total damage dealt">${stats.damage.toFixed(0)}</span>
+                        <span class="percentage-value" title="Percentage of total damage">${stats.percentage.toFixed(1)}%</span>
+                        <span class="crit-value" title="Critical hit percentage">${(stats.critPercentage || 0).toFixed(1)}%</span>
+                        <span class="pen-value" title="Penetration hit percentage">${(stats.penPercentage || 0).toFixed(1)}%</span>
+                        <span class="casts-value" title="Number of times cast">${stats.casts}</span>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // Update damage sources
+        const sourcesContainer = document.getElementById(`player-${playerId}-damage-sources`);
+        if (sourcesContainer) {
+            sourcesContainer.innerHTML = '<h4>Damage Sources</h4><div class="damage-sources-list"></div>';
+            const list = sourcesContainer.querySelector('.damage-sources-list');
+            
+            Object.entries(results.damageSources).forEach(([source, stats]) => {
+                if (stats.damage > 0) {
+                    const item = document.createElement('div');
+                    item.className = 'damage-source-item';
+                    item.innerHTML = `
+                        <span class="damage-source-name">${source}</span>
+                        <div class="damage-source-stats">
+                            <span class="damage-value">${stats.damage.toFixed(0)}</span>
+                            <span class="percentage-value">${stats.percentage.toFixed(1)}%</span>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                }
+            });
+        }
+        
+        // Update buff uptime display
+        const buffContainer = document.getElementById(`player-${playerId}-buff-uptime`);
+        if (buffContainer && results.buffUptime) {
+            buffContainer.innerHTML = '<h4>Buff Uptime</h4><div class="buff-uptime-list"></div>';
+            const list = buffContainer.querySelector('.buff-uptime-list');
+            
+            Object.entries(results.buffUptime).forEach(([buffName, stats]) => {
+                const item = document.createElement('div');
+                item.className = 'buff-uptime-item';
+                item.innerHTML = `
+                    <span class="buff-name">${buffName}</span>
+                    <div class="buff-stats">
+                        <span class="uptime-value">${(stats.uptimePercent || 0).toFixed(1)}%</span>
+                        <span class="proc-count">${stats.procCount || 0} procs</span>
+                        <span class="duration-value">${(stats.averageDuration || 0).toFixed(1)}s avg</span>
+                    </div>
+                    <div class="buff-description">${stats.description || 'No description'}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // Update effect uptime display
+        const effectContainer = document.getElementById(`player-${playerId}-effect-uptime`);
+        if (effectContainer && results.effectUptime) {
+            effectContainer.innerHTML = '<h4>Special Effects</h4><div class="effect-uptime-list"></div>';
+            const list = effectContainer.querySelector('.effect-uptime-list');
+            
+            Object.entries(results.effectUptime).forEach(([effectName, stats]) => {
+                const item = document.createElement('div');
+                item.className = 'effect-uptime-item';
+                item.innerHTML = `
+                    <span class="effect-name">${effectName}</span>
+                    <span class="effect-type">${stats.type || 'Unknown'}</span>
+                    <div class="effect-stats">
+                        <span class="uptime-value">${(stats.uptimePercent || 0).toFixed(1)}%</span>
+                        <span class="proc-count">${stats.procCount || 0} procs</span>
+                        <span class="duration-value">${(stats.averageDuration || 0).toFixed(1)}s avg</span>
+                    </div>
+                    <div class="effect-description">${stats.description || 'No description'}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+    }
+    
+    /**
+     * Update team summary UI
+     * @param {Object} teamResults - Team simulation results
+     * @param {number} simulationSeconds - Duration in seconds
+     */
+    function updateTeamSummaryUI(teamResults, simulationSeconds) {
+        document.getElementById('team-total-damage').textContent = 
+            teamResults.totalDamage.toFixed(0);
+        document.getElementById('team-combined-dps').textContent = 
+            teamResults.totalDps.toFixed(2);
+        document.getElementById('team-total-abilities-cast').textContent = 
+            teamResults.totalAbilitiesCast;
+        document.getElementById('team-sim-duration').textContent = 
+            `${simulationSeconds}s`;
     }
     
     // Start the application

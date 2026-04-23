@@ -383,6 +383,232 @@ h3 {
     gap: 2rem;
 }
 
+.team-controls {
+    margin-left: auto;
+}
+
+/* ==================== */
+/* COMBAT BREAKDOWN */
+/* ==================== */
+.combat-breakdown-panel {
+    margin-top: 1rem;
+}
+
+.breakdown-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.combat-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.player-breakdown {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.player-breakdown[data-player="1"] {
+    border-color: var(--player-colors-0, #4a9eff);
+}
+
+.player-breakdown[data-player="2"] {
+    border-color: var(--player-colors-1, #00d4aa);
+}
+
+.player-breakdown[data-player="3"] {
+    border-color: var(--player-colors-2, #ff9f40);
+}
+
+.player-breakdown[data-player="4"] {
+    border-color: var(--player-colors-3, #ff6b6b);
+}
+
+.player-breakdown[data-player="5"] {
+    border-color: var(--player-colors-4, #9d4edd);
+}
+
+.player-breakdown h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+}
+
+.breakdown-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.summary-value.highlight {
+    color: var(--accent);
+    text-shadow: 0 0 8px rgba(74, 158, 255, 0.4);
+}
+
+.ability-breakdown,
+.damage-sources {
+    margin-bottom: 1rem;
+}
+
+.ability-breakdown h4,
+.damage-sources h4 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ability-breakdown-list,
+.damage-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+}
+
+.ability-breakdown-item,
+.damage-source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.ability-breakdown-item:hover,
+.damage-source-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ability-breakdown-item {
+    border-left-color: var(--accent);
+}
+
+.damage-source-item {
+    border-left-color: var(--warning-color);
+}
+
+.ability-name,
+.damage-source-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    flex: 1;
+}
+
+.ability-stats,
+.damage-source-stats {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.stat-value {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.damage-value {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.percentage-value {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.casts-value {
+    color: var(--resource-color);
+    font-weight: 600;
+}
+
+.team-combat-summary {
+    background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(26, 29, 36, 0.8) 100%);
+    border: 1px solid rgba(74, 158, 255, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.team-combat-summary h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--accent);
+}
+
+.team-summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.team-summary-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive design for combat breakdown */
+@media (max-width: 768px) {
+    .combat-breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .breakdown-summary {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+    }
+    
+    .team-summary-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .breakdown-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
 .team-metrics {
     display: flex;
     gap: 2rem;
@@ -1233,6 +1459,252 @@ h3 {
     background: rgba(255, 159, 64, 0.2);
     border: 1px solid rgba(255, 159, 64, 0.3);
     color: #ff9f40;
+}
+
+/* ==================== */
+/* BUFF & EFFECT UPTIME STYLES */
+/* ==================== */
+
+.buff-uptime,
+.effect-uptime {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.buff-uptime h4,
+.effect-uptime h4 {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.buff-uptime h4::before {
+    content: "⚡";
+    color: var(--warning-color);
+}
+
+.effect-uptime h4::before {
+    content: "✨";
+    color: var(--accent);
+}
+
+.buff-uptime-list,
+.effect-uptime-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.buff-uptime-item,
+.effect-uptime-item {
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.buff-uptime-item:hover,
+.effect-uptime-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.buff-name,
+.effect-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.effect-type {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(74, 158, 255, 0.2);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.buff-stats,
+.effect-stats {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0.25rem 0;
+    flex-wrap: wrap;
+}
+
+.uptime-value {
+    color: var(--success-color);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.proc-count {
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.duration-value {
+    color: var(--warning-color);
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.buff-description,
+.effect-description {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 0.25rem;
+    line-height: 1.3;
+}
+
+/* ==================== */
+/* ABILITY BREAKDOWN HEADER STYLES */
+/* ==================== */
+
+.ability-breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ability-name-header {
+    flex: 1;
+}
+
+.ability-stats-header {
+    display: flex;
+    gap: 1rem;
+    min-width: 200px;
+    justify-content: space-between;
+}
+
+.damage-header,
+.percentage-header,
+.casts-header {
+    text-align: center;
+    min-width: 60px;
+}
+
+.damage-header::after {
+    content: " (total)";
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.percentage-header::after {
+    content: " (of total)";
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.casts-header::after {
+    content: " (times)";
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.ability-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.3rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.ability-breakdown-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.ability-stats {
+    display: flex;
+    gap: 1rem;
+    min-width: 200px;
+    justify-content: space-between;
+    text-align: right;
+}
+
+.damage-value {
+    color: var(--accent);
+    font-weight: 600;
+    min-width: 60px;
+    text-align: right;
+}
+
+.percentage-value {
+    color: var(--success-color);
+    font-weight: 500;
+    min-width: 60px;
+    text-align: right;
+}
+
+.casts-value {
+    color: var(--warning-color);
+    font-weight: 500;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Responsive adjustments for buff displays */
+@media (max-width: 1200px) {
+    .buff-stats,
+    .effect-stats {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .buff-uptime-item,
+    .effect-uptime-item {
+        padding: 0.4rem;
+    }
+    
+    .ability-stats-header,
+    .ability-stats {
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 120px;
+    }
+    
+    .damage-header,
+    .percentage-header,
+    .casts-header {
+        min-width: auto;
+        text-align: left;
+    }
 }
 
 @media (max-width: 768px) {

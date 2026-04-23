@@ -94,6 +94,201 @@
                         <span class="metric-value" id="team-average-dps">0</span>
                     </div>
                 </div>
+                <div class="team-controls">
+                    <button id="toggle-combat-breakdown" class="btn-primary">Hide Combat Breakdown</button>
+                </div>
+            </section>
+
+            <!-- Combat Breakdown -->
+            <section class="panel combat-breakdown-panel" id="combat-breakdown-panel" style="display: block;">
+                <h2>Combat Breakdown</h2>
+                <div class="breakdown-controls">
+                    <div class="control-group">
+                        <label for="breakdown-simulation-time">Sim Time (min)</label>
+                        <input type="number" id="breakdown-simulation-time" value="3" min="1" max="15">
+                    </div>
+                    <button id="run-combat-simulation" class="btn-primary">Run Simulation</button>
+                </div>
+                
+                <div class="combat-breakdown-grid">
+                    <!-- Player 1 Breakdown -->
+                    <div class="player-breakdown" data-player="1">
+                        <h3 id="player-1-breakdown-name">Player 1</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-1-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-1-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-1-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-1-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-1-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-1-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-1-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Player 2 Breakdown -->
+                    <div class="player-breakdown" data-player="2">
+                        <h3 id="player-2-breakdown-name">Player 2</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-2-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-2-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-2-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-2-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-2-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-2-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-2-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Player 3 Breakdown -->
+                    <div class="player-breakdown" data-player="3">
+                        <h3 id="player-3-breakdown-name">Player 3</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-3-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-3-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-3-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-3-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-3-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-3-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-3-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Player 4 Breakdown -->
+                    <div class="player-breakdown" data-player="4">
+                        <h3 id="player-4-breakdown-name">Player 4</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-4-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-4-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-4-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-4-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-4-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-4-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-4-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Player 5 Breakdown -->
+                    <div class="player-breakdown" data-player="5">
+                        <h3 id="player-5-breakdown-name">Player 5</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-5-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-5-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-5-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-5-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-5-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-5-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-5-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Combat Summary -->
+                <div class="team-combat-summary">
+                    <h3>Team Combat Summary</h3>
+                    <div class="team-summary-metrics">
+                        <div class="team-summary-metric">
+                            <span class="summary-label">Total Team Damage</span>
+                            <span class="summary-value highlight" id="team-total-damage">0</span>
+                        </div>
+                        <div class="team-summary-metric">
+                            <span class="summary-label">Combined DPS</span>
+                            <span class="summary-value" id="team-combined-dps">0</span>
+                        </div>
+                        <div class="team-summary-metric">
+                            <span class="summary-label">Total Abilities Cast</span>
+                            <span class="summary-value" id="team-total-abilities-cast">0</span>
+                        </div>
+                        <div class="team-summary-metric">
+                            <span class="summary-label">Simulation Duration</span>
+                            <span class="summary-value" id="team-sim-duration">0s</span>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Players Grid -->
