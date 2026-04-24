@@ -2644,10 +2644,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const attackRating = player.stats.attackRating;
         const critChance = player.stats.critChance / 100;
         let critPower = player.stats.critPower / 100;
-        const penChance = player.stats.penChance / 100;
+        
+        // Collect group-wide effects
+        const groupEffects = collectGroupWideEffects();
         
         // Initialize talisman effects for this player
         const talismanEffects = initializeTalismanEffects(player);
+        
+        // Calculate total penetration chance including group bonuses
+        let totalPenChance = player.stats.penChance;
+        
+        // Add group-wide penetration chance bonuses
+        totalPenChance += groupEffects.teamPenChance;
+        
+        // Add passive penetration bonuses from abilities (simplified)
+        // These would be calculated more accurately in a real-time system
+        const passivePenBonus = calculatePassivePenetrationBonuses(player);
+        totalPenChance += passivePenBonus;
+        
+        // Add Woodcutter's Wrath penetration chance bonus
+        totalPenChance += talismanEffects.mothersWrathPenChance;
+        
+        // Cap penetration chance at 100%
+        totalPenChance = Math.min(totalPenChance, 100);
+        const penChance = totalPenChance / 100;
         
         // Apply Laceration signet bonus (crit power %)
         critPower += talismanEffects.lacerationBonus / 100;
@@ -2684,11 +2704,92 @@ document.addEventListener('DOMContentLoaded', () => {
         return baseDps;
     }
     
+    // Calculate passive penetration bonuses from abilities
+    function calculatePassivePenetrationBonuses(player) {
+        let passivePenBonus = 0;
+        
+        // Collect all abilities for passive penetration bonuses
+        const allPlayerAbilities = [
+            ...player.abilities.actives,
+            ...player.abilities.elites,
+            ...player.abilities.auxiliaries,
+            ...player.abilities.passives
+        ];
+
+        allPlayerAbilities.forEach(abilityName => {
+            const ability = findAbilityInTswData(abilityName);
+            if (!ability) return;
+
+            // Check for passive penetration chance bonuses
+            switch (ability.name) {
+                case 'Strike Force':
+                    // "Increases the Penetration Chance of Strike attacks by 7.5%."
+                    // Estimate: 30% of abilities are Strike subtype
+                    passivePenBonus += 7.5 * 0.3; // ~2.25% average penetration bonus
+                    break;
+                case 'Beanbag Rounds':
+                    // "Whenever you apply Hindered, you gain the Minor Penetration Chance effect, which increases your Penetration Chance by 15% for 8 seconds."
+                    // Only works if enemy is currently Hindered (real-time system)
+                    // Simplified: assume 25% uptime with frequent application
+                    passivePenBonus += 15 * 0.25; // ~3.75% average penetration bonus
+                    break;
+                case 'Overpenetration':
+                    // "Whenever you penetrate, you build a counter. Once you reach 3 counters, you gain the Minor Penetration Chance effect, which increases Penetration Chance by 15% for 8 seconds."
+                    // Estimate: 15% penetration rate, need 3 procs, 8s duration
+                    // Simplified: assume ~20% uptime after initial trigger
+                    passivePenBonus += 15 * 0.2; // ~3% average penetration bonus
+                    break;
+                case 'Crap Shoot':
+                    // "Whenever you hit a Weakened target there is a random chance to get one of three effects... Midnight: 3% chance to gain the Minor Penetration effect, which increases your Penetration Chance by 15% for 8 seconds."
+                    // Only works if enemy is Weakened, 3% chance per hit
+                    // Simplified: assume frequent hits, 10% uptime
+                    passivePenBonus += 15 * 0.1 * 0.03; // ~0.045% average penetration bonus
+                    break;
+                case 'Seal The Deal':
+                    // "Increases the damage and healing done by resource consuming abilities by 20% and also increases the critical and penetration chance of these abilities by 5%."
+                    // Estimate: 40% of abilities consume resources
+                    passivePenBonus += 5 * 0.4; // ~2% average penetration bonus
+                    break;
+                case 'Short Controlled Bursts':
+                    // "Increases Hit Rating for Burst attacks by 200. In addition, the Critical Chance and Penetration Chance of all Burst attacks is increased by 4%."
+                    // Estimate: 25% of abilities are Burst subtype
+                    passivePenBonus += 4 * 0.25; // ~1% average penetration bonus
+                    break;
+                case 'Delicate Precision':
+                    // "Increases the Penetration Chance of \"Delicate Strike\" by 10%."
+                    // Only applies to one specific ability
+                    // Simplified: assume 5% of rotation is Delicate Strike
+                    passivePenBonus += 10 * 0.05; // ~0.5% average penetration bonus
+                    break;
+                case 'Expose Weakness':
+                    // "Whenever you apply Impaired, you gain the Minor Penetration Chance effect, which increases your Penetration Chance by 15% for 8 seconds."
+                    // Simplified: assume 20% uptime with frequent application
+                    passivePenBonus += 15 * 0.2; // ~3% average penetration bonus
+                    break;
+                case 'Fatal Flourish':
+                    // "Whenever you finish activating an ability on a target you have Afflicted, you build a Fatal Flourish counter. As soon as you reach 5 counters, the count will reset and you will gain beneficial effect which increases your Penetration Chance 20% for 5 seconds."
+                    // Requires Afflicted target and 5 counters
+                    // Simplified: assume ~15% uptime in optimal conditions
+                    passivePenBonus += 20 * 0.15; // ~3% average penetration bonus
+                    break;
+                case 'Iron Maiden':
+                    // "Whenever you penetrate a target that is Afflicted, you gain the Minor Pentration Chance effect, which increases Penetration Chance by 15% for 8 seconds."
+                    // Requires Afflicted target and penetration
+                    // Simplified: assume ~25% uptime in optimal conditions
+                    passivePenBonus += 15 * 0.25; // ~3.75% average penetration bonus
+                    break;
+            }
+        });
+
+        return passivePenBonus;
+    }
+    
     // Initialize talisman effects based on player's imported gear
     function initializeTalismanEffects(player) {
         const effects = {
             dustOfBlackPharaoh: false,
             mothersWrath: false,
+            mothersWrathPenChance: 0,  // New: penetration chance bonus from Woodcutter's Wrath
             mothersWrathDamage: 0,
             equilibrium: false,
             lacerationBonus: 0
@@ -2705,9 +2806,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check for Woodcutter's Wrath neck talisman (ID 92)
         if (importedGear.neck && importedGear.neck.talismanId === 92) {
             effects.mothersWrath = true;
-            const quality = importedGear.neck.quality || 1; // 1=Normal, 2=Elite, 3=Epic
-            const damageValues = [400, 500, 600]; // Damage values by quality
-            effects.mothersWrathDamage = damageValues[quality - 1] || 500;
+            // Woodcutter's Wrath: +40% penetration chance for 3 seconds after 5 failed penetrations
+            // Estimate uptime: Need 5 failed penetrations to trigger, 3s duration, 6s cooldown
+            // With typical penetration rates, this might trigger every 15-20 seconds
+            // Simplified: assume ~20% uptime of the 40% penetration bonus
+            const uptime = 0.2; // 20% uptime estimate
+            effects.mothersWrathPenChance = 40 * uptime; // ~8% average penetration bonus
         }
         
         // Check for Signet of Equilibrium (ID 70)
@@ -2829,8 +2933,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return hasInActives || hasInElites;
     }
     
+    // Helper function to find ability by name in tswData
+    function findAbilityInTswData(abilityName) {
+        if (!abilityName || typeof abilityName !== 'string') return null;
+        
+        // Search through tswData for ability with matching name
+        for (let i = 0; i < tswData.length; i++) {
+            const ability = tswData[i];
+            if (ability && ability.name === abilityName) {
+                return ability;
+            }
+        }
+        return null;
+    }
+    
     // Collect all group-wide effects from all players
     function collectGroupWideEffects() {
+        
         const groupEffects = {
             teamDamageBuff: 0,
             teamDamageReduction: 0,
@@ -2843,6 +2962,7 @@ document.addEventListener('DOMContentLoaded', () => {
             teamCritRating: 0,
             teamHitRating: 0,
             teamDamageBuffFlat: 0,
+            teamPenChance: 0,
             // Shared enemy debuffs (real-time duration tracking)
             enemyDebuffs: {
                 afflicted: false,
@@ -2861,6 +2981,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 shortFuse: { active: false, endTime: 0, damageBonusPercent: 0 },
                 amorFati: { active: false, endTime: 0, damageBonusPercent: 0 },
                 doOrDie: { active: false, endTime: 0, damageBonusPercent: 0 },
+                breachingShot: { active: false, endTime: 0, penChanceBonus: 0 }, // Breaching Shot buff
                 // Cooldown effects
                 uncalibrated: { active: false, endTime: 0 }, // Deadly Aim cooldown
                 depleted: { active: false, endTime: 0 } // Breaching Shot cooldown
@@ -2879,8 +3000,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize debuff durations based on player abilities (shared across group)
             const currentTime = Date.now() / 1000; // Current time in seconds
             
-            allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
-                const ability = tswData[abilityIndex];
+            allPlayerAbilitiesForDebuffs.forEach(abilityName => {
+                const ability = findAbilityInTswData(abilityName);
                 if (!ability || !ability.description) return;
                 
                 const desc = ability.description.toLowerCase();
@@ -2912,8 +3033,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // Apply active ability buffs with duration (real-time tracking)
-            allPlayerAbilitiesForDebuffs.forEach(abilityIndex => {
-                const ability = tswData[abilityIndex];
+            allPlayerAbilitiesForDebuffs.forEach(abilityName => {
+                const ability = findAbilityInTswData(abilityName);
                 if (!ability || !ability.description) return;
                 
                 const desc = ability.description.toLowerCase();
@@ -2995,10 +3116,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...player.abilities.auxiliaries,
                 ...player.abilities.passives
             ];
-
-            allPlayerAbilities.forEach(abilityIndex => {
-                const ability = tswData[abilityIndex];
-                if (!ability) return;
+            
+            allPlayerAbilities.forEach(abilityName => {
+                const ability = findAbilityInTswData(abilityName);
+                if (!ability) {
+                    return;
+                }
 
                 // Check for specific damage-related group-wide abilities
                 switch (ability.name) {
@@ -3046,6 +3169,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 80% glancing reduction is a significant DPS boost, especially for low-hit rating builds
                         // Convert to effective hit rating increase (simplified: ~80% reduction in glancing = ~400 hit rating equivalent)
                         groupEffects.teamHitRating += 400;
+                        break;
+                    case 'Breaching Shot':
+                        // "Gives all group members a beneficial effect that increases Penetration Chance by 45% for 8 seconds"
+                        // Check if buff is currently active
+                        if (groupEffects.playerBuffs.breachingShot.active) {
+                            groupEffects.teamPenChance += groupEffects.playerBuffs.breachingShot.penChanceBonus;
+                        } else {
+                            // Calculate uptime-based penetration bonus
+                            // Breaching Shot: 90s cooldown, 8s buff, 90s Depleted debuff
+                            // Base uptime: 8s every 98s = ~8.2% uptime
+                            // With potential cooldown reduction from Breach Party: 8s every 68s = ~11.8% uptime
+                            const uptime = groupEffects.cooldownReduction > 0 ? 0.118 : 0.082;
+                            const penBonus = 45 * uptime;
+                            groupEffects.teamPenChance += penBonus;
+                        }
                         break;
                     // Conditional abilities that benefit from shared enemy debuffs (real-time system)
                     case 'Third Degree':
@@ -3587,15 +3725,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Calculate total penetration chance including group buffs (needed for simulation)
+        const groupEffects = collectGroupWideEffects();
+        const talismanEffects = initializeTalismanEffects(player);
+        let totalPenChance = player.stats.penChance;
+        totalPenChance += groupEffects.teamPenChance;
+        const passivePenBonus = calculatePassivePenetrationBonuses(player);
+        totalPenChance += passivePenBonus;
+        totalPenChance += talismanEffects.mothersWrathPenChance;
+        totalPenChance = Math.min(totalPenChance, 100);
+        const penChance = totalPenChance / 100;
+        
         // Simulate combat second by second
         let currentTime = 0;
+        let resources = player.stats.maxResources || 100;
         let totalDamage = 0;
-        let resources = 5; // Start with max resources
         
-        while (currentTime < simulationSeconds) {
-            // Resource generation (1 resource per second)
-            resources = Math.min(5, resources + 1);
-            
+        // Simulation loop
+        for (let second = 0; second < simulationSeconds; second++) {
             // Update buff states and check for expirations
             updateBuffStates(buffTracking, currentTime);
             
@@ -3617,7 +3764,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate damage with active buffs
                     const baseDamage = calculateAbilityDamage(ability, player);
                     const isCrit = Math.random() < (player.stats.critChance / 100);
-                    const isPen = Math.random() < (player.stats.penChance / 100);
+                    const isPen = Math.random() < penChance; // Use total penetration chance
                     
                     let damage = baseDamage;
                     
@@ -3662,7 +3809,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Distribute damage based on player stats (simplified)
         const critChance = player.stats.critChance / 100;
-        const penChance = player.stats.penChance / 100;
         const normalChance = 1 - critChance - penChance;
         
         damageSources['Critical Hits'].damage = totalDamage * critChance;
