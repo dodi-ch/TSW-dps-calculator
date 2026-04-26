@@ -362,10 +362,11 @@
 
                     </div>
 
-
+                    <div class="combat-controls">
+                        <button id="toggle-combat-breakdown" class="btn-primary">Show Combat Breakdown</button>
+                    </div>
 
                     <button id="copy-breakdown-btn" class="btn-primary"
-
                         style="margin-top: 0.5rem; padding: 0.4rem 0.9rem; font-size: 0.8rem; align-self: flex-start;">
 
                         Copy DPS breakdown
@@ -401,17 +402,90 @@
 
 
                     <h3 style="margin-top: 1.5rem; color: var(--text-secondary); font-size: 1rem;">Slot Breakdown</h3>
-
                     <div id="slot-breakdown-container"
-
                         style="display: flex; flex-direction: column; gap: 0.5rem; text-align: left; margin-top: 1rem;">
-
-                        <!-- JS will populate individual slot stats here -->
-
+                        <div class="slot-breakdown">
+                            <h4>Slot 1</h4>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">Damage:</span>
+                                <span class="slot-stat-value" id="slot-1-damage">0</span>
+                            </div>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">DPS:</span>
+                                <span class="slot-stat-value" id="slot-1-dps">0</span>
+                            </div>
+                        </div>
+                        <div class="slot-breakdown">
+                            <h4>Slot 2</h4>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">Damage:</span>
+                                <span class="slot-stat-value" id="slot-2-damage">0</span>
+                            </div>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">DPS:</span>
+                                <span class="slot-stat-value" id="slot-2-dps">0</span>
+                            </div>
+                        </div>
+                        <div class="slot-breakdown">
+                            <h4>Slot 3</h4>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">Damage:</span>
+                                <span class="slot-stat-value" id="slot-3-damage">0</span>
+                            </div>
+                            <div class="slot-stats">
+                                <span class="slot-stat-label">DPS:</span>
+                                <span class="slot-stat-value" id="slot-3-dps">0</span>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
 
+            </section>
+
+            <!-- Combat Breakdown -->
+            <section class="panel combat-breakdown-panel" id="combat-breakdown-panel" style="display: none;">
+                <h2>Combat Breakdown</h2>
+                <div class="breakdown-controls">
+                    <div class="control-group">
+                        <label for="breakdown-simulation-time">Sim Time (min)</label>
+                        <input type="number" id="breakdown-simulation-time" value="3" min="1" max="15">
+                    </div>
+                    <button id="run-combat-simulation" class="btn-primary">Run Simulation</button>
+                </div>
+                
+                <div class="combat-breakdown-single">
+                    <!-- Player Breakdown -->
+                    <div class="player-breakdown" data-player="1">
+                        <h3>Combat Analysis</h3>
+                        <div class="breakdown-summary">
+                            <div class="summary-metric">
+                                <span class="summary-label">Total Damage</span>
+                                <span class="summary-value" id="player-total-damage">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">DPS</span>
+                                <span class="summary-value" id="player-breakdown-dps">0</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span class="summary-label">Abilities Used</span>
+                                <span class="summary-value" id="player-abilities-cast">0</span>
+                            </div>
+                        </div>
+                        <div class="ability-breakdown" id="player-ability-breakdown">
+                            <!-- Ability breakdown will be populated by JS -->
+                        </div>
+                        <div class="damage-sources" id="player-damage-sources">
+                            <!-- Damage sources will be populated by JS -->
+                        </div>
+                        <div class="buff-uptime" id="player-buff-uptime">
+                            <!-- Buff uptime will be populated by JS -->
+                        </div>
+                        <div class="effect-uptime" id="player-effect-uptime">
+                            <!-- Special effects will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section class="panel glass-panel" id="abilities-import-panel" style="margin-top: 2rem;">

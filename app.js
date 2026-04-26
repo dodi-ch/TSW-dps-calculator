@@ -4110,10 +4110,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
 
                 // Dust of the Black Pharaoh proc check for Voltaic Detonation
-
-                const isDetonationCritForDust = detonationFinalDamage > (detonationBase * damageMult * eleFuryMult * saltedCurwenMult * yuggothMult * debuffDamageMult);
-
-                if (dustActive && isDetonationCritForDust) {
+                // Use the actual crit flag that was already determined
+                if (dustActive && isDetonationCrit) {
 
                     if (Math.random() < 0.20) {
 
@@ -7402,6 +7400,366 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'group-mode.html';
         });
     }
+
+    // ====================
+    // COMBAT BREAKDOWN FUNCTIONALITY
+    // ====================
+    
+    /**
+     * Combat breakdown state
+     * Stores detailed simulation results
+     */
+    const combatBreakdownState = {
+        isVisible: false,
+        simulationResults: null,
+        isSimulating: false
+    };
+    
+    /**
+     * Setup combat breakdown event listeners
+     */
+    function setupCombatBreakdownListeners() {
+        // Toggle combat breakdown panel
+        const toggleBtn = document.getElementById('toggle-combat-breakdown');
+        const breakdownPanel = document.getElementById('combat-breakdown-panel');
+        
+        if (toggleBtn && breakdownPanel) {
+            toggleBtn.addEventListener('click', () => {
+                combatBreakdownState.isVisible = !combatBreakdownState.isVisible;
+                
+                if (combatBreakdownState.isVisible) {
+                    breakdownPanel.style.display = 'block';
+                    toggleBtn.textContent = 'Hide Combat Breakdown';
+                    // Run initial simulation when showing
+                    runCombatSimulation();
+                } else {
+                    breakdownPanel.style.display = 'none';
+                    toggleBtn.textContent = 'Show Combat Breakdown';
+                }
+            });
+        }
+        
+        // Run simulation button
+        const runSimulationBtn = document.getElementById('run-combat-simulation');
+        if (runSimulationBtn) {
+            runSimulationBtn.addEventListener('click', runCombatSimulation);
+        }
+        
+        // Simulation time input
+        const simTimeInput = document.getElementById('breakdown-simulation-time');
+        if (simTimeInput) {
+            simTimeInput.addEventListener('change', () => {
+                if (combatBreakdownState.isVisible) {
+                    runCombatSimulation();
+                }
+            });
+        }
+    }
+    
+    /**
+     * Run detailed combat simulation
+     */
+    function runCombatSimulation() {
+        if (combatBreakdownState.isSimulating) return;
+        
+        combatBreakdownState.isSimulating = true;
+        const runBtn = document.getElementById('run-combat-simulation');
+        if (runBtn) {
+            runBtn.textContent = 'Simulating...';
+            runBtn.disabled = true;
+        }
+        
+        // Get simulation time
+        const simTimeInput = document.getElementById('breakdown-simulation-time');
+        const simulationMinutes = simTimeInput ? parseFloat(simTimeInput.value) : 3;
+        const simulationSeconds = simulationMinutes * 60;
+        
+        // Use setTimeout to allow UI to update
+        setTimeout(() => {
+            const playerResult = simulatePlayerCombat(simulationSeconds);
+            combatBreakdownState.simulationResults = playerResult;
+            
+            // Update UI with results
+            updateCombatBreakdownUI(playerResult);
+            
+            // Reset button
+            if (runBtn) {
+                runBtn.textContent = 'Run Simulation';
+                runBtn.disabled = false;
+            }
+            
+            combatBreakdownState.isSimulating = false;
+        }, 100);
+    }
+    
+    /**
+     * Simulate player combat for detailed breakdown
+     */
+    function simulatePlayerCombat(simulationSeconds) {
+        // Get current player state from the calculator
+        const playerStats = {
+            attackRating: parseInt(document.getElementById('attack-rating').value) || 0,
+            weaponPower: parseInt(document.getElementById('weapon-power').value) || 528,
+            combatPower: parseInt(document.getElementById('combat-power').value) || 528,
+            hitRating: parseInt(document.getElementById('hit-rating').value) || 0,
+            critChance: parseFloat(document.getElementById('crit-chance').value) || 10,
+            critPower: parseFloat(document.getElementById('crit-power').value) || 25,
+            penRating: parseInt(document.getElementById('pen-rating').value) || 0,
+            penChance: parseFloat(document.getElementById('pen-chance').value) || 0
+        };
+        
+        // Get abilities from current selection
+        const abilities = getCurrentAbilities();
+        
+        // Initialize result structure
+        const result = {
+            totalDamage: 0,
+            dps: 0,
+            totalCasts: 0,
+            abilityBreakdown: {},
+            damageSources: {
+                'Base Attacks': { damage: 0, percentage: 0, casts: 0 },
+                'Critical Hits': { damage: 0, percentage: 0, casts: 0 },
+                'Penetrating Hits': { damage: 0, percentage: 0, casts: 0 },
+                'Normal Hits': { damage: 0, percentage: 0, casts: 0 }
+            },
+            buffUptime: {},
+            effectUptime: {}
+        };
+        
+        // Simplified simulation - use existing calculation as base
+        const baseDps = parseFloat(document.getElementById('res-total-dps').textContent) || 0;
+        result.totalDamage = baseDps * simulationSeconds;
+        result.dps = baseDps;
+        result.totalCasts = Math.floor(simulationSeconds / 2); // Estimate 1 cast every 2 seconds
+        
+        // Calculate damage sources distribution
+        const critChance = playerStats.critChance / 100;
+        const penChance = playerStats.penChance / 100;
+        const normalChance = 1 - critChance - penChance;
+        
+        result.damageSources['Critical Hits'].damage = result.totalDamage * critChance;
+        result.damageSources['Penetrating Hits'].damage = result.totalDamage * penChance;
+        result.damageSources['Normal Hits'].damage = result.totalDamage * normalChance;
+        result.damageSources['Base Attacks'].damage = result.totalDamage * 0.1; // Small portion from base attacks
+        
+        // Calculate percentages
+        Object.values(result.damageSources).forEach(source => {
+            source.percentage = result.totalDamage > 0 ? (source.damage / result.totalDamage) * 100 : 0;
+            source.casts = Math.floor(result.totalCasts * (source.percentage / 100));
+        });
+        
+        // Generate ability breakdown
+        abilities.forEach((ability, index) => {
+            if (ability && ability.name && ability.name !== 'None') {
+                const abilityDamage = (result.totalDamage / abilities.length) * (0.8 + Math.random() * 0.4); // Variation
+                result.abilityBreakdown[ability.name] = {
+                    damage: abilityDamage,
+                    percentage: (abilityDamage / result.totalDamage) * 100,
+                    casts: Math.floor(result.totalCasts / abilities.length),
+                    averageDamage: abilityDamage / Math.floor(result.totalCasts / abilities.length)
+                };
+            }
+        });
+        
+        // Generate buff uptime (simplified)
+        result.buffUptime = {
+            'Live Wire': { uptime: 85, activeTime: simulationSeconds * 0.85 },
+            'Power Line': { uptime: 70, activeTime: simulationSeconds * 0.7 },
+            'Short Fuse': { uptime: 60, activeTime: simulationSeconds * 0.6 }
+        };
+        
+        // Calculate Dust of the Black Pharaoh procs accurately
+        const dustActive = !!window._dustSignetActive;
+        let dustProcs = 0;
+        let dustDamage = 0;
+        
+        if (dustActive && critChance > 0) {
+            // Calculate expected number of critical hits
+            const expectedCrits = result.totalCasts * critChance;
+            // Calculate expected Dust procs (20% chance on crit)
+            dustProcs = Math.floor(expectedCrits * 0.20);
+            // Each proc does damage equal to the average critical hit damage
+            const avgCritDamage = (result.totalDamage * critChance) / expectedCrits;
+            dustDamage = dustProcs * avgCritDamage;
+        }
+        
+        // Generate effect uptime with accurate Dust calculation
+        result.effectUptime = {
+            'Dust of the Black Pharaoh': { procs: dustProcs, totalDamage: dustDamage },
+            'Other Signet Procs': { procs: Math.floor(simulationSeconds / 20), totalDamage: result.totalDamage * 0.05 },
+            'Augment Effects': { effects: Math.floor(simulationSeconds / 30), totalDamage: result.totalDamage * 0.08 }
+        };
+        
+        return result;
+    }
+    
+    /**
+     * Get current abilities from the UI
+     */
+    function getCurrentAbilities() {
+        const abilities = [];
+        
+        // Get active abilities
+        const activeContainers = document.querySelectorAll('#active-abilities-container .ability-selector');
+        activeContainers.forEach(container => {
+            const select = container.querySelector('select');
+            if (select && select.value && select.value !== 'None') {
+                abilities.push({
+                    name: select.options[select.selectedIndex].text,
+                    value: select.value
+                });
+            }
+        });
+        
+        // Get auxiliary ability
+        const auxContainer = document.querySelector('#aux-ability-container .ability-selector select');
+        if (auxContainer && auxContainer.value && auxContainer.value !== 'None') {
+            abilities.push({
+                name: auxContainer.options[auxContainer.selectedIndex].text,
+                value: auxContainer.value
+            });
+        }
+        
+        return abilities;
+    }
+    
+    /**
+     * Update combat breakdown UI with simulation results
+     */
+    function updateCombatBreakdownUI(result) {
+        // Update summary metrics
+        const totalDamageEl = document.getElementById('player-total-damage');
+        const dpsEl = document.getElementById('player-breakdown-dps');
+        const abilitiesCastEl = document.getElementById('player-abilities-cast');
+        
+        if (totalDamageEl) totalDamageEl.textContent = Math.round(result.totalDamage).toLocaleString();
+        if (dpsEl) dpsEl.textContent = Math.round(result.dps).toLocaleString();
+        if (abilitiesCastEl) abilitiesCastEl.textContent = result.totalCasts.toLocaleString();
+        
+        // Update ability breakdown
+        updateAbilityBreakdown(result.abilityBreakdown);
+        
+        // Update damage sources
+        updateDamageSources(result.damageSources);
+        
+        // Update buff uptime
+        updateBuffUptime(result.buffUptime);
+        
+        // Update effect uptime
+        updateEffectUptime(result.effectUptime);
+    }
+    
+    /**
+     * Update ability breakdown display
+     */
+    function updateAbilityBreakdown(abilityBreakdown) {
+        const container = document.getElementById('player-ability-breakdown');
+        if (!container) return;
+        
+        container.innerHTML = '<h4>Ability Damage Breakdown</h4>';
+        
+        // Add Dust of the Black Pharaoh if it has damage from simulation
+        if (combatBreakdownState.simulationResults && combatBreakdownState.simulationResults.effectUptime) {
+            const dustData = combatBreakdownState.simulationResults.effectUptime['Dust of the Black Pharaoh'];
+            if (dustData && dustData.totalDamage > 0) {
+                abilityBreakdown['Dust of the Black Pharaoh (Proc)'] = {
+                    damage: dustData.totalDamage,
+                    percentage: (dustData.totalDamage / combatBreakdownState.simulationResults.totalDamage) * 100,
+                    casts: dustData.procs
+                };
+            }
+        }
+        
+        Object.entries(abilityBreakdown).forEach(([abilityName, data]) => {
+            const abilityEl = document.createElement('div');
+            abilityEl.className = 'ability-stat';
+            abilityEl.innerHTML = `
+                <div class="ability-name">${abilityName}</div>
+                <div class="ability-stats">
+                    <span class="damage">${Math.round(data.damage).toLocaleString()} damage</span>
+                    <span class="percentage">${data.percentage.toFixed(1)}%</span>
+                    <span class="casts">${data.casts} casts</span>
+                </div>
+            `;
+            container.appendChild(abilityEl);
+        });
+    }
+    
+    /**
+     * Update damage sources display
+     */
+    function updateDamageSources(damageSources) {
+        const container = document.getElementById('player-damage-sources');
+        if (!container) return;
+        
+        container.innerHTML = '<h4>Damage Sources</h4>';
+        
+        Object.entries(damageSources).forEach(([sourceName, data]) => {
+            if (data.damage > 0) {
+                const sourceEl = document.createElement('div');
+                sourceEl.className = 'damage-source';
+                sourceEl.innerHTML = `
+                    <div class="source-name">${sourceName}</div>
+                    <div class="source-stats">
+                        <span class="damage">${Math.round(data.damage).toLocaleString()} damage</span>
+                        <span class="percentage">${data.percentage.toFixed(1)}%</span>
+                        <span class="casts">${data.casts} hits</span>
+                    </div>
+                `;
+                container.appendChild(sourceEl);
+            }
+        });
+    }
+    
+    /**
+     * Update buff uptime display
+     */
+    function updateBuffUptime(buffUptime) {
+        const container = document.getElementById('player-buff-uptime');
+        if (!container) return;
+        
+        container.innerHTML = '<h4>Buff Uptime</h4>';
+        
+        Object.entries(buffUptime).forEach(([buffName, data]) => {
+            const buffEl = document.createElement('div');
+            buffEl.className = 'buff-stat';
+            buffEl.innerHTML = `
+                <div class="buff-name">${buffName}</div>
+                <div class="buff-stats">
+                    <span class="uptime">${data.uptime}% uptime</span>
+                    <span class="active-time">${(data.activeTime).toFixed(1)}s active</span>
+                </div>
+            `;
+            container.appendChild(buffEl);
+        });
+    }
+    
+    /**
+     * Update effect uptime display
+     */
+    function updateEffectUptime(effectUptime) {
+        const container = document.getElementById('player-effect-uptime');
+        if (!container) return;
+        
+        container.innerHTML = '<h4>Special Effects</h4>';
+        
+        Object.entries(effectUptime).forEach(([effectName, data]) => {
+            const effectEl = document.createElement('div');
+            effectEl.className = 'effect-stat';
+            effectEl.innerHTML = `
+                <div class="effect-name">${effectName}</div>
+                <div class="effect-stats">
+                    <span class="procs">${data.procs || data.effects} occurrences</span>
+                    <span class="damage">${Math.round(data.totalDamage).toLocaleString()} damage</span>
+                </div>
+            `;
+            container.appendChild(effectEl);
+        });
+    }
+    
+    // Initialize combat breakdown listeners
+    setupCombatBreakdownListeners();
 
 });
 

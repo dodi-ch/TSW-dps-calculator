@@ -2613,16 +2613,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 addPowerLineStackForPlayer(player, currentTime + i);
             }
             
-            // Voltaic Detonation with max stacks bonus
+            // Voltaic Detonation with max stacks bonus and proper crit mechanics
             const detonationBase = 2.99004 * cp;
             const powerLineBonus = 1 + (getPowerLineDamageBonusForPlayer(player) / 100);
             const detonationDamage = detonationBase * powerLineBonus;
+            
+            // Apply critical hit mechanics to Voltaic Detonation
+            const critChance = player.stats.critChance / 100;
+            const critPower = (player.stats.critPower || 25) / 100;
+            const avgCritMultiplier = 1 + (critChance * critPower);
+            const detonationAvgDamage = detonationDamage * avgCritMultiplier;
+            
+            // Apply Dust of the Black Pharaoh proc to Voltaic Detonation
+            const talismanEffects = initializeTalismanEffects(player);
+            let detonationWithDust = detonationAvgDamage;
+            if (talismanEffects.dustOfBlackPharaoh) {
+                // 20% chance on critical hit to deal additional 100% damage
+                // Calculate expected proc damage: 20% of crits * 100% damage * average crit damage
+                const dustProcChance = critChance * 0.20; // 20% of crits
+                const dustProcDamage = detonationAvgDamage * dustProcChance; // Expected damage from procs
+                detonationWithDust += dustProcDamage;
+            }
             
             // Clear stacks after detonation
             clearPowerLineStacksForPlayer(player);
             
             // Convert to DPS (20 second cooldown cycle)
-            const powerLineDps = (tetherDamagePerSecond * 10 + detonationDamage) / 20;
+            const powerLineDps = (tetherDamagePerSecond * 10 + detonationWithDust) / 20;
             playerSpecificBonus += powerLineDps;
         }
         
@@ -2688,9 +2705,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Dust of the Black Pharaoh effect
         if (talismanEffects.dustOfBlackPharaoh) {
             // 20% chance on critical hit to deal additional 100% damage
+            // Calculate expected proc damage: 20% of crits * 100% damage
             const dustProcChance = critChance * 0.20; // 20% of crits
-            const dustBonusMultiplier = 1 + (dustProcChance * 1.0); // 100% extra damage on proc
-            baseDps *= dustBonusMultiplier;
+            const dustProcDamage = baseDps * dustProcChance; // Expected damage from procs
+            baseDps += dustProcDamage;
         }
         
         // Apply Woodcutter's Wrath (Mother's Wrath) effect
