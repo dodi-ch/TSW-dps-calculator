@@ -528,11 +528,91 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add change event listener for slot updates
             select.addEventListener('change', () => {
                 updateSlotIcon(select, wrapper);
+                updateAbilityDamagePreview(select, wrapper);
                 createAugmentUI();
                 calculate();
             });
 
             return { wrapper, select };
+        }
+
+        // ========== DAMAGE PREVIEW FUNCTION ==========
+        
+        function updateAbilityDamagePreview(select, wrapper) {
+            // Remove existing damage preview if any
+            const existingPreview = wrapper.querySelector('.damage-preview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+
+            // Get selected ability
+            const selectedAbility = tswData.find(a => a.name === select.value);
+            if (!selectedAbility || selectedAbility.type === 'Passive') {
+                return; // No preview for passives or empty selection
+            }
+
+            // Get current stats
+            const attackRating = parseFloat(attackRatingInput?.value) || 0;
+            const weaponPower = parseFloat(weaponPowerInput?.value) || 528;
+            const critChance = parseFloat(critChanceInput?.value) || 0;
+            const critPower = parseFloat(critPowerInput?.value) || 25;
+            const penChance = parseFloat(penChanceInput?.value) || 0;
+
+            // Calculate Combat Power
+            let cp;
+            if (attackRating < 5200) {
+                cp = Math.round((375 - (600 / (Math.pow(Math.E, (attackRating / 1400)) + 1))) * (1 + (weaponPower / 375)));
+            } else {
+                const c = (0.00008 * weaponPower) + 0.0301;
+                cp = Math.round(204.38 + (0.5471 * weaponPower) + (c * attackRating));
+            }
+
+            // Calculate base damage
+            let baseDamage;
+            if (selectedAbility.scaling > 0) {
+                // Use resource scaling if available
+                if (selectedAbility.scaling_5 > 0) {
+                    // Consumer ability - show max resource damage
+                    baseDamage = selectedAbility.scaling_5 * cp * 6.113601;
+                } else {
+                    // Builder ability
+                    baseDamage = selectedAbility.scaling * cp * 6.113601;
+                }
+            } else {
+                baseDamage = 0;
+            }
+
+            // Calculate crit damage
+            const critDamage = baseDamage * (1 + critPower / 100);
+
+            // Create damage preview element
+            const preview = document.createElement('div');
+            preview.className = 'damage-preview';
+            preview.style.cssText = `
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                margin-top: 0.25rem;
+                padding: 0.25rem;
+                background: rgba(0,0,0,0.2);
+                border-radius: 4px;
+                line-height: 1.3;
+            `;
+
+            // Build preview text
+            let previewText = `Damage: ${Math.round(baseDamage).toLocaleString()}`;
+            if (critChance > 0) {
+                previewText += `<br>Crit: ${Math.round(critDamage).toLocaleString()} (${critChance}%)`;
+            }
+            if (penChance > 0) {
+                previewText += `<br>Pen: ${Math.round(baseDamage).toLocaleString()} (${penChance}%)`;
+            }
+            if (selectedAbility.cast_time > 0) {
+                const dps = baseDamage / selectedAbility.cast_time;
+                previewText += `<br>DPS: ${Math.round(dps).toLocaleString()}`;
+            }
+
+            preview.innerHTML = previewText;
+            wrapper.appendChild(preview);
         }
 
         // ========== ABILITY SLOTS CREATION ==========
@@ -613,8 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-
+    // Add "None" option to auxiliary weapon dropdown
+    addOption(auxWeaponSelect, "", "None");
     auxWeaponSelect.value = "";
 
 
@@ -1312,10 +1392,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const progress = (clampedResources - 1) / 4; // 0.25, 0.5, 0.75 for resources 2, 3, 4
                     scalingToUse = ability.scaling_1 + progress * (ability.scaling_5 - ability.scaling_1);
                     
-                    // Add logging for debugging scaling calculations (disabled in production)
-                    // if (TEST_MODE && ability.name.includes('Test')) {
-                    //     console.log(`Scaling interpolation for ${ability.name}: resources=${effectiveResources}, scaling=${scalingToUse.toFixed(6)}`);
-                    // }
                 }
             }
             
@@ -1330,10 +1406,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Fallback to the main scaling value
                 scalingToUse = ability.scaling || 0;
                 
-                // Add warning for missing fixed resource scaling data (disabled in production)
-                // if (TEST_MODE && resourceConsumption > 0) {
-                //     console.warn(`Missing scaling_${resourceConsumption} for fixed resource ability: ${ability.name}`);
-                // }
             }
         }
 
@@ -2499,10 +2571,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update damage bonus percent (20% per stack, max 200%)
                 powerLineBuff.damageBonusPercent = Math.min(200, powerLineBuff.stacks * 20);
 
-                // Debug logging for Power Line stacks (disabled in production)
-                // if (TEST_MODE && powerLineBuff.stacks > 0) {
-                //     console.log(`Power Line stacks: ${powerLineBuff.stacks}, damage bonus: ${powerLineBuff.damageBonusPercent}%`);
-                // }
 
             } catch (e) {
 
@@ -3798,9 +3866,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dustActive = !!window._dustSignetActive;
 
             if (dustActive && isCrit) {
-
                 if (Math.random() < 0.20) {
-
                     finalDamage += actualDmg;
 
                     // Track the extra hit as its own breakdown entry
@@ -3935,6 +4001,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         totalDamage += liveWireFinalDamage;
 
+                        // Track actual combat statistics for summary
+                        if (!window._lastCombatStats) {
+                            window._lastCombatStats = {
+                                critDamage: 0,
+                                penDamage: 0,
+                                normalDamage: 0,
+                                baseAttackDamage: 0,
+                                critCount: 0,
+                                penCount: 0,
+                                normalCount: 0,
+                                totalHits: 0
+                            };
+                        }
+                        
+                        // Update combat statistics
+                        if (isCrit) {
+                            window._lastCombatStats.critDamage += finalDamage;
+                            window._lastCombatStats.critCount++;
+                        } else if (isPenetrated) {
+                            window._lastCombatStats.penDamage += finalDamage;
+                            window._lastCombatStats.penCount++;
+                        } else {
+                            window._lastCombatStats.normalDamage += finalDamage;
+                            window._lastCombatStats.normalCount++;
+                        }
+                        window._lastCombatStats.totalHits++;
+                        
                         // Record Live Wire damage in breakdown
                         const LIVE_WIRE_NAME = 'Live Wire (Proc)';
                         if (!statsBreakdown[LIVE_WIRE_NAME]) {
@@ -4114,7 +4207,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (dustActive && isDetonationCrit) {
 
                     if (Math.random() < 0.20) {
-
                         const dustDetonationDmg = detonationFinalDamage;
 
                         totalDamage += dustDetonationDmg;
@@ -6925,11 +7017,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Initialize Combat Power on page load
+    updateCombatPower();
+
     // Stat inputs that trigger recalculation
     const statInputs = [hitRatingInput, critChanceInput, critPowerInput, penRatingInput, penChanceInput];
     statInputs.forEach(input => {
-        if (input) input.addEventListener('input', calculate);
+        if (input) input.addEventListener('input', () => {
+            updateAllDamagePreviews();
+            calculate();
+        });
     });
+
+    // Function to update all ability damage previews
+    function updateAllDamagePreviews() {
+        // Update all active ability previews
+        activeSelects.forEach(select => {
+            const wrapper = select.closest('.ability-slot-wrapper');
+            if (wrapper) updateAbilityDamagePreview(select, wrapper);
+        });
+        
+        // Update elite active preview
+        eliteActiveSelects.forEach(select => {
+            const wrapper = select.closest('.ability-slot-wrapper');
+            if (wrapper) updateAbilityDamagePreview(select, wrapper);
+        });
+        
+        // Update auxiliary active preview
+        auxActiveSelects.forEach(select => {
+            const wrapper = select.closest('.ability-slot-wrapper');
+            if (wrapper) updateAbilityDamagePreview(select, wrapper);
+        });
+    }
 
 
 
@@ -7476,6 +7595,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Use setTimeout to allow UI to update
         setTimeout(() => {
+            // First run main calculation to collect actual combat statistics
+            calculate();
+            
+            // Then run summary simulation with collected statistics
             const playerResult = simulatePlayerCombat(simulationSeconds);
             combatBreakdownState.simulationResults = playerResult;
             
@@ -7527,21 +7650,28 @@ document.addEventListener('DOMContentLoaded', () => {
             effectUptime: {}
         };
         
-        // Simplified simulation - use existing calculation as base
+        // Use actual combat data from the main simulation if available
         const baseDps = parseFloat(document.getElementById('res-total-dps').textContent) || 0;
         result.totalDamage = baseDps * simulationSeconds;
         result.dps = baseDps;
         result.totalCasts = Math.floor(simulationSeconds / 2); // Estimate 1 cast every 2 seconds
         
-        // Calculate damage sources distribution
-        const critChance = playerStats.critChance / 100;
-        const penChance = playerStats.penChance / 100;
-        const normalChance = 1 - critChance - penChance;
+        // Get actual combat stats if available from main simulation
+        const actualStats = window._lastCombatStats || {};
+        const actualCritChance = actualStats.critChance || playerStats.critChance / 100;
+        const actualPenChance = actualStats.penChance || playerStats.penChance / 100;
+        const normalChance = 1 - actualCritChance - actualPenChance;
         
-        result.damageSources['Critical Hits'].damage = result.totalDamage * critChance;
-        result.damageSources['Penetrating Hits'].damage = result.totalDamage * penChance;
-        result.damageSources['Normal Hits'].damage = result.totalDamage * normalChance;
-        result.damageSources['Base Attacks'].damage = result.totalDamage * 0.1; // Small portion from base attacks
+        // Use actual combat data if available, otherwise fall back to estimates
+        const critDamage = actualStats.critDamage || (result.totalDamage * actualCritChance);
+        const penDamage = actualStats.penDamage || (result.totalDamage * actualPenChance);
+        const normalDamage = actualStats.normalDamage || (result.totalDamage * normalChance);
+        const baseAttackDamage = actualStats.baseAttackDamage || (result.totalDamage * 0.1);
+        
+        result.damageSources['Critical Hits'].damage = critDamage;
+        result.damageSources['Penetrating Hits'].damage = penDamage;
+        result.damageSources['Normal Hits'].damage = normalDamage;
+        result.damageSources['Base Attacks'].damage = baseAttackDamage;
         
         // Calculate percentages
         Object.values(result.damageSources).forEach(source => {
@@ -7575,12 +7705,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let dustDamage = 0;
         
         if (dustActive && critChance > 0) {
-            // Calculate expected number of critical hits
-            const expectedCrits = result.totalCasts * critChance;
-            // Calculate expected Dust procs (20% chance on crit)
-            dustProcs = Math.floor(expectedCrits * 0.20);
+            // Use actual combat statistics from main simulation if available
+            const combatStats = window._lastCombatStats || {};
+            const actualCritCount = combatStats.critCount || 0;
+            const actualCritDamage = combatStats.critDamage || 0;
+            
+            // Calculate expected Dust procs (20% chance on actual crits)
+            dustProcs = Math.floor(actualCritCount * 0.20);
             // Each proc does damage equal to the average critical hit damage
-            const avgCritDamage = (result.totalDamage * critChance) / expectedCrits;
+            const avgCritDamage = actualCritCount > 0 ? actualCritDamage / actualCritCount : 0;
             dustDamage = dustProcs * avgCritDamage;
         }
         
@@ -7660,13 +7793,13 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '<h4>Ability Damage Breakdown</h4>';
         
         // Add Dust of the Black Pharaoh if it has damage from simulation
-        if (combatBreakdownState.simulationResults && combatBreakdownState.simulationResults.effectUptime) {
-            const dustData = combatBreakdownState.simulationResults.effectUptime['Dust of the Black Pharaoh'];
-            if (dustData && dustData.totalDamage > 0) {
+        if (combatBreakdownState.simulationResults && combatBreakdownState.simulationResults.abilityBreakdown) {
+            const dustData = combatBreakdownState.simulationResults.abilityBreakdown['Dust of the Black Pharaoh (Proc)'];
+            if (dustData && dustData.damage > 0) {
                 abilityBreakdown['Dust of the Black Pharaoh (Proc)'] = {
-                    damage: dustData.totalDamage,
-                    percentage: (dustData.totalDamage / combatBreakdownState.simulationResults.totalDamage) * 100,
-                    casts: dustData.procs
+                    damage: dustData.damage,
+                    percentage: (dustData.damage / combatBreakdownState.simulationResults.totalDamage) * 100,
+                    casts: dustData.casts
                 };
             }
         }

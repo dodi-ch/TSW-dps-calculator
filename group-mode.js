@@ -595,12 +595,17 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.appendChild(select);
         if (priorityInput) wrapper.appendChild(priorityInput);
         if (minResInput) {
+            const minResContainer = document.createElement('div');
+            minResContainer.className = 'slot-min-res-container';
+            
             const minResLabel = document.createElement('span');
             minResLabel.className = 'slot-min-res-label';
             minResLabel.textContent = 'Min Res';
             minResLabel.title = 'Minimum resources required before this ability can fire';
-            wrapper.appendChild(minResLabel);
-            wrapper.appendChild(minResInput);
+            
+            minResContainer.appendChild(minResLabel);
+            minResContainer.appendChild(minResInput);
+            wrapper.appendChild(minResContainer);
         }
         wrapper.appendChild(searchInput);
         wrapper.appendChild(display);
@@ -2705,7 +2710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Dust of the Black Pharaoh effect
         if (talismanEffects.dustOfBlackPharaoh) {
             // 20% chance on critical hit to deal additional 100% damage
-            // Calculate expected proc damage: 20% of crits * 100% damage
+            // Calculate expected proc damage: critChance * 0.20 * 100% * average damage
             const dustProcChance = critChance * 0.20; // 20% of crits
             const dustProcDamage = baseDps * dustProcChance; // Expected damage from procs
             baseDps += dustProcDamage;
